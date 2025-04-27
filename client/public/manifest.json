@@ -1,0 +1,50 @@
+{
+  "name": "Digital Trade Finance System",
+  "short_name": "DTFS",
+  "description": "A cutting-edge platform connecting African businesses to global markets through simplified trade finance, robust marketplaces, and expert training",
+  "icons": [
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#3949AB",
+  "background_color": "#ffffff",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["business", "finance", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Apply for Finance",
+      "short_name": "Finance",
+      "description": "Apply for trade finance",
+      "url": "/trade-finance",
+      "icons": [{ "src": "/icons/finance-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Marketplace",
+      "short_name": "Market",
+      "description": "Browse the marketplace",
+      "url": "/marketplace",
+      "icons": [{ "src": "/icons/market-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
+}
