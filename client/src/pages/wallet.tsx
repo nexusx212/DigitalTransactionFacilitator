@@ -34,6 +34,18 @@ import {
   TabsList,
   TabsTrigger
 } from "@/components/ui/tabs";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogClose
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -304,6 +316,39 @@ export default function Wallet() {
     }
   };
 
+  // State for modal dialogs
+  const [showDepositModal, setShowDepositModal] = useState(false);
+  const [showConnectWalletModal, setShowConnectWalletModal] = useState(false);
+  const [depositMethod, setDepositMethod] = useState<'fiat' | 'crypto'>('fiat');
+  const [selectedCryptoForDeposit, setSelectedCryptoForDeposit] = useState("BTC");
+  const [connectedWallets, setConnectedWallets] = useState<string[]>([]);
+  const [isWalletConnecting, setIsWalletConnecting] = useState(false);
+
+  const handleConnectWallet = (walletType: string) => {
+    setIsWalletConnecting(true);
+    
+    // Simulate wallet connection process
+    setTimeout(() => {
+      setConnectedWallets(prev => [...prev, walletType]);
+      setIsWalletConnecting(false);
+      setShowConnectWalletModal(false);
+      
+      toast({
+        title: "Wallet Connected",
+        description: `Your ${walletType} wallet has been successfully connected.`,
+      });
+    }, 2000);
+  };
+
+  const disconnectWallet = (walletType: string) => {
+    setConnectedWallets(prev => prev.filter(wallet => wallet !== walletType));
+    
+    toast({
+      title: "Wallet Disconnected",
+      description: `Your ${walletType} wallet has been disconnected.`,
+    });
+  };
+
   return (
     <section id="wallet" className="mb-16 py-2" ref={sectionRef}>
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
@@ -313,12 +358,23 @@ export default function Wallet() {
           </h1>
           <p className="text-neutral-600">Manage your digital assets and make secure cross-border payments</p>
         </div>
-        <div className="flex gap-3 mt-4 md:mt-0">
+        <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
           <Button variant="outline" className="flex items-center gap-2">
             <span className="material-icons text-[18px]">history</span>
             <span>History</span>
           </Button>
-          <Button className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            className="flex items-center gap-2"
+            onClick={() => setShowConnectWalletModal(true)}
+          >
+            <span className="material-icons text-[18px]">link</span>
+            <span>Connect</span>
+          </Button>
+          <Button 
+            className="flex items-center gap-2"
+            onClick={() => setShowDepositModal(true)}
+          >
             <span className="material-icons text-[18px]">add</span>
             <span>Deposit</span>
           </Button>
@@ -883,6 +939,313 @@ export default function Wallet() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Deposit Modal */}
+      <Dialog open={showDepositModal} onOpenChange={setShowDepositModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Deposit Funds</DialogTitle>
+            <DialogDescription>
+              Add funds to your wallet using your preferred payment method
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <RadioGroup 
+              defaultValue="fiat" 
+              value={depositMethod} 
+              onValueChange={(value) => setDepositMethod(value as 'fiat' | 'crypto')}
+              className="flex flex-col gap-4"
+            >
+              <div className={`flex items-start space-x-3 border rounded-lg p-4 ${depositMethod === 'fiat' ? 'border-primary bg-primary-light/10' : 'border-neutral-200'}`}>
+                <RadioGroupItem value="fiat" id="fiat" className="mt-1" />
+                <div className="flex-1">
+                  <Label htmlFor="fiat" className="text-base font-medium flex items-center">
+                    <span className="material-icons mr-2 text-neutral-700">credit_card</span>
+                    Fiat Payment
+                  </Label>
+                  <p className="text-sm text-neutral-600 mt-1">Deposit using credit/debit card, bank transfer, or mobile money</p>
+
+                  {depositMethod === 'fiat' && (
+                    <div className="mt-4 space-y-4">
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <Label htmlFor="depositAmount" className="text-sm font-medium">Amount</Label>
+                          <div className="relative mt-1">
+                            <Input 
+                              id="depositAmount" 
+                              placeholder="0.00" 
+                              className="pl-10"
+                            />
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                              <span className="text-neutral-500">$</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="paymentMethod" className="text-sm font-medium">Payment Method</Label>
+                          <Select defaultValue="card">
+                            <SelectTrigger id="paymentMethod" className="mt-1">
+                              <SelectValue placeholder="Select payment method" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="card">Credit/Debit Card</SelectItem>
+                              <SelectItem value="bank">Bank Transfer</SelectItem>
+                              <SelectItem value="mobile">Mobile Money</SelectItem>
+                              <SelectItem value="papss">PAPSS</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="bg-neutral-50 p-3 rounded-lg flex justify-between items-center text-sm">
+                        <span className="text-neutral-700">Processing Fee (2.5%)</span>
+                        <span className="font-medium">+ $0.00</span>
+                      </div>
+
+                      <div className="pt-3 flex justify-end gap-3">
+                        <DialogClose asChild>
+                          <Button variant="outline">Cancel</Button>
+                        </DialogClose>
+                        <Button>
+                          <span className="material-icons mr-2 text-[18px]">credit_card</span>
+                          Proceed to Payment
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className={`flex items-start space-x-3 border rounded-lg p-4 ${depositMethod === 'crypto' ? 'border-primary bg-primary-light/10' : 'border-neutral-200'}`}>
+                <RadioGroupItem value="crypto" id="crypto" className="mt-1" />
+                <div className="flex-1">
+                  <Label htmlFor="crypto" className="text-base font-medium flex items-center">
+                    <span className="material-icons mr-2 text-neutral-700">currency_bitcoin</span>
+                    Cryptocurrency
+                  </Label>
+                  <p className="text-sm text-neutral-600 mt-1">Deposit BTC, ETH, USDT, or other cryptocurrencies</p>
+
+                  {depositMethod === 'crypto' && (
+                    <div className="mt-4 space-y-4">
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <Label htmlFor="cryptoCurrency" className="text-sm font-medium">Select Cryptocurrency</Label>
+                          <Select 
+                            defaultValue="BTC" 
+                            value={selectedCryptoForDeposit} 
+                            onValueChange={setSelectedCryptoForDeposit}
+                          >
+                            <SelectTrigger id="cryptoCurrency" className="mt-1">
+                              <SelectValue placeholder="Select cryptocurrency" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
+                              <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
+                              <SelectItem value="USDT">Tether (USDT)</SelectItem>
+                              <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="bg-neutral-50 p-4 rounded-lg">
+                        <p className="text-sm font-medium text-neutral-700 mb-3">Deposit Address</p>
+                        <div className="flex items-center space-x-2">
+                          <Input 
+                            readOnly
+                            value={`${selectedCryptoForDeposit === 'BTC' ? 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' : 
+                                     selectedCryptoForDeposit === 'ETH' ? '0x7121B6B846807a7D5F184C49B82695896856A00F' : 
+                                     '0x1da92f48254342e1d87fdfcc6a46288b2e233cd5'}`}
+                            className="font-mono text-sm"
+                          />
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="shrink-0"
+                            onClick={() => {
+                              navigator.clipboard.writeText(`${selectedCryptoForDeposit === 'BTC' ? 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' : 
+                                selectedCryptoForDeposit === 'ETH' ? '0x7121B6B846807a7D5F184C49B82695896856A00F' : 
+                                '0x1da92f48254342e1d87fdfcc6a46288b2e233cd5'}`);
+                              toast({
+                                title: "Address Copied",
+                                description: "Wallet address copied to clipboard",
+                              });
+                            }}
+                          >
+                            <span className="material-icons">content_copy</span>
+                          </Button>
+                        </div>
+
+                        <div className="mt-4 p-4 bg-white border border-neutral-200 rounded-lg flex flex-col items-center">
+                          <div className="w-32 h-32 mb-2">
+                            <svg viewBox="0 0 100 100" className="w-full h-full">
+                              <rect x="0" y="0" width="100" height="100" fill="white" />
+                              <rect x="10" y="10" width="80" height="80" fill="black" />
+                              <rect x="20" y="20" width="60" height="60" fill="white" />
+                              <rect x="30" y="30" width="40" height="40" fill="black" />
+                              <rect x="40" y="40" width="20" height="20" fill="white" />
+                            </svg>
+                          </div>
+                          <p className="text-xs text-neutral-500">Scan this QR code to deposit</p>
+                        </div>
+
+                        <p className="mt-3 text-xs text-neutral-500">
+                          Send only {selectedCryptoForDeposit} to this address. Your funds will be automatically credited to your account after {selectedCryptoForDeposit === 'BTC' ? '2 confirmations' : '12 confirmations'}.
+                        </p>
+                      </div>
+
+                      <div className="pt-3 flex justify-center">
+                        <DialogClose asChild>
+                          <Button variant="outline">
+                            Done
+                          </Button>
+                        </DialogClose>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </RadioGroup>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Connect Wallet Modal */}
+      <Dialog open={showConnectWalletModal} onOpenChange={setShowConnectWalletModal}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Connect Wallet</DialogTitle>
+            <DialogDescription>
+              Connect an external wallet to easily transfer funds
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="space-y-4">
+              {connectedWallets.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium mb-3">Connected Wallets</h3>
+                  <div className="space-y-2">
+                    {connectedWallets.map((wallet) => (
+                      <div key={wallet} className="flex items-center justify-between p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-full ${
+                            wallet === 'MetaMask' ? 'bg-amber-100' : 
+                            wallet === 'WalletConnect' ? 'bg-blue-100' :
+                            wallet === 'Phantom' ? 'bg-purple-100' : 'bg-neutral-100'
+                          } flex items-center justify-center`}>
+                            <span className="material-icons text-[20px] text-neutral-700">account_balance_wallet</span>
+                          </div>
+                          <div>
+                            <p className="font-medium">{wallet}</p>
+                            <p className="text-xs text-neutral-500">
+                              {wallet === 'MetaMask' ? '0x71...A00F' : 
+                               wallet === 'WalletConnect' ? '0xF2...c3B7' : 
+                               wallet === 'Phantom' ? 'Dz5U...7PQm' : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          className="h-8 text-xs"
+                          onClick={() => disconnectWallet(wallet)}
+                        >
+                          Disconnect
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <h3 className="text-sm font-medium mb-3">Available Wallets</h3>
+              <div className="grid grid-cols-1 gap-3">
+                {!connectedWallets.includes('MetaMask') && (
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-between h-auto py-3 px-4"
+                    disabled={isWalletConnecting}
+                    onClick={() => handleConnectWallet('MetaMask')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
+                        <span className="material-icons text-amber-500">extension</span>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium">MetaMask</p>
+                        <p className="text-xs text-neutral-500">Connect to your MetaMask wallet</p>
+                      </div>
+                    </div>
+                    {isWalletConnecting ? (
+                      <div className="h-5 w-5 border-2 border-neutral-300 border-t-primary rounded-full animate-spin"></div>
+                    ) : (
+                      <span className="material-icons text-neutral-400">chevron_right</span>
+                    )}
+                  </Button>
+                )}
+                
+                {!connectedWallets.includes('WalletConnect') && (
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-between h-auto py-3 px-4"
+                    disabled={isWalletConnecting}
+                    onClick={() => handleConnectWallet('WalletConnect')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <span className="material-icons text-blue-500">link</span>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium">WalletConnect</p>
+                        <p className="text-xs text-neutral-500">Connect via WalletConnect</p>
+                      </div>
+                    </div>
+                    {isWalletConnecting ? (
+                      <div className="h-5 w-5 border-2 border-neutral-300 border-t-primary rounded-full animate-spin"></div>
+                    ) : (
+                      <span className="material-icons text-neutral-400">chevron_right</span>
+                    )}
+                  </Button>
+                )}
+                
+                {!connectedWallets.includes('Phantom') && (
+                  <Button 
+                    variant="outline" 
+                    className="flex items-center justify-between h-auto py-3 px-4"
+                    disabled={isWalletConnecting}
+                    onClick={() => handleConnectWallet('Phantom')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
+                        <span className="material-icons text-purple-500">auto_awesome</span>
+                      </div>
+                      <div className="text-left">
+                        <p className="font-medium">Phantom</p>
+                        <p className="text-xs text-neutral-500">Connect to your Phantom wallet</p>
+                      </div>
+                    </div>
+                    {isWalletConnecting ? (
+                      <div className="h-5 w-5 border-2 border-neutral-300 border-t-primary rounded-full animate-spin"></div>
+                    ) : (
+                      <span className="material-icons text-neutral-400">chevron_right</span>
+                    )}
+                  </Button>
+                )}
+              </div>
+
+              <div className="bg-neutral-50 p-4 mt-4 rounded-lg text-sm text-neutral-600">
+                <p className="flex items-start">
+                  <span className="material-icons text-neutral-500 mr-2 text-[18px] mt-0.5">info</span>
+                  <span>By connecting your wallet, you agree to our Terms of Service and our Privacy Policy.</span>
+                </p>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
