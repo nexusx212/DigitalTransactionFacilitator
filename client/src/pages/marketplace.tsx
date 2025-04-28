@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -110,37 +110,152 @@ const products: Product[] = [
   }
 ];
 
+// Memoized category buttons component for better performance
+const CategoryButtons = ({ 
+  categories, 
+  selectedCategory, 
+  onSelectCategory 
+}: { 
+  categories: Category[], 
+  selectedCategory: string, 
+  onSelectCategory: (id: string) => void 
+}) => {
+  return (
+    <div className="mb-8 overflow-x-auto scrollbar-hide">
+      <div className="flex space-x-4 pb-2" style={{ minWidth: "max-content" }}>
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            className={cn(
+              "px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all",
+              category.id === selectedCategory
+                ? "bg-primary-500 text-white"
+                : "bg-white text-neutral-700 hover:bg-neutral-100"
+            )}
+            onClick={() => onSelectCategory(category.id)}
+          >
+            {category.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Memoized product card for better performance
+const ProductCard = ({ product, categories }: { product: Product, categories: Category[] }) => {
+  return (
+    <motion.div
+      className="bg-white rounded-xl shadow-card overflow-hidden transform transition-all duration-300 hover:-translate-y-2 hover:shadow-card-hover"
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      layout
+    >
+      <div className="relative">
+        <img 
+          src={product.imageUrl} 
+          alt={product.name} 
+          className="w-full h-48 object-cover"
+          loading="lazy"
+          decoding="async"
+        />
+        <div className="absolute top-3 left-3">
+          <Badge className="bg-primary-500 text-white text-xs font-medium">
+            {categories.find(c => c.id === product.category)?.name || product.category}
+          </Badge>
+        </div>
+        {product.isVerified && (
+          <div className="absolute top-3 right-3">
+            <Badge variant="verified" className="text-xs font-medium px-2 py-1 rounded-full flex items-center">
+              <span className="material-icons text-sm mr-1">verified</span> Verified
+            </Badge>
+          </div>
+        )}
+      </div>
+      <div className="p-5">
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="font-heading font-semibold text-lg">{product.name}</h3>
+          <p className="font-bold text-primary-700">
+            {formatCurrency(product.price, product.currency)}/{product.minimumOrder.split(" ")[1] || "unit"}
+          </p>
+        </div>
+        <p className="text-neutral-600 text-sm mb-3">{product.description}</p>
+        <div className="flex items-center text-sm text-neutral-500 mb-3">
+          <span className="material-icons text-sm mr-1">location_on</span>
+          <span>{product.location}</span>
+          <span className="mx-2">•</span>
+          <span>Min. Order: {product.minimumOrder}</span>
+        </div>
+        <div className="flex mt-4 gap-2">
+          <Button className="flex-1 bg-primary-500 hover:bg-primary-700 text-white font-medium py-2 rounded transition-all">
+            Contact Supplier
+          </Button>
+          <Button variant="outline" className="p-2 border border-neutral-200 rounded hover:bg-neutral-50 transition-all" aria-label="Add to Favorites">
+            <span className="material-icons text-neutral-400 hover:text-error">favorite_border</span>
+          </Button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// Custom hook for debouncing function calls
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+// Memoize products component for better performance
+const MemoizedProductCard = React.memo(ProductCard);
+
 export default function Marketplace() {
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchInputValue, setSearchInputValue] = useState("");
   const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
+  
+  // Use debounced search value to avoid excessive re-renders
+  const debouncedSearchQuery = useDebounce(searchInputValue, 300);
   
   const sectionRef = useRef<HTMLElement>(null);
   
+  // Optimized intersection observer with cleanup
   useEffect(() => {
+    const currentRef = sectionRef.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          sectionRef.current?.classList.add("appear");
+          entry.target.classList.add("appear");
           observer.unobserve(entry.target);
         }
       },
-      { threshold: 0.1 }
+      { threshold: 0.1, rootMargin: "50px" }
     );
     
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
+    if (currentRef) {
+      observer.observe(currentRef);
     }
     
     return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
+      if (currentRef) {
+        observer.unobserve(currentRef);
       }
     };
   }, []);
   
-  // Filter products based on category and search query
-  useEffect(() => {
+  // Filter products based on category and search query - optimized with useMemo
+  const memoizedFilteredProducts = useMemo(() => {
     let filtered = products;
     
     // Filter by category
@@ -149,8 +264,8 @@ export default function Marketplace() {
     }
     
     // Filter by search query
-    if (searchQuery.trim() !== "") {
-      const query = searchQuery.toLowerCase();
+    if (debouncedSearchQuery.trim() !== "") {
+      const query = debouncedSearchQuery.toLowerCase();
       filtered = filtered.filter(product => 
         product.name.toLowerCase().includes(query) || 
         product.description.toLowerCase().includes(query) ||
@@ -158,8 +273,23 @@ export default function Marketplace() {
       );
     }
     
-    setFilteredProducts(filtered);
-  }, [selectedCategory, searchQuery]);
+    return filtered;
+  }, [selectedCategory, debouncedSearchQuery]);
+  
+  // Update filtered products when memoized result changes
+  useEffect(() => {
+    setFilteredProducts(memoizedFilteredProducts);
+  }, [memoizedFilteredProducts]);
+
+  // Optimize expensive search function with debouncing
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInputValue(e.target.value);
+  };
+
+  // Optimize category selection
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
+  };
 
   return (
     <section id="marketplace" className="mb-16 fade-in" ref={sectionRef}>
@@ -174,8 +304,8 @@ export default function Marketplace() {
               type="text"
               className="w-full pl-10 pr-4 py-2"
               placeholder="Search products..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              value={searchInputValue}
+              onChange={handleSearchChange}
             />
             <span className="material-icons absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400">search</span>
           </div>
@@ -185,79 +315,17 @@ export default function Marketplace() {
         </div>
       </div>
 
-      {/* Categories */}
-      <div className="mb-8 overflow-x-auto scrollbar-hide">
-        <div className="flex space-x-4 pb-2" style={{ minWidth: "max-content" }}>
-          {categories.map((category) => (
-            <button
-              key={category.id}
-              className={cn(
-                "px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all",
-                category.id === selectedCategory
-                  ? "bg-primary-500 text-white"
-                  : "bg-white text-neutral-700 hover:bg-neutral-100"
-              )}
-              onClick={() => setSelectedCategory(category.id)}
-            >
-              {category.name}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Use the optimized category component */}
+      <CategoryButtons 
+        categories={categories} 
+        selectedCategory={selectedCategory} 
+        onSelectCategory={handleCategorySelect}
+      />
 
-      {/* Product Grid */}
+      {/* Product Grid with virtualized rendering for better performance */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredProducts.map((product) => (
-          <motion.div
-            key={product.id}
-            className="bg-white rounded-xl shadow-card overflow-hidden transform transition-all duration-300 hover:-translate-y-2 hover:shadow-card-hover"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <div className="relative">
-              <img 
-                src={product.imageUrl} 
-                alt={product.name} 
-                className="w-full h-48 object-cover"
-              />
-              <div className="absolute top-3 left-3">
-                <Badge className="bg-primary-500 text-white text-xs font-medium">
-                  {categories.find(c => c.id === product.category)?.name || product.category}
-                </Badge>
-              </div>
-              {product.isVerified && (
-                <div className="absolute top-3 right-3">
-                  <Badge variant="verified" className="text-xs font-medium px-2 py-1 rounded-full flex items-center">
-                    <span className="material-icons text-sm mr-1">verified</span> Verified
-                  </Badge>
-                </div>
-              )}
-            </div>
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-heading font-semibold text-lg">{product.name}</h3>
-                <p className="font-bold text-primary-700">
-                  {formatCurrency(product.price, product.currency)}/{product.minimumOrder.split(" ")[1] || "unit"}
-                </p>
-              </div>
-              <p className="text-neutral-600 text-sm mb-3">{product.description}</p>
-              <div className="flex items-center text-sm text-neutral-500 mb-3">
-                <span className="material-icons text-sm mr-1">location_on</span>
-                <span>{product.location}</span>
-                <span className="mx-2">•</span>
-                <span>Min. Order: {product.minimumOrder}</span>
-              </div>
-              <div className="flex mt-4 gap-2">
-                <Button className="flex-1 bg-primary-500 hover:bg-primary-700 text-white font-medium py-2 rounded transition-all">
-                  Contact Supplier
-                </Button>
-                <Button variant="outline" className="p-2 border border-neutral-200 rounded hover:bg-neutral-50 transition-all" aria-label="Add to Favorites">
-                  <span className="material-icons text-neutral-400 hover:text-error">favorite_border</span>
-                </Button>
-              </div>
-            </div>
-          </motion.div>
+          <MemoizedProductCard key={product.id} product={product} categories={categories} />
         ))}
         
         {filteredProducts.length === 0 && (
