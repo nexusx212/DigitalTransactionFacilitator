@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+/* Optimized font loading with display swap for better performance */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap&display=swap');
+@import url('https://fonts.googleapis.com/icon?family=Material+Icons&display=block');
 
 @tailwind base;
 @tailwind components;
@@ -131,6 +133,7 @@
   html {
     font-feature-settings: "cv02", "cv03", "cv04", "cv09";
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    text-rendering: optimizeSpeed;
   }
   
   body {
@@ -157,6 +160,12 @@
   
   p {
     @apply leading-relaxed;
+  }
+  
+  /* Add image lazy loading by default */
+  img {
+    @apply transition-opacity duration-300;
+    loading: lazy;
   }
 }
 
@@ -190,11 +199,13 @@
     box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08), 0 3px 5px rgba(0, 0, 0, 0.04);
   }
   
-  /* Animation utilities */
+  /* Animation utilities - Using GPU acceleration */
   .fade-in {
     opacity: 0;
     transform: translateY(20px);
     transition: opacity var(--transition-slow) ease, transform var(--transition-slow) ease;
+    will-change: opacity, transform;
+    transform: translateZ(0); /* Force GPU acceleration */
   }
   
   .appear {
@@ -202,10 +213,11 @@
     transform: translateY(0);
   }
   
-  /* Gradient text */
+  /* Gradient text with optimized rendering */
   .gradient-text {
     @apply bg-clip-text text-transparent;
     background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--secondary)));
+    will-change: background-position;
   }
   
   /* Gradient backgrounds */

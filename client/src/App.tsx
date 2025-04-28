@@ -73,11 +73,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Dashboard} />
-      <Route path="/trade-finance" component={TradeFinance} />
-      <Route path="/marketplace" component={Marketplace} />
-      <Route path="/training" component={Training} />
-      <Route path="/wallet" component={Wallet} />
+      <Route path="/" component={LazyDashboard} />
+      <Route path="/trade-finance" component={LazyTradeFinance} />
+      <Route path="/marketplace" component={LazyMarketplace} />
+      <Route path="/training" component={LazyTraining} />
+      <Route path="/wallet" component={LazyWallet} />
       <Route component={NotFound} />
     </Switch>
   );
