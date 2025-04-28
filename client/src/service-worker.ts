@@ -41,7 +41,7 @@ registerRoute(
   createHandlerBoundToURL('/index.html')
 );
 
-// Cache images with a Cache First strategy
+// Cache images with a Cache First strategy - optimized for performance
 registerRoute(
   ({ request }) => request.destination === 'image',
   new CacheFirst({
@@ -51,8 +51,9 @@ registerRoute(
         statuses: [0, 200],
       }),
       new ExpirationPlugin({
-        maxEntries: 60,
-        maxAgeSeconds: 30 * 24 * 60 * 60, // 30 Days
+        maxEntries: 100, // Increased cache size for better performance
+        maxAgeSeconds: 60 * 24 * 60 * 60, // 60 Days - longer cache
+        purgeOnQuotaError: true, // Auto cleanup when storage is full
       }),
     ],
   })
@@ -69,6 +70,29 @@ registerRoute(
     plugins: [
       new CacheableResponsePlugin({
         statuses: [0, 200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 50,
+        maxAgeSeconds: 7 * 24 * 60 * 60, // 7 Days
+        purgeOnQuotaError: true,
+      }),
+    ],
+  })
+);
+
+// Cache font files
+registerRoute(
+  ({ request }) => request.destination === 'font',
+  new CacheFirst({
+    cacheName: 'fonts',
+    plugins: [
+      new CacheableResponsePlugin({
+        statuses: [0, 200],
+      }),
+      new ExpirationPlugin({
+        maxEntries: 20,
+        maxAgeSeconds: 365 * 24 * 60 * 60, // 1 year
+        purgeOnQuotaError: true,
       }),
     ],
   })
@@ -123,17 +147,18 @@ self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
   event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
+    self.clients.matchAll({ type: 'window' }).then((clientList) => {
       // Try to focus an existing window
-      for (const client of clientList) {
+      for (const client of Array.from(clientList)) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
           return client.focus();
         }
       }
       // Otherwise, open a new window
-      if (clients.openWindow) {
-        return clients.openWindow('/');
+      if (self.clients.openWindow) {
+        return self.clients.openWindow('/');
       }
+      return undefined;
     })
   );
 });
