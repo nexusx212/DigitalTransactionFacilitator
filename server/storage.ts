@@ -7,7 +7,12 @@ import {
   userCourses, type UserCourse, type InsertUserCourse,
   wallets, type Wallet, type InsertWallet,
   transactions, type Transaction, type InsertTransaction,
-  aiMessages, type AiMessage, type InsertAiMessage
+  aiMessages, type AiMessage, type InsertAiMessage,
+  chats, type Chat, type InsertChat,
+  chatParticipants, type ChatParticipant, type InsertChatParticipant,
+  chatMessages, type ChatMessage, type InsertChatMessage,
+  escrows, type Escrow, type InsertEscrow,
+  disputes, type Dispute, type InsertDispute
 } from "@shared/schema";
 
 // Storage interface for all CRUD operations
@@ -63,6 +68,38 @@ export interface IStorage {
   getAiMessage(id: number): Promise<AiMessage | undefined>;
   getAiMessagesByUserId(userId: number): Promise<AiMessage[]>;
   createAiMessage(message: InsertAiMessage): Promise<AiMessage>;
+  
+  // Chat operations
+  getChat(id: number): Promise<Chat | undefined>;
+  getChatsByUserId(userId: number): Promise<Chat[]>;
+  createChat(chat: InsertChat): Promise<Chat>;
+  updateChat(id: number, data: Partial<InsertChat>): Promise<Chat | undefined>;
+  
+  // Chat Participant operations
+  getChatParticipant(userId: number, chatId: number): Promise<ChatParticipant | undefined>;
+  getChatParticipantsByChatId(chatId: number): Promise<ChatParticipant[]>;
+  createChatParticipant(participant: InsertChatParticipant): Promise<ChatParticipant>;
+  updateChatParticipant(id: number, data: Partial<InsertChatParticipant>): Promise<ChatParticipant | undefined>;
+  
+  // Chat Message operations
+  getChatMessage(id: number): Promise<ChatMessage | undefined>;
+  getChatMessagesByChatId(chatId: number, limit?: number, before?: number): Promise<ChatMessage[]>;
+  createChatMessage(message: InsertChatMessage): Promise<ChatMessage>;
+  updateChatMessage(id: number, data: Partial<InsertChatMessage>): Promise<ChatMessage | undefined>;
+  
+  // Escrow operations
+  getEscrow(id: number): Promise<Escrow | undefined>;
+  getEscrowsByChatId(chatId: number): Promise<Escrow[]>;
+  getEscrowsByUserId(userId: number): Promise<Escrow[]>;
+  createEscrow(escrow: InsertEscrow): Promise<Escrow>;
+  updateEscrow(id: number, data: Partial<InsertEscrow>): Promise<Escrow | undefined>;
+  
+  // Dispute operations
+  getDispute(id: number): Promise<Dispute | undefined>;
+  getDisputesByEscrowId(escrowId: number): Promise<Dispute[]>;
+  getDisputesByUserId(userId: number): Promise<Dispute[]>;
+  createDispute(dispute: InsertDispute): Promise<Dispute>;
+  updateDispute(id: number, data: Partial<InsertDispute>): Promise<Dispute | undefined>;
 }
 
 export class MemStorage implements IStorage {
@@ -75,6 +112,11 @@ export class MemStorage implements IStorage {
   private wallets: Map<number, Wallet>;
   private transactions: Map<number, Transaction>;
   private aiMessages: Map<number, AiMessage>;
+  private chats: Map<number, Chat>;
+  private chatParticipants: Map<number, ChatParticipant>;
+  private chatMessages: Map<number, ChatMessage>;
+  private escrows: Map<number, Escrow>;
+  private disputes: Map<number, Dispute>;
 
   private userIdCounter: number;
   private invoiceIdCounter: number;
@@ -85,6 +127,11 @@ export class MemStorage implements IStorage {
   private walletIdCounter: number;
   private transactionIdCounter: number;
   private aiMessageIdCounter: number;
+  private chatIdCounter: number;
+  private chatParticipantIdCounter: number;
+  private chatMessageIdCounter: number;
+  private escrowIdCounter: number;
+  private disputeIdCounter: number;
 
   constructor() {
     this.users = new Map();
@@ -96,6 +143,11 @@ export class MemStorage implements IStorage {
     this.wallets = new Map();
     this.transactions = new Map();
     this.aiMessages = new Map();
+    this.chats = new Map();
+    this.chatParticipants = new Map();
+    this.chatMessages = new Map();
+    this.escrows = new Map();
+    this.disputes = new Map();
 
     this.userIdCounter = 1;
     this.invoiceIdCounter = 1;
@@ -106,6 +158,11 @@ export class MemStorage implements IStorage {
     this.walletIdCounter = 1;
     this.transactionIdCounter = 1;
     this.aiMessageIdCounter = 1;
+    this.chatIdCounter = 1;
+    this.chatParticipantIdCounter = 1;
+    this.chatMessageIdCounter = 1;
+    this.escrowIdCounter = 1;
+    this.disputeIdCounter = 1;
 
     // Initialize with some defaults for demo purposes
     this.initializeDefaults();
@@ -321,6 +378,8 @@ export class MemStorage implements IStorage {
       startDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
       lastAccessDate: new Date()
     });
+    
+    // We'll add peer-to-peer trading sample data in another PR when the methods are fully implemented.
   }
 
   // User operations
@@ -533,6 +592,238 @@ export class MemStorage implements IStorage {
     const newMessage: AiMessage = { ...message, id };
     this.aiMessages.set(id, newMessage);
     return newMessage;
+  }
+
+  // Chat operations
+  async getChat(id: number): Promise<Chat | undefined> {
+    return this.chats.get(id);
+  }
+
+  async getChatsByUserId(userId: number): Promise<Chat[]> {
+    // Get all chats where the user is a participant
+    const participantChats = Array.from(this.chatParticipants.values())
+      .filter((participant) => participant.userId === userId)
+      .map((participant) => participant.chatId);
+    
+    // Return chats based on participant info
+    return Array.from(this.chats.values())
+      .filter((chat) => participantChats.includes(chat.id))
+      .sort((a, b) => b.updatedAt.getTime() - a.updatedAt.getTime()); // Sort by updatedAt descending
+  }
+
+  async createChat(chat: InsertChat): Promise<Chat> {
+    const id = this.chatIdCounter++;
+    const now = new Date();
+    const newChat: Chat = { 
+      ...chat, 
+      id, 
+      createdAt: now, 
+      updatedAt: now
+    };
+    this.chats.set(id, newChat);
+    return newChat;
+  }
+
+  async updateChat(id: number, data: Partial<InsertChat>): Promise<Chat | undefined> {
+    const chat = this.chats.get(id);
+    if (!chat) return undefined;
+    
+    const updatedChat: Chat = { 
+      ...chat, 
+      ...data, 
+      updatedAt: new Date() 
+    };
+    this.chats.set(id, updatedChat);
+    return updatedChat;
+  }
+  
+  // Chat Participant operations
+  async getChatParticipant(userId: number, chatId: number): Promise<ChatParticipant | undefined> {
+    return Array.from(this.chatParticipants.values()).find(
+      (participant) => participant.userId === userId && participant.chatId === chatId
+    );
+  }
+
+  async getChatParticipantsByChatId(chatId: number): Promise<ChatParticipant[]> {
+    return Array.from(this.chatParticipants.values()).filter(
+      (participant) => participant.chatId === chatId
+    );
+  }
+
+  async createChatParticipant(participant: InsertChatParticipant): Promise<ChatParticipant> {
+    const id = this.chatParticipantIdCounter++;
+    const newParticipant: ChatParticipant = { 
+      ...participant, 
+      id, 
+      joinedAt: new Date() 
+    };
+    this.chatParticipants.set(id, newParticipant);
+    return newParticipant;
+  }
+
+  async updateChatParticipant(id: number, data: Partial<InsertChatParticipant>): Promise<ChatParticipant | undefined> {
+    const participant = this.chatParticipants.get(id);
+    if (!participant) return undefined;
+    
+    const updatedParticipant: ChatParticipant = { ...participant, ...data };
+    this.chatParticipants.set(id, updatedParticipant);
+    return updatedParticipant;
+  }
+  
+  // Chat Message operations
+  async getChatMessage(id: number): Promise<ChatMessage | undefined> {
+    return this.chatMessages.get(id);
+  }
+
+  async getChatMessagesByChatId(chatId: number, limit?: number, before?: number): Promise<ChatMessage[]> {
+    let messages = Array.from(this.chatMessages.values())
+      .filter((message) => message.chatId === chatId);
+      
+    // Filter for pagination if 'before' ID is provided
+    if (before !== undefined) {
+      const beforeMessage = this.chatMessages.get(before);
+      if (beforeMessage) {
+        messages = messages.filter(
+          (message) => message.createdAt.getTime() < beforeMessage.createdAt.getTime()
+        );
+      }
+    }
+    
+    // Sort messages by timestamp ascending
+    messages = messages.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+    
+    // Apply limit if provided
+    if (limit !== undefined && limit > 0) {
+      messages = messages.slice(0, limit);
+    }
+    
+    return messages;
+  }
+
+  async createChatMessage(message: InsertChatMessage): Promise<ChatMessage> {
+    const id = this.chatMessageIdCounter++;
+    const now = new Date();
+    const newMessage: ChatMessage = { 
+      ...message, 
+      id, 
+      createdAt: now,
+      isEdited: false
+    };
+    this.chatMessages.set(id, newMessage);
+    
+    // Update the chat's updatedAt timestamp
+    const chat = this.chats.get(message.chatId);
+    if (chat) {
+      this.updateChat(chat.id, { ...chat, updatedAt: now });
+    }
+    
+    return newMessage;
+  }
+
+  async updateChatMessage(id: number, data: Partial<InsertChatMessage>): Promise<ChatMessage | undefined> {
+    const message = this.chatMessages.get(id);
+    if (!message) return undefined;
+    
+    const updatedMessage: ChatMessage = { 
+      ...message, 
+      ...data, 
+      isEdited: true 
+    };
+    this.chatMessages.set(id, updatedMessage);
+    return updatedMessage;
+  }
+  
+  // Escrow operations
+  async getEscrow(id: number): Promise<Escrow | undefined> {
+    return this.escrows.get(id);
+  }
+
+  async getEscrowsByChatId(chatId: number): Promise<Escrow[]> {
+    return Array.from(this.escrows.values())
+      .filter((escrow) => escrow.chatId === chatId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort by createdAt descending
+  }
+
+  async getEscrowsByUserId(userId: number): Promise<Escrow[]> {
+    return Array.from(this.escrows.values())
+      .filter((escrow) => escrow.importerId === userId || escrow.exporterId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort by createdAt descending
+  }
+
+  async createEscrow(escrow: InsertEscrow): Promise<Escrow> {
+    const id = this.escrowIdCounter++;
+    const now = new Date();
+    const newEscrow: Escrow = { 
+      ...escrow, 
+      id, 
+      createdAt: now, 
+      updatedAt: now 
+    };
+    this.escrows.set(id, newEscrow);
+    return newEscrow;
+  }
+
+  async updateEscrow(id: number, data: Partial<InsertEscrow>): Promise<Escrow | undefined> {
+    const escrow = this.escrows.get(id);
+    if (!escrow) return undefined;
+    
+    const updatedEscrow: Escrow = { 
+      ...escrow, 
+      ...data, 
+      updatedAt: new Date() 
+    };
+    this.escrows.set(id, updatedEscrow);
+    return updatedEscrow;
+  }
+  
+  // Dispute operations
+  async getDispute(id: number): Promise<Dispute | undefined> {
+    return this.disputes.get(id);
+  }
+
+  async getDisputesByEscrowId(escrowId: number): Promise<Dispute[]> {
+    return Array.from(this.disputes.values())
+      .filter((dispute) => dispute.escrowId === escrowId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort by createdAt descending
+  }
+
+  async getDisputesByUserId(userId: number): Promise<Dispute[]> {
+    return Array.from(this.disputes.values())
+      .filter((dispute) => dispute.initiatorId === userId || dispute.respondentId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()); // Sort by createdAt descending
+  }
+
+  async createDispute(dispute: InsertDispute): Promise<Dispute> {
+    const id = this.disputeIdCounter++;
+    const now = new Date();
+    const newDispute: Dispute = { 
+      ...dispute, 
+      id, 
+      createdAt: now, 
+      updatedAt: now,
+      resolvedAt: null
+    };
+    this.disputes.set(id, newDispute);
+    return newDispute;
+  }
+
+  async updateDispute(id: number, data: Partial<InsertDispute>): Promise<Dispute | undefined> {
+    const dispute = this.disputes.get(id);
+    if (!dispute) return undefined;
+    
+    const updatedDispute: Dispute = { 
+      ...dispute, 
+      ...data, 
+      updatedAt: new Date() 
+    };
+    
+    // If status is changing to a resolved state, update the resolvedAt timestamp
+    if (data.status && ['resolved_release', 'resolved_refund'].includes(data.status) && !dispute.resolvedAt) {
+      updatedDispute.resolvedAt = new Date();
+    }
+    
+    this.disputes.set(id, updatedDispute);
+    return updatedDispute;
   }
 }
 

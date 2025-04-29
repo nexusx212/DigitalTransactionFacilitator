@@ -7,6 +7,7 @@ import TradeFinance from "@/pages/trade-finance";
 import Marketplace from "@/pages/marketplace";
 import Training from "@/pages/training";
 import Wallet from "@/pages/wallet";
+import Chat from "@/pages/chat";
 import { AppProvider } from "@/context/app-context";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -20,6 +21,7 @@ const LazyTradeFinance = lazy(() => import("@/pages/trade-finance"));
 const LazyMarketplace = lazy(() => import("@/pages/marketplace"));
 const LazyTraining = lazy(() => import("@/pages/training"));
 const LazyWallet = lazy(() => import("@/pages/wallet"));
+const LazyChat = lazy(() => import("@/pages/chat"));
 
 // Loading indicator component
 function LoadingIndicator() {
@@ -78,6 +80,7 @@ function Router() {
       <Route path="/marketplace" component={LazyMarketplace} />
       <Route path="/training" component={LazyTraining} />
       <Route path="/wallet" component={LazyWallet} />
+      <Route path="/chat/:id" component={LazyChat} />
       <Route component={NotFound} />
     </Switch>
   );

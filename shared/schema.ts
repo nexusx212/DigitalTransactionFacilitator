@@ -151,6 +151,106 @@ export const insertAiMessageSchema = createInsertSchema(aiMessages).omit({
   id: true,
 });
 
+// Chat and Trade Negotiation
+export const chats = pgTable("chats", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(), // "direct", "group", "trade_negotiation"
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  status: text("status").default("active").notNull(), // "active", "archived", "closed"
+  metadata: jsonb("metadata"), // Additional chat properties, like trade details
+});
+
+export const insertChatSchema = createInsertSchema(chats).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const chatParticipants = pgTable("chat_participants", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull().references(() => chats.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  role: text("role").default("member").notNull(), // "member", "admin", "importer", "exporter", "moderator"
+  joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  lastReadMessageId: integer("last_read_message_id"),
+});
+
+export const insertChatParticipantSchema = createInsertSchema(chatParticipants).omit({
+  id: true,
+  joinedAt: true,
+});
+
+export const chatMessages = pgTable("chat_messages", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull().references(() => chats.id),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  messageType: text("message_type").default("text").notNull(), // "text", "file", "trade_offer", "dispute", "escrow", "system"
+  metadata: jsonb("metadata"), // For trade offers, disputes, escrow actions
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  isEdited: boolean("is_edited").default(false).notNull(),
+  replyToMessageId: integer("reply_to_message_id"),
+});
+
+export const insertChatMessageSchema = createInsertSchema(chatMessages).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Trade Escrow
+export const escrows = pgTable("escrows", {
+  id: serial("id").primaryKey(),
+  chatId: integer("chat_id").notNull().references(() => chats.id),
+  importerId: integer("importer_id").notNull().references(() => users.id),
+  exporterId: integer("exporter_id").notNull().references(() => users.id),
+  amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
+  currency: text("currency").notNull(),
+  status: text("status").default("pending").notNull(), // "pending", "funded", "released", "refunded", "disputed"
+  tradeDescription: text("trade_description").notNull(),
+  productId: integer("product_id").references(() => products.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  releaseConditions: text("release_conditions"),
+  releaseDate: timestamp("release_date"),
+  disputeReason: text("dispute_reason"),
+  resolutionNotes: text("resolution_notes"),
+  transactionId: integer("transaction_id").references(() => transactions.id),
+});
+
+export const insertEscrowSchema = createInsertSchema(escrows).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Dispute Resolution
+export const disputes = pgTable("disputes", {
+  id: serial("id").primaryKey(),
+  escrowId: integer("escrow_id").notNull().references(() => escrows.id),
+  chatId: integer("chat_id").notNull().references(() => chats.id),
+  initiatorId: integer("initiator_id").notNull().references(() => users.id),
+  respondentId: integer("respondent_id").notNull().references(() => users.id),
+  status: text("status").default("open").notNull(), // "open", "under_review", "resolved_release", "resolved_refund", "cancelled"
+  reason: text("reason").notNull(),
+  details: text("details").notNull(),
+  evidenceUrls: jsonb("evidence_urls"), // Array of evidence file URLs
+  moderatorId: integer("moderator_id").references(() => users.id),
+  moderatorNotes: text("moderator_notes"),
+  resolution: text("resolution"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  resolvedAt: timestamp("resolved_at"),
+});
+
+export const insertDisputeSchema = createInsertSchema(disputes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  resolvedAt: true,
+});
+
 // Types for storage interfaces
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -178,3 +278,18 @@ export type InsertTransaction = z.infer<typeof insertTransactionSchema>;
 
 export type AiMessage = typeof aiMessages.$inferSelect;
 export type InsertAiMessage = z.infer<typeof insertAiMessageSchema>;
+
+export type Chat = typeof chats.$inferSelect;
+export type InsertChat = z.infer<typeof insertChatSchema>;
+
+export type ChatParticipant = typeof chatParticipants.$inferSelect;
+export type InsertChatParticipant = z.infer<typeof insertChatParticipantSchema>;
+
+export type ChatMessage = typeof chatMessages.$inferSelect;
+export type InsertChatMessage = z.infer<typeof insertChatMessageSchema>;
+
+export type Escrow = typeof escrows.$inferSelect;
+export type InsertEscrow = z.infer<typeof insertEscrowSchema>;
+
+export type Dispute = typeof disputes.$inferSelect;
+export type InsertDispute = z.infer<typeof insertDisputeSchema>;
