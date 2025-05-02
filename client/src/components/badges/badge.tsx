@@ -3,26 +3,26 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const badgeVariants = cva(
-  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+  "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium transition-all focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 shadow-sm hover:shadow-md transform hover:-translate-y-0.5",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground border border-input hover:bg-accent hover:text-accent-foreground",
+        default: "bg-gradient-to-r from-primary to-primary-600 text-primary-foreground font-semibold shadow-sm hover:from-primary-600 hover:to-primary-700",
+        secondary: "bg-gradient-to-r from-secondary to-secondary-600 text-secondary-foreground font-semibold shadow-sm hover:from-secondary-600 hover:to-secondary-700",
+        destructive: "bg-gradient-to-r from-destructive to-red-600 text-destructive-foreground font-semibold shadow-sm hover:from-red-600 hover:to-red-700",
+        outline: "bg-transparent text-foreground border border-input hover:bg-accent hover:text-accent-foreground shadow-sm",
         // Enhanced badge variants with more vibrant colors
-        export: "bg-green-600 text-white border border-green-700 hover:bg-green-700",
-        finance: "bg-blue-600 text-white border border-blue-700 hover:bg-blue-700",
-        seller: "bg-purple-600 text-white border border-purple-700 hover:bg-purple-700",
-        afcfta: "bg-amber-600 text-white border border-amber-700 hover:bg-amber-700",
-        marketplace: "bg-indigo-600 text-white border border-indigo-700 hover:bg-indigo-700",
-        verified: "bg-teal-600 text-white border border-teal-700 hover:bg-teal-700",
+        export: "bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold shadow-sm hover:from-green-600 hover:to-green-700",
+        finance: "bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-sm hover:from-blue-600 hover:to-blue-700",
+        seller: "bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold shadow-sm hover:from-purple-600 hover:to-purple-700",
+        afcfta: "bg-gradient-to-r from-amber-500 to-amber-600 text-white font-semibold shadow-sm hover:from-amber-600 hover:to-amber-700",
+        marketplace: "bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold shadow-sm hover:from-indigo-600 hover:to-indigo-700",
+        verified: "bg-gradient-to-r from-teal-500 to-teal-600 text-white font-semibold shadow-sm hover:from-teal-600 hover:to-teal-700",
       },
       size: {
-        default: "h-6 px-2.5 py-0.5 text-xs",
-        sm: "h-5 px-2 py-0 text-xs",
-        lg: "h-7 px-3 py-1 text-sm",
+        default: "h-6 px-3 py-0.5 text-xs",
+        sm: "h-5 px-2.5 py-0.5 text-xs",
+        lg: "h-7 px-3.5 py-1 text-sm font-semibold",
       }
     },
     defaultVariants: {

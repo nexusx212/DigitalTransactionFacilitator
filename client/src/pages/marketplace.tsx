@@ -127,10 +127,10 @@ const CategoryButtons = ({
           <button
             key={category.id}
             className={cn(
-              "px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all",
+              "px-4 py-2 rounded-lg font-medium whitespace-nowrap transition-all shadow-sm",
               category.id === selectedCategory
-                ? "bg-primary-500 text-white"
-                : "bg-white text-neutral-700 hover:bg-neutral-100"
+                ? "bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-md"
+                : "bg-gradient-to-r from-gray-50 to-gray-100 text-neutral-700 hover:from-gray-100 hover:to-gray-200"
             )}
             onClick={() => onSelectCategory(category.id)}
           >

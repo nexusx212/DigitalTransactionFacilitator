@@ -230,7 +230,7 @@ export default function Dashboard() {
 
       {/* About DTFS */}
       <section 
-        ref={el => fadeElementsRef.current[1] = el} 
+        ref={el => fadeElementsRef.current[1] = el as HTMLElement} 
         className="mb-16 fade-in"
       >
         <div className="bg-white rounded-xl shadow-card overflow-hidden">
