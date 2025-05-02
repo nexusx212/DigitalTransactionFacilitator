@@ -19,7 +19,7 @@ const statsCardVariants = {
 
 export default function Dashboard() {
   // Use ref for observing sections for fade-in animation
-  const fadeElementsRef = useRef<(HTMLDivElement | null)[]>([]);
+  const fadeElementsRef = useRef<(HTMLElement | null)[]>([]);
 
   useEffect(() => {
     // Set up intersection observer for fade-in animations
@@ -85,7 +85,7 @@ export default function Dashboard() {
     <>
       {/* Hero Section */}
       <section className="relative bg-primary-500 text-white rounded-b-3xl overflow-hidden clip-path-wave mb-12">
-        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
+        <div className="absolute top-0 left-0 w-full h-full opacity-25 bg-[url('https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
         <div className="relative z-10 px-4 py-16 sm:px-6 lg:px-8 lg:py-20 max-w-screen-xl mx-auto">
           <div className="lg:grid lg:grid-cols-12 lg:gap-8">
             <div className="lg:col-span-7">
@@ -182,7 +182,7 @@ export default function Dashboard() {
 
       {/* Feature sections */}
       <section 
-        ref={el => fadeElementsRef.current[0] = el} 
+        ref={el => fadeElementsRef.current[0] = el as HTMLElement} 
         className="mb-12 fade-in"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
@@ -194,35 +194,35 @@ export default function Dashboard() {
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300">
-            <div className="h-40 bg-primary-50 flex items-center justify-center">
-              <span className="material-icons text-6xl text-primary-500">receipt_long</span>
+            <div className="h-40 bg-primary-600 flex items-center justify-center">
+              <span className="material-icons text-6xl text-white">receipt_long</span>
             </div>
             <CardContent className="p-6">
               <h3 className="text-xl font-heading font-semibold mb-2">Smart Contract Trade Finance</h3>
               <p className="text-neutral-600 mb-4">Access instant financing through our smart contract approval system with minimal documentation.</p>
-              <Badge variant="primary">Quick Approvals</Badge>
+              <Badge variant="default">Quick Approvals</Badge>
             </CardContent>
           </Card>
 
           <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300">
-            <div className="h-40 bg-secondary-50 flex items-center justify-center">
-              <span className="material-icons text-6xl text-secondary-500">storefront</span>
+            <div className="h-40 bg-secondary-600 flex items-center justify-center">
+              <span className="material-icons text-6xl text-white">storefront</span>
             </div>
             <CardContent className="p-6">
               <h3 className="text-xl font-heading font-semibold mb-2">B2B Marketplace</h3>
               <p className="text-neutral-600 mb-4">Connect with verified suppliers and buyers from across Africa and global markets.</p>
-              <Badge variant="secondary">AI-Powered Search</Badge>
+              <Badge variant="default">AI-Powered Search</Badge>
             </CardContent>
           </Card>
 
           <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300">
-            <div className="h-40 bg-accent-500/10 flex items-center justify-center">
-              <span className="material-icons text-6xl text-accent-500">school</span>
+            <div className="h-40 bg-purple-600 flex items-center justify-center">
+              <span className="material-icons text-6xl text-white">school</span>
             </div>
             <CardContent className="p-6">
               <h3 className="text-xl font-heading font-semibold mb-2">Trade Expertise Training</h3>
               <p className="text-neutral-600 mb-4">Build your export capabilities through our certified learning modules and resources.</p>
-              <Badge variant="accent">Certification Available</Badge>
+              <Badge variant="default">Certification Available</Badge>
             </CardContent>
           </Card>
         </div>
