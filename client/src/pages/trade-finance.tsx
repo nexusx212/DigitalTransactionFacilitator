@@ -590,9 +590,6 @@ export default function TradeFinance() {
                                 <SelectItem value="25+">25+ months</SelectItem>
                               </SelectContent>
                             </Select>
-                              className="w-full px-4 py-3"
-                              {...field}
-                            />
                           </FormControl>
                           <FormDescription className="text-xs text-neutral-500">
                             How long has your business been operating?
