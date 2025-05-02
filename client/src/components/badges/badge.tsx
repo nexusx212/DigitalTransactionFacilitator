@@ -11,13 +11,13 @@ const badgeVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         destructive: "bg-destructive text-destructive-foreground hover:bg-destructive/80",
         outline: "text-foreground border border-input hover:bg-accent hover:text-accent-foreground",
-        // Adding custom badge variants
-        export: "bg-green-100 text-green-800 border border-green-300 hover:bg-green-200",
-        finance: "bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200",
-        seller: "bg-purple-100 text-purple-800 border border-purple-300 hover:bg-purple-200",
-        afcfta: "bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200",
-        marketplace: "bg-indigo-100 text-indigo-800 border border-indigo-300 hover:bg-indigo-200",
-        verified: "bg-teal-100 text-teal-800 border border-teal-300 hover:bg-teal-200",
+        // Enhanced badge variants with more vibrant colors
+        export: "bg-green-600 text-white border border-green-700 hover:bg-green-700",
+        finance: "bg-blue-600 text-white border border-blue-700 hover:bg-blue-700",
+        seller: "bg-purple-600 text-white border border-purple-700 hover:bg-purple-700",
+        afcfta: "bg-amber-600 text-white border border-amber-700 hover:bg-amber-700",
+        marketplace: "bg-indigo-600 text-white border border-indigo-700 hover:bg-indigo-700",
+        verified: "bg-teal-600 text-white border border-teal-700 hover:bg-teal-700",
       },
       size: {
         default: "h-6 px-2.5 py-0.5 text-xs",
