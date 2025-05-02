@@ -25,6 +25,7 @@ const LazyTraining = lazy(() => import("@/pages/training"));
 const LazyWallet = lazy(() => import("@/pages/wallet"));
 const LazyChat = lazy(() => import("@/pages/chat"));
 const LazyAuthPage = lazy(() => import("@/pages/auth-page"));
+const LazyBadgesDemo = lazy(() => import("@/pages/badges-demo"));
 
 // Loading indicator component
 function LoadingIndicator() {
@@ -112,6 +113,7 @@ function App() {
       <ProtectedRoute path="/training" component={LazyTraining} />
       <ProtectedRoute path="/wallet" component={LazyWallet} />
       <ProtectedRoute path="/chat/:id" component={LazyChat} />
+      <ProtectedRoute path="/badges" component={LazyBadgesDemo} />
       <Route path="/auth" component={LazyAuthPage} />
       <Route component={NotFound} />
     </Switch>
