@@ -41,7 +41,7 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user } = useContext(AppContext);
+  const { user, login, register: registerUser } = useContext(AppContext);
 
   // Redirect if user is already logged in
   useEffect(() => {
@@ -127,12 +127,43 @@ export default function AuthPage() {
   });
 
   // Form submission handlers
-  const onLoginSubmit = (values: LoginFormValues) => {
-    loginMutation.mutate(values);
+  const onLoginSubmit = async (values: LoginFormValues) => {
+    try {
+      await login(values.username, values.password);
+      toast({
+        title: 'Login Successful',
+        description: 'Welcome back to DTFS!',
+        variant: 'default',
+      });
+      navigate('/');
+    } catch (error: any) {
+      toast({
+        title: 'Login Failed',
+        description: error.message || 'Please check your credentials and try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const onRegisterSubmit = (values: RegisterFormValues) => {
-    registerMutation.mutate(values);
+  const onRegisterSubmit = async (values: RegisterFormValues) => {
+    try {
+      // Remove confirmPassword since it's not part of our API schema
+      const { confirmPassword, ...userData } = values;
+      await registerUser(userData);
+      toast({
+        title: 'Registration Successful',
+        description: 'Your account has been created! You can now log in.',
+        variant: 'default',
+      });
+      setActiveTab('login');
+      loginForm.setValue('username', registerForm.getValues('username'));
+    } catch (error: any) {
+      toast({
+        title: 'Registration Failed',
+        description: error.message || 'There was a problem creating your account.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (

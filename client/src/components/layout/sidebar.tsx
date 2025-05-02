@@ -159,11 +159,8 @@ export function Sidebar() {
           {user ? (
             <button 
               onClick={() => {
-                if (user) {
-                  const { logout } = useContext(AppContext);
-                  logout();
-                  window.location.href = '/auth';
-                }
+                logout();
+                window.location.href = '/auth';
               }}
               className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 hover:text-neutral-700 transition-all duration-normal"
               title="Log out"

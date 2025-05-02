@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 export function Header() {
-  const { user, selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode } = useContext(AppContext);
+  const { user, selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode, logout } = useContext(AppContext);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -214,7 +214,13 @@ export function Header() {
               Help & Support
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-error">
+            <DropdownMenuItem 
+              className="text-error"
+              onClick={() => {
+                logout();
+                window.location.href = '/auth';
+              }}
+            >
               <span className="material-icons text-[18px] mr-2">logout</span>
               Sign Out
             </DropdownMenuItem>
