@@ -4,8 +4,6 @@ import { AppContext } from '@/context/app-context';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { apiRequest } from '@/lib/queryClient';
-import { useMutation } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 
 // UI Components
@@ -39,6 +37,8 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>('login');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const { user, login, register: registerUser } = useContext(AppContext);
@@ -71,64 +71,10 @@ export default function AuthPage() {
     },
   });
 
-  // Login mutation
-  const loginMutation = useMutation({
-    mutationFn: async (values: LoginFormValues) => {
-      const response = await apiRequest('POST', '/api/auth/login', values);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome back to DTFS!',
-        variant: 'default',
-      });
-      
-      // In a real app, we would update the user context here
-      // This is just for demo purposes
-      setTimeout(() => {
-        navigate('/');
-        window.location.reload(); // Force reload to simulate login state change
-      }, 1000);
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Login Failed',
-        description: error.message || 'Please check your credentials and try again.',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  // Register mutation
-  const registerMutation = useMutation({
-    mutationFn: async (values: RegisterFormValues) => {
-      // Remove confirmPassword since it's not part of our API schema
-      const { confirmPassword, ...userData } = values;
-      const response = await apiRequest('POST', '/api/auth/register', userData);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: 'Registration Successful',
-        description: 'Your account has been created! You can now log in.',
-        variant: 'default',
-      });
-      setActiveTab('login');
-      loginForm.setValue('username', registerForm.getValues('username'));
-    },
-    onError: (error: any) => {
-      toast({
-        title: 'Registration Failed',
-        description: error.message || 'There was a problem creating your account.',
-        variant: 'destructive',
-      });
-    },
-  });
-
   // Form submission handlers
   const onLoginSubmit = async (values: LoginFormValues) => {
     try {
+      setIsLoggingIn(true);
       await login(values.username, values.password);
       toast({
         title: 'Login Successful',
@@ -142,11 +88,14 @@ export default function AuthPage() {
         description: error.message || 'Please check your credentials and try again.',
         variant: 'destructive',
       });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     try {
+      setIsRegistering(true);
       // Remove confirmPassword since it's not part of our API schema
       const { confirmPassword, ...userData } = values;
       await registerUser(userData);
@@ -163,6 +112,8 @@ export default function AuthPage() {
         description: error.message || 'There was a problem creating your account.',
         variant: 'destructive',
       });
+    } finally {
+      setIsRegistering(false);
     }
   };
 
@@ -230,9 +181,9 @@ export default function AuthPage() {
                     <Button 
                       type="submit" 
                       className="w-full mt-6" 
-                      disabled={loginMutation.isPending}
+                      disabled={isLoggingIn}
                     >
-                      {loginMutation.isPending ? (
+                      {isLoggingIn ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Signing in...
@@ -358,9 +309,9 @@ export default function AuthPage() {
                     <Button 
                       type="submit" 
                       className="w-full mt-6" 
-                      disabled={registerMutation.isPending}
+                      disabled={isRegistering}
                     >
-                      {registerMutation.isPending ? (
+                      {isRegistering ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                           Creating Account...
