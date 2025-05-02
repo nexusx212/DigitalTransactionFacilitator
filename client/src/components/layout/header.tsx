@@ -169,35 +169,35 @@ export function Header() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button className="lg:h-10 p-1.5 rounded-lg hover:bg-neutral-100 transition-all duration-normal" aria-label="User Menu">
-              {user.photoUrl ? (
+              {user && user.photoUrl ? (
                 <img 
                   src={user.photoUrl} 
-                  alt={user.name} 
+                  alt={user?.name || 'User'} 
                   className="w-7 h-7 rounded-full object-cover border-2 border-white shadow-sm"
                 />
               ) : (
                 <div className="w-7 h-7 rounded-full bg-primary-light flex items-center justify-center text-primary border-2 border-white shadow-sm">
-                  <span className="text-xs font-medium">{getInitials(user.name)}</span>
+                  <span className="text-xs font-medium">{user ? getInitials(user.name) : 'G'}</span>
                 </div>
               )}
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[240px]">
             <div className="flex items-center gap-3 p-3">
-              {user.photoUrl ? (
+              {user && user.photoUrl ? (
                 <img 
                   src={user.photoUrl} 
-                  alt={user.name} 
+                  alt={user?.name || 'User'} 
                   className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
                 />
               ) : (
                 <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center text-primary border-2 border-white shadow-sm">
-                  <span className="font-medium">{getInitials(user.name)}</span>
+                  <span className="font-medium">{user ? getInitials(user.name) : 'G'}</span>
                 </div>
               )}
               <div className="flex-1">
-                <p className="font-medium text-sm">{user.name}</p>
-                <p className="text-xs text-neutral-500">{user.email}</p>
+                <p className="font-medium text-sm">{user?.name || 'Guest User'}</p>
+                <p className="text-xs text-neutral-500">{user?.email || 'Sign in to access all features'}</p>
               </div>
             </div>
             <DropdownMenuSeparator />

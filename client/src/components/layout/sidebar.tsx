@@ -141,23 +141,23 @@ export function Sidebar() {
       {/* User Profile */}
       <div className="border-t border-neutral-100 p-4 bg-neutral-50/50">
         <div className="flex items-center gap-3">
-          {user.photoUrl ? (
+          {user && user.photoUrl ? (
             <img 
               src={user.photoUrl} 
-              alt={user.name} 
+              alt={user?.name || 'User'} 
               className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-primary-light flex items-center justify-center text-primary border-2 border-white shadow-sm">
-              <span className="font-medium">{getInitials(user.name)}</span>
+              <span className="font-medium">{user ? getInitials(user.name) : 'G'}</span>
             </div>
           )}
           <div>
-            <p className="font-medium text-sm text-neutral-800">{user.name}</p>
-            <p className="text-xs text-neutral-500">{user.email}</p>
+            <p className="font-medium text-sm text-neutral-800">{user?.name || 'Guest User'}</p>
+            <p className="text-xs text-neutral-500">{user?.email || 'Sign in to access all features'}</p>
           </div>
           <button className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 hover:text-neutral-700 transition-all duration-normal">
-            <span className="material-icons text-[20px]">logout</span>
+            <span className="material-icons text-[20px]">{user ? 'logout' : 'login'}</span>
           </button>
         </div>
       </div>
