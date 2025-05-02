@@ -111,10 +111,10 @@ export default function Dashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
-                <a href="/trade-finance" className="bg-white text-primary-700 hover:bg-neutral-100 font-medium px-6 py-3 rounded-lg shadow-button transition-all">
+                <a href="/trade-finance" className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
                   Apply for Finance
                 </a>
-                <a href="/marketplace" className="bg-secondary-500 text-white hover:bg-secondary-700 font-medium px-6 py-3 rounded-lg shadow-button transition-all">
+                <a href="/marketplace" className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white hover:from-teal-600 hover:to-emerald-700 font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
                   Explore Marketplace
                 </a>
               </motion.div>
@@ -153,7 +153,7 @@ export default function Dashboard() {
           {stats.map((stat, index) => (
             <motion.div 
               key={stat.id}
-              className="bg-white p-6 rounded-xl shadow-card hover:shadow-card-hover"
+              className="bg-gradient-to-b from-white to-gray-50 p-6 rounded-xl shadow-card hover:shadow-card-hover border border-gray-100"
               custom={index}
               initial="hidden"
               animate="visible"
@@ -193,36 +193,36 @@ export default function Dashboard() {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300">
-            <div className="h-40 bg-primary-600 flex items-center justify-center">
+          <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300 border border-gray-100">
+            <div className="h-40 bg-gradient-to-r from-blue-500 to-blue-700 flex items-center justify-center">
               <span className="material-icons text-6xl text-white">receipt_long</span>
             </div>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-gradient-to-b from-white to-gray-50">
               <h3 className="text-xl font-heading font-semibold mb-2">Smart Contract Trade Finance</h3>
               <p className="text-neutral-600 mb-4">Access instant financing through our smart contract approval system with minimal documentation.</p>
-              <Badge variant="default">Quick Approvals</Badge>
+              <Badge variant="finance">Quick Approvals</Badge>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300">
-            <div className="h-40 bg-secondary-600 flex items-center justify-center">
+          <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300 border border-gray-100">
+            <div className="h-40 bg-gradient-to-r from-teal-500 to-emerald-600 flex items-center justify-center">
               <span className="material-icons text-6xl text-white">storefront</span>
             </div>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-gradient-to-b from-white to-gray-50">
               <h3 className="text-xl font-heading font-semibold mb-2">B2B Marketplace</h3>
               <p className="text-neutral-600 mb-4">Connect with verified suppliers and buyers from across Africa and global markets.</p>
-              <Badge variant="default">AI-Powered Search</Badge>
+              <Badge variant="marketplace">AI-Powered Search</Badge>
             </CardContent>
           </Card>
 
-          <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300">
-            <div className="h-40 bg-purple-600 flex items-center justify-center">
+          <Card className="overflow-hidden hover:shadow-card-hover transition-all duration-300 border border-gray-100">
+            <div className="h-40 bg-gradient-to-r from-purple-500 to-indigo-600 flex items-center justify-center">
               <span className="material-icons text-6xl text-white">school</span>
             </div>
-            <CardContent className="p-6">
+            <CardContent className="p-6 bg-gradient-to-b from-white to-gray-50">
               <h3 className="text-xl font-heading font-semibold mb-2">Trade Expertise Training</h3>
               <p className="text-neutral-600 mb-4">Build your export capabilities through our certified learning modules and resources.</p>
-              <Badge variant="default">Certification Available</Badge>
+              <Badge variant="seller">Certification Available</Badge>
             </CardContent>
           </Card>
         </div>
@@ -233,7 +233,7 @@ export default function Dashboard() {
         ref={el => fadeElementsRef.current[1] = el as HTMLElement} 
         className="mb-16 fade-in"
       >
-        <div className="bg-white rounded-xl shadow-card overflow-hidden">
+        <div className="bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-card overflow-hidden border border-gray-100">
           <div className="p-8">
             <h2 className="text-2xl font-heading font-bold text-neutral-800 mb-4">About Digital Trade Finance System</h2>
             <p className="text-neutral-600 mb-6">
@@ -302,10 +302,10 @@ export default function Dashboard() {
             </div>
             
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <a href="/trade-finance" className="bg-primary-500 hover:bg-primary-700 text-white font-medium px-6 py-3 rounded-lg shadow-button transition-all">
+              <a href="/trade-finance" className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
                 Get Started
               </a>
-              <a href="#" className="text-primary-500 hover:text-primary-700 font-medium flex items-center">
+              <a href="#" className="bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-primary-700 font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg border border-gray-200 transform hover:-translate-y-1 transition-all flex items-center">
                 Learn More <span className="material-icons ml-1">arrow_forward</span>
               </a>
             </div>
