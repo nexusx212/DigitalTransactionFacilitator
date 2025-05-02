@@ -200,7 +200,7 @@ export default function Dashboard() {
             <CardContent className="p-6 bg-gradient-to-b from-white to-gray-50">
               <h3 className="text-xl font-heading font-semibold mb-2">Smart Contract Trade Finance</h3>
               <p className="text-neutral-600 mb-4">Access instant financing through our smart contract approval system with minimal documentation.</p>
-              <Badge variant="finance">Quick Approvals</Badge>
+              <Badge className="bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow-sm hover:from-blue-600 hover:to-blue-700">Quick Approvals</Badge>
             </CardContent>
           </Card>
 
@@ -211,7 +211,7 @@ export default function Dashboard() {
             <CardContent className="p-6 bg-gradient-to-b from-white to-gray-50">
               <h3 className="text-xl font-heading font-semibold mb-2">B2B Marketplace</h3>
               <p className="text-neutral-600 mb-4">Connect with verified suppliers and buyers from across Africa and global markets.</p>
-              <Badge variant="marketplace">AI-Powered Search</Badge>
+              <Badge className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold shadow-sm hover:from-indigo-600 hover:to-indigo-700">AI-Powered Search</Badge>
             </CardContent>
           </Card>
 
@@ -222,7 +222,7 @@ export default function Dashboard() {
             <CardContent className="p-6 bg-gradient-to-b from-white to-gray-50">
               <h3 className="text-xl font-heading font-semibold mb-2">Trade Expertise Training</h3>
               <p className="text-neutral-600 mb-4">Build your export capabilities through our certified learning modules and resources.</p>
-              <Badge variant="seller">Certification Available</Badge>
+              <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold shadow-sm hover:from-purple-600 hover:to-purple-700">Certification Available</Badge>
             </CardContent>
           </Card>
         </div>
