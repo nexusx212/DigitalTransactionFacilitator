@@ -99,6 +99,13 @@ export function Sidebar() {
                 label="Wallet" 
                 isActive={location === "/wallet"} 
               />
+              <SidebarLink 
+                href="/badges" 
+                icon="workspace_premium" 
+                label="Badges" 
+                isActive={location === "/badges"} 
+                isNew={true}
+              />
             </ul>
           </div>
           
