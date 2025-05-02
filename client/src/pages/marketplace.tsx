@@ -146,7 +146,7 @@ const CategoryButtons = ({
 const ProductCard = ({ product, categories }: { product: Product, categories: Category[] }) => {
   return (
     <motion.div
-      className="bg-white rounded-xl shadow-card overflow-hidden transform transition-all duration-300 hover:-translate-y-2 hover:shadow-card-hover"
+      className="bg-gradient-to-b from-white to-gray-50 rounded-xl shadow-card overflow-hidden transform transition-all duration-300 hover:-translate-y-2 hover:shadow-card-hover border border-gray-100"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -161,7 +161,7 @@ const ProductCard = ({ product, categories }: { product: Product, categories: Ca
           decoding="async"
         />
         <div className="absolute top-3 left-3">
-          <Badge className="bg-primary-500 text-white text-xs font-medium">
+          <Badge className="bg-gradient-to-r from-primary-500 to-primary-600 text-white text-xs font-semibold shadow-sm">
             {categories.find(c => c.id === product.category)?.name || product.category}
           </Badge>
         </div>
@@ -173,7 +173,7 @@ const ProductCard = ({ product, categories }: { product: Product, categories: Ca
           </div>
         )}
       </div>
-      <div className="p-5">
+      <div className="p-5 bg-gradient-to-b from-transparent to-gray-50">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-heading font-semibold text-lg">{product.name}</h3>
           <p className="font-bold text-primary-700">
@@ -188,11 +188,11 @@ const ProductCard = ({ product, categories }: { product: Product, categories: Ca
           <span>Min. Order: {product.minimumOrder}</span>
         </div>
         <div className="flex mt-4 gap-2">
-          <Button className="flex-1 bg-primary-500 hover:bg-primary-700 text-white font-medium py-2 rounded transition-all">
+          <Button className="flex-1 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-medium py-2 rounded shadow-sm hover:shadow-md transition-all transform hover:-translate-y-0.5">
             Contact Supplier
           </Button>
-          <Button variant="outline" className="p-2 border border-neutral-200 rounded hover:bg-neutral-50 transition-all" aria-label="Add to Favorites">
-            <span className="material-icons text-neutral-400 hover:text-error">favorite_border</span>
+          <Button variant="outline" className="p-2 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-lg shadow-sm hover:from-pink-50 hover:to-pink-100 hover:border-pink-200 transition-all" aria-label="Add to Favorites">
+            <span className="material-icons text-neutral-400 hover:text-pink-500">favorite_border</span>
           </Button>
         </div>
       </div>
@@ -309,8 +309,8 @@ export default function Marketplace() {
             />
             <span className="material-icons absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400">search</span>
           </div>
-          <Button variant="outline" className="p-2 bg-neutral-100 hover:bg-neutral-200 transition-all">
-            <span className="material-icons">filter_list</span>
+          <Button variant="outline" className="p-2 bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 hover:from-gray-100 hover:to-gray-200 rounded-lg shadow-sm transition-all">
+            <span className="material-icons text-primary-600">filter_list</span>
           </Button>
         </div>
       </div>
@@ -339,7 +339,7 @@ export default function Marketplace() {
 
       {filteredProducts.length > 0 && (
         <div className="mt-8 text-center">
-          <Button variant="outline" className="inline-flex items-center px-6 py-3 bg-white border border-neutral-300 rounded-lg text-primary-500 font-medium hover:bg-neutral-50 transition-all">
+          <Button className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white font-medium rounded-lg shadow-md hover:shadow-lg transition-all transform hover:-translate-y-0.5">
             Load More Products <span className="material-icons ml-2">expand_more</span>
           </Button>
         </div>
