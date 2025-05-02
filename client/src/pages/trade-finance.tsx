@@ -171,9 +171,9 @@ export default function TradeFinance() {
       case 'export':
         return exportFinanceSchema;
       case 'noninterest':
-        return islamicFinanceSchema;
+        return nonInterestFinanceSchema;
       case 'startup':
-        return invoiceSchema; // Using basic invoice schema for startup
+        return startupFinanceSchema;
       default:
         return invoiceSchema;
     }
@@ -195,7 +195,7 @@ export default function TradeFinance() {
         agreementToTerms: false  
       } : {}),
       ...(activeFinanceType === 'startup' ? {
-        // Additional startup-specific fields can be added here
+        businessAge: ""
       } : {})
     },
   });
@@ -216,7 +216,7 @@ export default function TradeFinance() {
         agreementToTerms: false  
       } : {}),
       ...(activeFinanceType === 'startup' ? {
-        // Additional startup-specific fields can be added here
+        businessAge: ""
       } : {})
     });
   }, [activeFinanceType, form]);
@@ -573,13 +573,23 @@ export default function TradeFinance() {
                       name="businessAge"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm font-medium text-neutral-700">Business Age (Years)</FormLabel>
+                          <FormLabel className="text-sm font-medium text-neutral-700">Business Age</FormLabel>
                           <FormControl>
-                            <Input
-                              type="number"
-                              min="0"
-                              max="5"
-                              placeholder="0-5"
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Select business age" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="0-6">0-6 months</SelectItem>
+                                <SelectItem value="7-12">7-12 months</SelectItem>
+                                <SelectItem value="13-18">13-18 months</SelectItem>
+                                <SelectItem value="19-24">19-24 months</SelectItem>
+                                <SelectItem value="25+">25+ months</SelectItem>
+                              </SelectContent>
+                            </Select>
                               className="w-full px-4 py-3"
                               {...field}
                             />
