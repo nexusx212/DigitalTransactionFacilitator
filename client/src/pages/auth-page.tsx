@@ -43,12 +43,24 @@ export default function AuthPage() {
   const { toast } = useToast();
   const { user, login, register: registerUser } = useContext(AppContext);
 
-  // Redirect if user is already logged in
+  // Redirect if user is already logged in, but with a slight delay to allow page to render first
+  const [pageLoaded, setPageLoaded] = useState(false);
+  
   useEffect(() => {
-    if (user && user.id) {
+    // Set a flag after the component has mounted
+    const timer = setTimeout(() => {
+      setPageLoaded(true);
+    }, 500); // Short delay to ensure the page renders first
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  useEffect(() => {
+    // Only redirect after the page has had time to load
+    if (pageLoaded && user && user.id) {
       navigate('/');
     }
-  }, [user, navigate]);
+  }, [user, navigate, pageLoaded]);
 
   // Login form setup
   const loginForm = useForm<LoginFormValues>({

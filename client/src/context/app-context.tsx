@@ -51,6 +51,9 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   // Check if user is already logged in on mount
   useEffect(() => {
     const checkAuthStatus = async () => {
+      // Add a small delay to ensure UI renders correctly before auth check
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       try {
         // Try to fetch the current user
         const response = await apiRequest('GET', '/api/user');
@@ -74,7 +77,10 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
           });
         }
         
-        setIsLoading(false);
+        // Set isLoading to false after a short delay to ensure UI has time to render
+        setTimeout(() => {
+          setIsLoading(false);
+        }, 300);
       }
     };
     
