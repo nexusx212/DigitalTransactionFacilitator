@@ -44,7 +44,7 @@ type FinanceContract = {
 };
 
 // Form Types
-type FinanceType = 'factoring' | 'export' | 'supply' | 'import' | 'islamic';
+type FinanceType = 'factoring' | 'export' | 'supply' | 'import' | 'noninterest' | 'startup';
 
 // Base form schema
 const baseSchema = {
@@ -67,12 +67,17 @@ const exportFinanceSchema = z.object({
   shipmentDate: z.string().min(1, "Shipment date is required"),
 });
 
-const islamicFinanceSchema = z.object({
+const nonInterestFinanceSchema = z.object({
   ...baseSchema,
   financingType: z.enum(["murabaha", "ijara", "musharaka"]),
   agreementToTerms: z.boolean().refine(val => val === true, {
-    message: "You must agree to the Shariah-compliant terms",
+    message: "You must agree to the ethical finance terms",
   }),
+});
+
+const startupFinanceSchema = z.object({
+  ...baseSchema,
+  businessAge: z.string().min(1, "Business age is required")
 });
 
 // Default invoice schema
@@ -143,10 +148,17 @@ export default function TradeFinance() {
       comingSoon: true
     },
     {
-      id: 'islamic',
-      name: 'Islamic Finance',
-      description: 'Shariah-compliant financing solutions',
+      id: 'noninterest',
+      name: 'Non Interest Finance',
+      description: 'Ethical financing solutions with no interest charges',
       icon: 'handshake',
+      available: true
+    },
+    {
+      id: 'startup',
+      name: 'Startup Trade Finance',
+      description: 'Specialized financing for early-stage trading businesses',
+      icon: 'rocket_launch',
       available: true
     }
   ];
@@ -158,8 +170,10 @@ export default function TradeFinance() {
         return factoringSchema;
       case 'export':
         return exportFinanceSchema;
-      case 'islamic':
+      case 'noninterest':
         return islamicFinanceSchema;
+      case 'startup':
+        return invoiceSchema; // Using basic invoice schema for startup
       default:
         return invoiceSchema;
     }
@@ -176,9 +190,12 @@ export default function TradeFinance() {
         exportCountry: "",
         shipmentDate: ""
       } : {}),
-      ...(activeFinanceType === 'islamic' ? { 
+      ...(activeFinanceType === 'noninterest' ? { 
         financingType: "murabaha",
         agreementToTerms: false  
+      } : {}),
+      ...(activeFinanceType === 'startup' ? {
+        // Additional startup-specific fields can be added here
       } : {})
     },
   });
@@ -194,9 +211,12 @@ export default function TradeFinance() {
         exportCountry: "",
         shipmentDate: ""
       } : {}),
-      ...(activeFinanceType === 'islamic' ? { 
+      ...(activeFinanceType === 'noninterest' ? { 
         financingType: "murabaha",
         agreementToTerms: false  
+      } : {}),
+      ...(activeFinanceType === 'startup' ? {
+        // Additional startup-specific fields can be added here
       } : {})
     });
   }, [activeFinanceType, form]);
@@ -291,8 +311,10 @@ export default function TradeFinance() {
         return 'Supply Chain Finance';
       case 'import': 
         return 'Import Finance';
-      case 'islamic': 
-        return 'Islamic Finance';
+      case 'noninterest': 
+        return 'Non Interest Finance';
+      case 'startup': 
+        return 'Startup Trade Finance';
       default: 
         return 'Invoice Finance';
     }
@@ -356,14 +378,16 @@ export default function TradeFinance() {
               {activeFinanceType === 'export' && 'Apply for Export Finance'}
               {activeFinanceType === 'supply' && 'Apply for Supply Chain Finance'}
               {activeFinanceType === 'import' && 'Apply for Import Finance'}
-              {activeFinanceType === 'islamic' && 'Apply for Islamic Finance'}
+              {activeFinanceType === 'noninterest' && 'Apply for Non Interest Finance'}
+              {activeFinanceType === 'startup' && 'Apply for Startup Trade Finance'}
             </h3>
             <p className="text-neutral-600 mb-6">
               {activeFinanceType === 'factoring' && 'Convert your accounts receivable into immediate cash flow by uploading your invoice below.'}
               {activeFinanceType === 'export' && 'Secure funding for your export operations by providing your shipment and invoice details.'}
               {activeFinanceType === 'supply' && 'Optimize working capital throughout your supply chain with our advanced financing solutions.'}
               {activeFinanceType === 'import' && 'Get financing for international purchases and secure your import operations.'}
-              {activeFinanceType === 'islamic' && 'Access Shariah-compliant financing solutions for your trade operations.'}
+              {activeFinanceType === 'noninterest' && 'Access ethical financing solutions with no interest charges for your trade operations.'}
+              {activeFinanceType === 'startup' && 'Specialized financing solutions for early-stage trading businesses.'}
             </p>
             
             <Form {...form}>
@@ -483,8 +507,8 @@ export default function TradeFinance() {
                   </>
                 )}
                 
-                {/* Islamic Finance specific fields */}
-                {activeFinanceType === 'islamic' && (
+                {/* Non Interest Finance specific fields */}
+                {activeFinanceType === 'noninterest' && (
                   <>
                     <FormField
                       control={form.control}
@@ -501,14 +525,14 @@ export default function TradeFinance() {
                                 <SelectValue placeholder="Select financing type" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="murabaha">Murabaha (Cost-Plus Financing)</SelectItem>
-                                <SelectItem value="ijara">Ijara (Leasing)</SelectItem>
-                                <SelectItem value="musharaka">Musharaka (Joint Venture)</SelectItem>
+                                <SelectItem value="murabaha">Cost-Plus Financing</SelectItem>
+                                <SelectItem value="ijara">Lease-Based Financing</SelectItem>
+                                <SelectItem value="musharaka">Joint Venture Partnership</SelectItem>
                               </SelectContent>
                             </Select>
                           </FormControl>
                           <FormDescription className="text-xs text-neutral-500">
-                            Choose the Shariah-compliant financing structure
+                            Choose your preferred ethical financing structure
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -528,12 +552,41 @@ export default function TradeFinance() {
                           </FormControl>
                           <div className="space-y-1 leading-none">
                             <FormLabel className="text-sm font-medium">
-                              I agree to the Shariah-compliant terms and conditions
+                              I agree to the ethical financing terms and conditions
                             </FormLabel>
                             <FormDescription className="text-xs text-neutral-500">
-                              By checking this box, you confirm that the transaction complies with Islamic finance principles
+                              By checking this box, you confirm that the transaction complies with non-interest finance principles
                             </FormDescription>
                           </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
+                
+                {/* Startup Trade Finance specific fields */}
+                {activeFinanceType === 'startup' && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="businessAge"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm font-medium text-neutral-700">Business Age (Years)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="0"
+                              max="5"
+                              placeholder="0-5"
+                              className="w-full px-4 py-3"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormDescription className="text-xs text-neutral-500">
+                            How long has your business been operating?
+                          </FormDescription>
                           <FormMessage />
                         </FormItem>
                       )}
