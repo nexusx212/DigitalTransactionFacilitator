@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -8,12 +8,14 @@ import Marketplace from "@/pages/marketplace";
 import Training from "@/pages/training";
 import Wallet from "@/pages/wallet";
 import Chat from "@/pages/chat";
+import AuthPage from "@/pages/auth-page";
 import { AppProvider } from "@/context/app-context";
-import { lazy, Suspense, useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState, useContext } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import AvaAIAssistant from "@/components/ava-ai-assistant";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 // Use lazy loading for potential route splitting in the future
 const LazyDashboard = lazy(() => import("@/pages/dashboard"));
@@ -22,6 +24,7 @@ const LazyMarketplace = lazy(() => import("@/pages/marketplace"));
 const LazyTraining = lazy(() => import("@/pages/training"));
 const LazyWallet = lazy(() => import("@/pages/wallet"));
 const LazyChat = lazy(() => import("@/pages/chat"));
+const LazyAuthPage = lazy(() => import("@/pages/auth-page"));
 
 // Loading indicator component
 function LoadingIndicator() {
@@ -43,7 +46,7 @@ function LoadingIndicator() {
   );
 }
 
-function AppShell({ children }: { children: React.ReactNode }) {
+function AppShell({ children, isAuthPage = false }: { children: React.ReactNode, isAuthPage?: boolean }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -54,6 +57,15 @@ function AppShell({ children }: { children: React.ReactNode }) {
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Different layout for auth page
+  if (isAuthPage) {
+    return (
+      <div className="min-h-screen bg-white">
+        {isLoading ? <LoadingIndicator /> : children}
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-neutral-50 dark:bg-neutral-900">
@@ -72,21 +84,10 @@ function AppShell({ children }: { children: React.ReactNode }) {
   );
 }
 
-function Router() {
-  return (
-    <Switch>
-      <Route path="/" component={LazyDashboard} />
-      <Route path="/trade-finance" component={LazyTradeFinance} />
-      <Route path="/marketplace" component={LazyMarketplace} />
-      <Route path="/training" component={LazyTraining} />
-      <Route path="/wallet" component={LazyWallet} />
-      <Route path="/chat/:id" component={LazyChat} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
-
 function App() {
+  const [location] = useLocation();
+  const isAuthPage = location === '/auth';
+
   // Register service worker for PWA capabilities
   useEffect(() => {
     if ('serviceWorker' in navigator) {
@@ -102,11 +103,25 @@ function App() {
     }
   }, []);
 
+  // Router component inside App to access location
+  const Router = () => (
+    <Switch>
+      <ProtectedRoute path="/" component={LazyDashboard} />
+      <ProtectedRoute path="/trade-finance" component={LazyTradeFinance} />
+      <ProtectedRoute path="/marketplace" component={LazyMarketplace} />
+      <ProtectedRoute path="/training" component={LazyTraining} />
+      <ProtectedRoute path="/wallet" component={LazyWallet} />
+      <ProtectedRoute path="/chat/:id" component={LazyChat} />
+      <Route path="/auth" component={LazyAuthPage} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+
   return (
     <AppProvider>
       <TooltipProvider>
         <Toaster />
-        <AppShell>
+        <AppShell isAuthPage={isAuthPage}>
           <Suspense fallback={<LoadingIndicator />}>
             <Router />
           </Suspense>

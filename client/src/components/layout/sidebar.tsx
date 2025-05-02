@@ -48,7 +48,7 @@ const SidebarLink = ({ href, icon, label, isActive, badge, isNew }: SidebarLinkP
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user } = useContext(AppContext);
+  const { user, logout } = useContext(AppContext);
 
   return (
     <aside className="hidden lg:flex flex-col w-72 h-full bg-white border-r border-neutral-100 overflow-hidden transition-all duration-300 ease-in-out z-20">
@@ -156,9 +156,29 @@ export function Sidebar() {
             <p className="font-medium text-sm text-neutral-800">{user?.name || 'Guest User'}</p>
             <p className="text-xs text-neutral-500">{user?.email || 'Sign in to access all features'}</p>
           </div>
-          <button className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 hover:text-neutral-700 transition-all duration-normal">
-            <span className="material-icons text-[20px]">{user ? 'logout' : 'login'}</span>
-          </button>
+          {user ? (
+            <button 
+              onClick={() => {
+                if (user) {
+                  const { logout } = useContext(AppContext);
+                  logout();
+                  window.location.href = '/auth';
+                }
+              }}
+              className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 hover:text-neutral-700 transition-all duration-normal"
+              title="Log out"
+            >
+              <span className="material-icons text-[20px]">logout</span>
+            </button>
+          ) : (
+            <a 
+              href="/auth" 
+              className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 hover:text-neutral-700 transition-all duration-normal"
+              title="Log in"
+            >
+              <span className="material-icons text-[20px]">login</span>
+            </a>
+          )}
         </div>
       </div>
     </aside>
