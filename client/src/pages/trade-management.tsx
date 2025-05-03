@@ -900,6 +900,26 @@ export default function TradeManagement() {
           </div>
         </TabsContent>
       </Tabs>
+      
+      {/* Partner section */}
+      <div className="mt-10">
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-primary-50 border-b border-primary-100 pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <span className="material-icons text-primary">handshake</span>
+              Official Trade Partners
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-4">
+            <PartnersSection compact={true} />
+          </CardContent>
+        </Card>
+      </div>
+      
+      {/* Ad banner at bottom */}
+      <div className="mt-8">
+        <AdBanner type="horizontal" position="bottom" />
+      </div>
     </section>
   );
 }
