@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
-import { simulateSmartContractApproval } from "@/lib/utils";
+import { useSmartContracts } from "@/hooks/use-smart-contracts";
 import { formatCurrency, formatDate } from "@/lib/utils";
 import { 
   Card, 
@@ -88,6 +88,15 @@ export default function TradeFinance() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeFinanceType, setActiveFinanceType] = useState<FinanceType>('factoring');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { 
+    isConnected, 
+    isLoading: isBlockchainLoading, 
+    currentAddress,
+    initialize, 
+    createInvoice, 
+    createLetterOfCredit,
+    createSupplyChainFinancing
+  } = useSmartContracts();
   
   // Sample active contracts
   const [activeContracts, setActiveContracts] = useState<FinanceContract[]>([
@@ -254,23 +263,83 @@ export default function TradeFinance() {
     setIsSubmitting(true);
     
     try {
-      // Parse amount to number for simulation
-      const amountValue = parseFloat(data.amount.replace(/,/g, ""));
+      // Ensure we're connected to MetaMask
+      if (!isConnected) {
+        const initialized = await initialize();
+        if (!initialized) {
+          toast({
+            variant: "destructive",
+            title: "Blockchain Connection Failed",
+            description: "Please make sure MetaMask is installed and unlocked to proceed.",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
       
-      // Simulate smart contract approval
-      const isApproved = await simulateSmartContractApproval(amountValue);
+      // Format amount and calculate due date in seconds since epoch
+      const amountValue = data.amount.replace(/,/g, "");
+      const dueDateTimestamp = Math.floor(new Date(data.dueDate).getTime() / 1000);
       
-      if (isApproved) {
+      // Generate unique ID for this finance request
+      const financeId = `fin-${Date.now().toString(36)}`;
+      const invoiceNumber = `INV-2023-${Math.floor(1000 + Math.random() * 9000)}`;
+      
+      // Submit to the appropriate smart contract based on finance type
+      let success = false;
+      
+      // Sample addresses for demo - in a real app we'd get these from the backend
+      // In a real implementation, these would be actual blockchain addresses of registered users
+      const exporterAddress = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+      const importerAddress = currentAddress || "0x90F79bf6EB2c4f870365E785982E1f101E93b906";
+      
+      if (activeFinanceType === 'factoring') {
+        success = await createInvoice(
+          financeId, 
+          amountValue,
+          exporterAddress, 
+          importerAddress,
+          dueDateTimestamp
+        );
+      } else if (activeFinanceType === 'export') {
+        success = await createLetterOfCredit(
+          financeId,
+          importerAddress,
+          exporterAddress,
+          amountValue,
+          `Export to ${data.exportCountry}, shipping on ${data.shipmentDate}`
+        );
+      } else if (activeFinanceType === 'noninterest' || activeFinanceType === 'startup') {
+        success = await createSupplyChainFinancing(
+          financeId,
+          exporterAddress,
+          importerAddress,
+          amountValue,
+          activeFinanceType === 'noninterest' ? 0 : 5, // 0% for non-interest, 5% for startup
+          30 // 30 day term
+        );
+      } else {
+        // Fallback to generic invoice creation for other types
+        success = await createInvoice(
+          financeId, 
+          amountValue,
+          exporterAddress, 
+          importerAddress,
+          dueDateTimestamp
+        );
+      }
+      
+      if (success) {
         // Add new contract to the list
         const newContract: FinanceContract = {
-          id: `fc-${Date.now().toString(36)}`,
-          invoiceNumber: `INV-2023-${Math.floor(1000 + Math.random() * 9000)}`,
-          amount: amountValue,
+          id: financeId,
+          invoiceNumber: invoiceNumber,
+          amount: parseFloat(amountValue),
           issuedDate: new Date(),
           dueDate: new Date(data.dueDate),
           status: "Pending",
           fundingStatus: "Processing",
-          smartContractStatus: "Under Review",
+          smartContractStatus: "Active", // Changed to Active since contract was created
           financeType: getFinanceTypeLabel(activeFinanceType)
         };
         
@@ -280,21 +349,22 @@ export default function TradeFinance() {
         form.reset();
         
         toast({
-          title: "Finance Request Submitted Successfully",
-          description: `Your ${getFinanceTypeLabel(activeFinanceType)} request has been approved and is now being processed`,
+          title: "Smart Contract Deployed",
+          description: `Your ${getFinanceTypeLabel(activeFinanceType)} smart contract has been created on the blockchain`,
         });
       } else {
         toast({
           variant: "destructive",
-          title: "Approval Failed",
-          description: "The smart contract could not approve this finance request. Please check the amount and try again.",
+          title: "Smart Contract Deployment Failed",
+          description: "The blockchain transaction could not be completed. Please check your wallet and try again.",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Finance submission error:", error);
       toast({
         variant: "destructive",
         title: "Submission Failed",
-        description: "There was an error processing your finance request",
+        description: error.message || "There was an error processing your finance request",
       });
     } finally {
       setIsSubmitting(false);
@@ -367,6 +437,36 @@ export default function TradeFinance() {
             </div>
           </motion.div>
         ))}
+      </div>
+
+      {/* Blockchain Connection Status */}
+      <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-medium text-neutral-800 mb-1">Blockchain Wallet Status</h3>
+            <div className="flex items-center">
+              <div className={`h-2.5 w-2.5 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <p className="text-sm text-neutral-600">
+                {isConnected 
+                  ? `Connected: ${currentAddress?.slice(0, 6)}...${currentAddress?.slice(-4)}` 
+                  : 'Disconnected - Connect MetaMask to deploy smart contracts'}
+              </p>
+            </div>
+          </div>
+          <Button 
+            type="button" 
+            variant={isConnected ? "outline" : "default"} 
+            size="sm"
+            disabled={isBlockchainLoading}
+            onClick={() => initialize()}
+            className="flex items-center"
+          >
+            {isBlockchainLoading && (
+              <span className="h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+            )}
+            {isConnected ? 'Refresh Connection' : 'Connect Wallet'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
