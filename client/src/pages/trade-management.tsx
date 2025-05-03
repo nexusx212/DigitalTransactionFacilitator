@@ -198,7 +198,21 @@ export default function TradeManagement() {
     }
   ]);
 
-  const [tradeRequests, setTradeRequests] = useState([
+  // Define trade request interface
+  interface TradeRequest {
+    id: string;
+    name: string;
+    company: string;
+    avatar: string;
+    country: string;
+    productName?: string;
+    type: "incoming" | "outgoing";
+    status: "pending" | "accepted" | "declined";
+    date: string;
+    message: string;
+  }
+  
+  const [tradeRequests, setTradeRequests] = useState<TradeRequest[]>([
     {
       id: "req-1",
       name: "Sarah Johnson",
@@ -314,20 +328,6 @@ export default function TradeManagement() {
   // Get active chat session
   const activeChatSession = activeContactId ? 
     chatSessions.find(session => session.contact.id === activeContactId) : null;
-
-  // Define trade request interface
-  interface TradeRequest {
-    id: string;
-    name: string;
-    company: string;
-    avatar: string;
-    country: string;
-    productName?: string;
-    type: "incoming" | "outgoing";
-    status: "pending" | "accepted" | "declined";
-    date: string;
-    message: string;
-  }
   
   // Apply filters to requests
   const applyRequestFilters = (requests: TradeRequest[]): TradeRequest[] => {
@@ -507,13 +507,13 @@ export default function TradeManagement() {
       if (request.id === requestId) {
         return {
           ...request,
-          status: action === 'accept' ? 'accepted' : 'declined'
+          status: action === 'accept' ? 'accepted' as const : 'declined' as const
         };
       }
       return request;
     });
     
-    setTradeRequests(updatedRequests);
+    setTradeRequests(updatedRequests as TradeRequest[]);
   };
 
   // Get status indicator color
