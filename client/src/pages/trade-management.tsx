@@ -279,23 +279,14 @@ export default function TradeManagement() {
   // Filter contacts with applied filters
   const filteredContacts = applyContactFilters(tradeContacts);
 
-  // Filter trade requests based on search query
-  const filteredRequests = tradeRequests.filter(request =>
-    request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    request.message.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
   // Get active chat session
   const activeChatSession = activeContactId ? 
     chatSessions.find(session => session.contact.id === activeContactId) : null;
 
   // Apply filters to requests
   const applyRequestFilters = (requests: any[]) => {
-    let filtered = requests;
-    
-    // Apply search filter
-    filtered = filtered.filter(request =>
+    // First apply search filter
+    let filtered = requests.filter(request =>
       request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
       request.message.toLowerCase().includes(searchQuery.toLowerCase())
@@ -321,6 +312,13 @@ export default function TradeManagement() {
     
     return filtered;
   };
+  
+  // We'll keep this for backward compatibility
+  const filteredRequests = tradeRequests.filter(request =>
+    request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    request.message.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Send a new message
   const handleSendMessage = () => {
@@ -958,7 +956,18 @@ export default function TradeManagement() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                            <DropdownMenuItem
+                              className="flex items-center gap-2 cursor-pointer"
+                              onClick={() => {
+                                const updatedContacts = tradeContacts.map(c => {
+                                  if (c.id === contact.id) {
+                                    return { ...c, isFavorite: !c.isFavorite };
+                                  }
+                                  return c;
+                                });
+                                setTradeContacts(updatedContacts);
+                              }}
+                            >
                               <span className="material-icons text-sm">
                                 {contact.isFavorite ? "star" : "star_outline"}
                               </span>
@@ -1066,28 +1075,46 @@ export default function TradeManagement() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setRequestFilter("all")}
+                  >
                     <span className="material-icons text-sm">all_inbox</span>
                     <span>All Requests</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setRequestFilter("incoming")}
+                  >
                     <span className="material-icons text-sm">inbox</span>
                     <span>Incoming Requests</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setRequestFilter("outgoing")}
+                  >
                     <span className="material-icons text-sm">outbox</span>
                     <span>Outgoing Requests</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setRequestFilter("pending")}
+                  >
                     <span className="material-icons text-sm">pending</span>
                     <span>Pending</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setRequestFilter("accepted")}
+                  >
                     <span className="material-icons text-sm">check_circle</span>
                     <span>Accepted</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                  <DropdownMenuItem 
+                    className="flex items-center gap-2 cursor-pointer"
+                    onClick={() => setRequestFilter("declined")}
+                  >
                     <span className="material-icons text-sm">cancel</span>
                     <span>Declined</span>
                   </DropdownMenuItem>
@@ -1097,7 +1124,25 @@ export default function TradeManagement() {
           </div>
           
           <div className="space-y-4">
-            {filteredRequests.map(request => (
+            {/* Active filter indicator */}
+            {requestFilter !== "all" && (
+              <div className="flex items-center gap-2 text-sm text-neutral-600">
+                <span>Filtered by: </span>
+                <Badge variant="outline" className="capitalize font-normal">
+                  {requestFilter}
+                </Badge>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setRequestFilter("all")}
+                >
+                  Clear filter
+                </Button>
+              </div>
+            )}
+            
+            {applyRequestFilters(tradeRequests).map(request => (
               <motion.div
                 key={request.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -1180,14 +1225,16 @@ export default function TradeManagement() {
               </motion.div>
             ))}
             
-            {filteredRequests.length === 0 && (
+            {applyRequestFilters(tradeRequests).length === 0 && (
               <div className="p-10 text-center border rounded-lg bg-neutral-50">
                 <span className="material-icons text-5xl text-neutral-300 mb-3">inbox</span>
                 <h3 className="font-medium text-lg mb-2">No requests found</h3>
                 <p className="text-neutral-500 mb-4">
                   {searchQuery 
                     ? `No results found for "${searchQuery}"`
-                    : "You don't have any trade requests at the moment"}
+                    : requestFilter !== "all"
+                      ? `No ${requestFilter} requests found`
+                      : "You don't have any trade requests at the moment"}
                 </p>
                 <Button className="flex items-center gap-2 mx-auto">
                   <span className="material-icons">add</span>
