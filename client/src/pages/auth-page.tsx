@@ -1,6 +1,6 @@
-import { useState, useEffect, useContext } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
-import { AppContext } from '@/context/app-context';
+import { useAuth } from '@/hooks/use-auth';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -41,7 +41,7 @@ export default function AuthPage() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, login, register: registerUser } = useContext(AppContext);
+  const { user, loginMutation, registerMutation } = useAuth();
 
   // Redirect if user is already logged in, but with a slight delay to allow page to render first
   const [pageLoaded, setPageLoaded] = useState(false);
@@ -85,48 +85,55 @@ export default function AuthPage() {
 
   // Form submission handlers
   const onLoginSubmit = async (values: LoginFormValues) => {
-    try {
-      setIsLoggingIn(true);
-      await login(values.username, values.password);
-      toast({
-        title: 'Login Successful',
-        description: 'Welcome back to DTFS!',
-        variant: 'default',
-      });
-      navigate('/');
-    } catch (error: any) {
-      toast({
-        title: 'Login Failed',
-        description: error.message || 'Please check your credentials and try again.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoggingIn(false);
-    }
+    setIsLoggingIn(true);
+    loginMutation.mutate(values, {
+      onSuccess: () => {
+        toast({
+          title: 'Login Successful',
+          description: 'Welcome back to DTFS!',
+          variant: 'default',
+        });
+        navigate('/');
+      },
+      onError: (error: any) => {
+        toast({
+          title: 'Login Failed',
+          description: error.message || 'Please check your credentials and try again.',
+          variant: 'destructive',
+        });
+      },
+      onSettled: () => {
+        setIsLoggingIn(false);
+      }
+    });
   };
 
   const onRegisterSubmit = async (values: RegisterFormValues) => {
-    try {
-      setIsRegistering(true);
-      // Remove confirmPassword since it's not part of our API schema
-      const { confirmPassword, ...userData } = values;
-      await registerUser(userData);
-      toast({
-        title: 'Registration Successful',
-        description: 'Your account has been created! You can now log in.',
-        variant: 'default',
-      });
-      setActiveTab('login');
-      loginForm.setValue('username', registerForm.getValues('username'));
-    } catch (error: any) {
-      toast({
-        title: 'Registration Failed',
-        description: error.message || 'There was a problem creating your account.',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsRegistering(false);
-    }
+    setIsRegistering(true);
+    // Remove confirmPassword since it's not part of our API schema
+    const { confirmPassword, ...userData } = values;
+    
+    registerMutation.mutate(userData, {
+      onSuccess: () => {
+        toast({
+          title: 'Registration Successful',
+          description: 'Your account has been created! You can now log in.',
+          variant: 'default',
+        });
+        setActiveTab('login');
+        loginForm.setValue('username', registerForm.getValues('username'));
+      },
+      onError: (error: any) => {
+        toast({
+          title: 'Registration Failed',
+          description: error.message || 'There was a problem creating your account.',
+          variant: 'destructive',
+        });
+      },
+      onSettled: () => {
+        setIsRegistering(false);
+      }
+    });
   };
 
   return (

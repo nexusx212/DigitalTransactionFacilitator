@@ -10,6 +10,7 @@ import Wallet from "@/pages/wallet";
 import Chat from "@/pages/chat";
 import AuthPage from "@/pages/auth-page";
 import { AppProvider } from "@/context/app-context";
+import { AuthProvider } from "@/hooks/use-auth";
 import { lazy, Suspense, useEffect, useState, useContext } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -124,16 +125,18 @@ function App() {
   );
 
   return (
-    <AppProvider>
-      <TooltipProvider>
-        <Toaster />
-        <AppShell isAuthPage={isAuthPage}>
-          <Suspense fallback={<LoadingIndicator />}>
-            <Router />
-          </Suspense>
-        </AppShell>
-      </TooltipProvider>
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <TooltipProvider>
+          <Toaster />
+          <AppShell isAuthPage={isAuthPage}>
+            <Suspense fallback={<LoadingIndicator />}>
+              <Router />
+            </Suspense>
+          </AppShell>
+        </TooltipProvider>
+      </AppProvider>
+    </AuthProvider>
   );
 }
 
