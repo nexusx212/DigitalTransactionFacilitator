@@ -21,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import ChatTranslator from '@/components/chat-translator';
+import { ChatTranslator } from '@/components/chat-translator';
 import { AdBanner } from '@/components/ad-banner';
 import { PartnersSection } from '@/components/partners-section';
 import {
@@ -40,6 +40,10 @@ export default function TradeManagement() {
   const [newMessage, setNewMessage] = useState("");
   const [activeTranslation, setActiveTranslation] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("all");
+  const [requestFilter, setRequestFilter] = useState("all");
+  const [isTyping, setIsTyping] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
+  const [newContactModalOpen, setNewContactModalOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -286,9 +290,48 @@ export default function TradeManagement() {
   const activeChatSession = activeContactId ? 
     chatSessions.find(session => session.contact.id === activeContactId) : null;
 
+  // Apply filters to requests
+  const applyRequestFilters = (requests: any[]) => {
+    let filtered = requests;
+    
+    // Apply search filter
+    filtered = filtered.filter(request =>
+      request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      request.message.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // Apply request type and status filters
+    if (requestFilter === "incoming") {
+      filtered = filtered.filter(request => request.type === "incoming");
+    } else if (requestFilter === "outgoing") {
+      filtered = filtered.filter(request => request.type === "outgoing");
+    } else if (requestFilter === "pending") {
+      filtered = filtered.filter(request => request.status === "pending");
+    } else if (requestFilter === "accepted") {
+      filtered = filtered.filter(request => request.status === "accepted");
+    } else if (requestFilter === "declined") {
+      filtered = filtered.filter(request => request.status === "declined");
+    }
+    
+    // Sort by date (newest first)
+    filtered = [...filtered].sort((a, b) => 
+      new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+    
+    return filtered;
+  };
+
   // Send a new message
   const handleSendMessage = () => {
     if (!newMessage.trim() || !activeContactId) return;
+
+    // Stop any typing indicator
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+      setTypingTimeout(null);
+    }
+    setIsTyping(false);
 
     const updatedSessions = chatSessions.map(session => {
       if (session.contact.id === activeContactId) {
@@ -311,6 +354,77 @@ export default function TradeManagement() {
 
     setChatSessions(updatedSessions);
     setNewMessage("");
+    
+    // Simulate a response after a few seconds (for demo purposes)
+    setTimeout(() => {
+      simulateResponse(activeContactId);
+    }, 3000);
+  };
+  
+  // Simulate typing indicator
+  const handleMessageTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setNewMessage(e.target.value);
+    
+    if (!isTyping && e.target.value.length > 0) {
+      setIsTyping(true);
+    }
+    
+    // Clear existing timeout
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+    
+    // Set new timeout to clear typing indicator
+    const newTimeout = setTimeout(() => {
+      setIsTyping(false);
+    }, 2000);
+    
+    setTypingTimeout(newTimeout);
+  };
+  
+  // Simulate a response from the contact
+  const simulateResponse = (contactId: number) => {
+    // First show typing indicator
+    setIsTyping(true);
+    
+    // Then after a delay, add a message
+    setTimeout(() => {
+      setIsTyping(false);
+      
+      const contact = tradeContacts.find(contact => contact.id === contactId);
+      if (!contact) return;
+      
+      const responseMessages = [
+        "I understand. Let me check our inventory and get back to you with more details.",
+        "That sounds interesting! Can you provide more information about your requirements?",
+        "Thank you for sharing that. I'll discuss with my team and follow up soon.",
+        "Excellent! When would be a good time to schedule a call to discuss this further?"
+      ];
+      
+      const randomResponse = responseMessages[Math.floor(Math.random() * responseMessages.length)];
+      
+      const updatedSessions = chatSessions.map(session => {
+        if (session.contact.id === contactId) {
+          return {
+            ...session,
+            messages: [
+              ...session.messages,
+              {
+                id: `m-${Date.now()}`,
+                content: randomResponse,
+                senderId: `contact-${contactId}`,
+                timestamp: new Date().toISOString(),
+                isRead: true
+              }
+            ],
+            unreadCount: activeContactId === contactId ? 0 : (session.unreadCount + 1)
+          };
+        }
+        return session;
+      });
+      
+      setChatSessions(updatedSessions);
+    }, 2000);
   };
 
   // Auto scroll to bottom of messages
@@ -640,6 +754,24 @@ export default function TradeManagement() {
                             )}
                           </motion.div>
                         ))}
+                        
+                        {/* Typing indicator */}
+                        {isTyping && activeContactId && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-start"
+                          >
+                            <div className="max-w-[80%] bg-neutral-100 text-neutral-800 rounded-2xl rounded-tl-sm p-3">
+                              <div className="flex space-x-1 items-center">
+                                <div className="h-2 w-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
+                                <div className="h-2 w-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
+                                <div className="h-2 w-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "600ms" }}></div>
+                              </div>
+                            </div>
+                          </motion.div>
+                        )}
+                        
                         <div ref={messagesEndRef} />
                       </div>
                     </div>
@@ -651,7 +783,7 @@ export default function TradeManagement() {
                         <Input 
                           placeholder="Type a message..." 
                           value={newMessage}
-                          onChange={(e) => setNewMessage(e.target.value)}
+                          onChange={handleMessageTyping}
                           onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                           className="flex-1"
                         />
