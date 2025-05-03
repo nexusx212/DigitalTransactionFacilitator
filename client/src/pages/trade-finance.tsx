@@ -444,7 +444,7 @@ export default function TradeFinance() {
     <section id="trade-finance" className="mb-16 fade-in" ref={sectionRef}>
       {/* Hero Section */}
       <div className="relative mb-10 bg-gradient-to-br from-primary-700 to-primary-900 text-white rounded-xl overflow-hidden">
-        <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
+        {/* Removed white overlay background */}
         <div className="relative z-10 px-6 py-10 lg:py-14 max-w-screen-xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             <div>
