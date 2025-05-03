@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useContext } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
-import { useAuth } from "@/hooks/use-auth";
+import { AppContext } from "@/context/app-context";
 
 // Mock data types
 type TradeContact = {
@@ -58,7 +58,7 @@ type ChatSession = {
 
 export default function TradeManagement() {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState("chat");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeContactId, setActiveContactId] = useState<string | null>(null);
@@ -263,7 +263,7 @@ export default function TradeManagement() {
       if (request.id === requestId) {
         return {
           ...request,
-          status: action === "accept" ? "accepted" : "declined"
+          status: action === "accept" ? "accepted" as const : "declined" as const
         };
       }
       return request;
@@ -514,7 +514,7 @@ export default function TradeManagement() {
                           onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
                           className="flex-1"
                         />
-                        <Button variant="primary" onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                        <Button variant="default" onClick={handleSendMessage} disabled={!newMessage.trim()}>
                           <span className="material-icons">send</span>
                         </Button>
                       </div>

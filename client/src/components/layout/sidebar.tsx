@@ -75,6 +75,13 @@ export function Sidebar() {
                 isActive={location === "/" || location === ""} 
               />
               <SidebarLink 
+                href="/trade-management" 
+                icon="handshake" 
+                label="Trade Management" 
+                isActive={location === "/trade-management"} 
+                badge="3"
+              />
+              <SidebarLink 
                 href="/trade-finance" 
                 icon="receipt_long" 
                 label="Trade Finance" 
@@ -105,13 +112,6 @@ export function Sidebar() {
                 label="Badges" 
                 isActive={location === "/badges"} 
                 isNew={true}
-              />
-              <SidebarLink 
-                href="/trade-management" 
-                icon="handshake" 
-                label="Trade Management" 
-                isActive={location === "/trade-management"} 
-                badge="3"
               />
             </ul>
           </div>
