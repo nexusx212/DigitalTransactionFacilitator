@@ -521,7 +521,7 @@ export default function TradeFinance() {
       </div>
       
       {/* Finance Options */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
         {financeOptions.map((option) => (
           <motion.div
             key={option.id}
@@ -529,29 +529,78 @@ export default function TradeFinance() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             className={`
-              relative overflow-hidden rounded-xl border p-4 cursor-pointer transition-all duration-300
+              relative overflow-hidden rounded-xl transition-all duration-300 cursor-pointer
+              ${!option.available ? 'opacity-80 grayscale-[30%]' : ''}
               ${activeFinanceType === option.id as FinanceType
-                ? 'border-primary-500 bg-primary-50/50 shadow-md' 
-                : 'border-neutral-200 hover:border-primary-200 hover:bg-neutral-50'}
-              ${!option.available ? 'opacity-80' : ''}
+                ? 'shadow-lg shadow-primary-500/10 ring-2 ring-primary-500 transform scale-[1.02]' 
+                : 'shadow-md hover:shadow-lg border border-gray-100 hover:border-primary-200 hover:-translate-y-1'}
             `}
             onClick={() => option.available && setActiveFinanceType(option.id as FinanceType)}
           >
-            <div className="flex flex-col items-center text-center">
-              <div className={`
-                w-12 h-12 rounded-full flex items-center justify-center mb-3
-                ${activeFinanceType === option.id as FinanceType ? 'bg-primary-500 text-white' : 'bg-neutral-100 text-neutral-700'}
-              `}>
-                <span className="material-icons">{option.icon}</span>
+            <div className={`h-3 w-full ${activeFinanceType === option.id as FinanceType ? 'bg-primary-500' : 'bg-gray-200'}`}></div>
+            <div className="p-6">
+              <div className="flex items-start mb-4">
+                <div className={`
+                  h-14 w-14 rounded-lg flex items-center justify-center mr-4
+                  ${activeFinanceType === option.id as FinanceType 
+                    ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-md' 
+                    : 'bg-gray-100 text-neutral-700'}
+                `}>
+                  <span className="material-icons text-2xl">{option.icon}</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg text-neutral-800 mb-1">{option.name}</h3>
+                  <p className="text-sm text-neutral-600">{option.description}</p>
+                </div>
               </div>
-              <h3 className="font-medium text-neutral-800 mb-1">{option.name}</h3>
-              <p className="text-xs text-neutral-600">{option.description}</p>
               
-              {option.comingSoon && (
-                <span className="absolute top-2 right-2 bg-warning/10 text-warning text-xs px-2 py-0.5 rounded-full">
-                  Coming Soon
-                </span>
-              )}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {option.id === 'factoring' && (
+                  <>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-blue-100 text-blue-800">
+                      <span className="material-icons text-[14px] mr-1">description</span>Invoice
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-teal-100 text-teal-800">
+                      <span className="material-icons text-[14px] mr-1">bolt</span>Fast Approval
+                    </span>
+                  </>
+                )}
+                {option.id === 'export' && (
+                  <>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-indigo-100 text-indigo-800">
+                      <span className="material-icons text-[14px] mr-1">public</span>International
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-green-100 text-green-800">
+                      <span className="material-icons text-[14px] mr-1">event_available</span>Pre-shipment
+                    </span>
+                  </>
+                )}
+                {option.id === 'noninterest' && (
+                  <>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-purple-100 text-purple-800">
+                      <span className="material-icons text-[14px] mr-1">handshake</span>Ethical
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-amber-100 text-amber-800">
+                      <span className="material-icons text-[14px] mr-1">verified</span>Compliant
+                    </span>
+                  </>
+                )}
+                {option.id === 'startup' && (
+                  <>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-rose-100 text-rose-800">
+                      <span className="material-icons text-[14px] mr-1">rocket_launch</span>Growth
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-cyan-100 text-cyan-800">
+                      <span className="material-icons text-[14px] mr-1">trending_up</span>Flexible
+                    </span>
+                  </>
+                )}
+                {option.comingSoon && (
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-warning/20 text-warning ml-auto">
+                    Coming Soon
+                  </span>
+                )}
+              </div>
             </div>
           </motion.div>
         ))}
@@ -649,6 +698,31 @@ export default function TradeFinance() {
                   )}
                 />
                 
+                {/* File Upload Section - Show for all finance types */}
+                <div className="border-t border-dashed border-neutral-200 mt-6 pt-6">
+                  <div className="flex items-center mb-4">
+                    <span className="material-icons text-primary-500 mr-2">upload_file</span>
+                    <h4 className="text-sm font-semibold text-neutral-800">Upload Documents</h4>
+                  </div>
+                  
+                  <div 
+                    onClick={handleFileButtonClick}
+                    className="border-2 border-dashed border-neutral-200 rounded-lg p-6 text-center cursor-pointer hover:border-primary-300 hover:bg-primary-50/30 transition-colors"
+                  >
+                    <span className="material-icons text-neutral-400 text-3xl mb-2">file_upload</span>
+                    <p className="text-sm text-neutral-600 mb-1">Drag and drop your documents or click to browse</p>
+                    <p className="text-xs text-neutral-500">PDF, JPG, PNG, DOC up to 10MB</p>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                      multiple
+                    />
+                  </div>
+                  <p className="text-xs text-center text-neutral-500 mt-2">Uploading all required documents will speed up the approval process</p>
+                </div>
+                
                 {/* Factoring specific fields */}
                 {activeFinanceType === 'factoring' && (
                   <FormField
@@ -672,6 +746,135 @@ export default function TradeFinance() {
                     )}
                   />
                 )}
+                
+                {/* Document Requirements */}
+                <div className="mt-6 mb-4">
+                  <h4 className="text-sm font-semibold text-neutral-800 mb-3 flex items-center">
+                    <span className="material-icons text-primary-500 mr-2 text-lg">description</span>
+                    Required Documents
+                  </h4>
+                  <div className="p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
+                    <ul className="space-y-2">
+                      {activeFinanceType === 'factoring' && (
+                        <>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Invoice document</span>
+                              <p className="text-xs text-neutral-500">Original invoice issued to your customer (PDF format)</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Proof of delivery</span>
+                              <p className="text-xs text-neutral-500">Signed delivery note confirming goods/services received</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Customer contract</span>
+                              <p className="text-xs text-neutral-500">Contract with customer (if applicable)</p>
+                            </div>
+                          </li>
+                        </>
+                      )}
+                      
+                      {activeFinanceType === 'export' && (
+                        <>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Commercial invoice</span>
+                              <p className="text-xs text-neutral-500">Invoice for goods being exported</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Bill of lading</span>
+                              <p className="text-xs text-neutral-500">Shipping document issued by carrier</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Purchase order</span>
+                              <p className="text-xs text-neutral-500">Order confirmation from buyer</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Export license</span>
+                              <p className="text-xs text-neutral-500">Valid permit for exporting goods (if applicable)</p>
+                            </div>
+                          </li>
+                        </>
+                      )}
+                      
+                      {activeFinanceType === 'noninterest' && (
+                        <>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Commercial invoice</span>
+                              <p className="text-xs text-neutral-500">Invoice for goods or services</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Purchase agreement</span>
+                              <p className="text-xs text-neutral-500">Ethical finance compliant purchase agreement</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Ethical compliance form</span>
+                              <p className="text-xs text-neutral-500">Signed declaration of ethical trade practices</p>
+                            </div>
+                          </li>
+                        </>
+                      )}
+                      
+                      {activeFinanceType === 'startup' && (
+                        <>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Business registration</span>
+                              <p className="text-xs text-neutral-500">Proof of business registration</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Financial projections</span>
+                              <p className="text-xs text-neutral-500">12-month revenue and expense forecast</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Purchase orders</span>
+                              <p className="text-xs text-neutral-500">Proof of orders requiring financing</p>
+                            </div>
+                          </li>
+                          <li className="flex items-start text-sm">
+                            <span className="material-icons text-success mr-2 mt-0.5 text-[18px]">check_circle</span>
+                            <div>
+                              <span className="font-medium">Business plan</span>
+                              <p className="text-xs text-neutral-500">Executive summary of business plan</p>
+                            </div>
+                          </li>
+                        </>
+                      )}
+                    </ul>
+                  </div>
+                </div>
                 
                 {/* Export Finance specific fields */}
                 {activeFinanceType === 'export' && (
@@ -874,7 +1077,21 @@ export default function TradeFinance() {
         {/* Active Finance Card */}
         <Card>
           <CardContent className="p-6 lg:p-8">
-            <h3 className="text-xl font-heading font-semibold mb-4">Active Finance Contracts</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-heading font-semibold">Active Finance Contracts</h3>
+              <Select defaultValue="all">
+                <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Contracts</SelectItem>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
             <div className="space-y-5">
               {activeContracts.map((contract) => (
                 <motion.div
@@ -882,17 +1099,22 @@ export default function TradeFinance() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
-                  className="border border-neutral-200 rounded-lg p-4 hover:border-primary-300 transition-all"
+                  className="relative group overflow-hidden border border-neutral-200 rounded-lg p-5 hover:shadow-md hover:border-primary-300 transition-all"
                 >
-                  <div className="flex justify-between items-start mb-3">
+                  <div className="absolute top-0 left-0 w-1.5 h-full" style={{ 
+                    backgroundColor: contract.status === "Active" ? '#10b981' : 
+                                      contract.status === "Pending" ? '#f59e0b' : '#6366f1' 
+                  }}></div>
+                  
+                  <div className="flex justify-between items-start mb-4 pl-2">
                     <div>
                       <div className="flex items-center space-x-2">
-                        <span className={`text-xs font-medium px-2 py-1 rounded ${
+                        <span className={`text-xs font-medium px-2 py-1 rounded-full ${
                           contract.status === "Active" 
-                            ? "bg-primary-50 text-primary-700" 
+                            ? "bg-green-50 text-green-700" 
                             : contract.status === "Pending"
-                              ? "bg-warning/10 text-warning"
-                              : "bg-neutral-100 text-neutral-700"
+                              ? "bg-amber-50 text-amber-700"
+                              : "bg-indigo-50 text-indigo-700"
                         }`}>
                           {contract.status}
                         </span>
