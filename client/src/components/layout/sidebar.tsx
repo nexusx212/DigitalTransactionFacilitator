@@ -106,6 +106,13 @@ export function Sidebar() {
                 isActive={location === "/badges"} 
                 isNew={true}
               />
+              <SidebarLink 
+                href="/trade-management" 
+                icon="handshake" 
+                label="Trade Management" 
+                isActive={location === "/trade-management"} 
+                badge="3"
+              />
             </ul>
           </div>
           
