@@ -12,9 +12,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/use-auth";
 
 export function Header() {
-  const { user, selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode, logout } = useContext(AppContext);
+  const { user, selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode } = useContext(AppContext);
+  const { logoutMutation } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -216,10 +218,7 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-error"
-              onClick={() => {
-                logout();
-                window.location.href = '/auth';
-              }}
+              onClick={() => logoutMutation.mutate()}
             >
               <span className="material-icons text-[18px] mr-2">logout</span>
               Sign Out

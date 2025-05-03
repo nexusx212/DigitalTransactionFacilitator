@@ -4,6 +4,7 @@ import { getInitials } from "@/lib/utils";
 import { useContext } from "react";
 import { AppContext } from "@/context/app-context";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/hooks/use-auth";
 
 type SidebarLinkProps = {
   href: string;
@@ -48,7 +49,8 @@ const SidebarLink = ({ href, icon, label, isActive, badge, isNew }: SidebarLinkP
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user, logout } = useContext(AppContext);
+  const { user } = useContext(AppContext);
+  const { logoutMutation } = useAuth();
 
   return (
     <aside className="hidden lg:flex flex-col w-72 h-full bg-white border-r border-neutral-100 overflow-hidden transition-all duration-300 ease-in-out z-20">
@@ -172,10 +174,7 @@ export function Sidebar() {
           </div>
           {user ? (
             <button 
-              onClick={() => {
-                logout();
-                window.location.href = '/auth';
-              }}
+              onClick={() => logoutMutation.mutate()}
               className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 hover:text-neutral-700 transition-all duration-normal"
               title="Log out"
             >
