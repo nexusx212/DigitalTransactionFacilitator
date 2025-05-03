@@ -255,6 +255,13 @@ export default function TradeFinance() {
     };
   }, []);
   
+  // Effect to try connecting to blockchain when component mounts
+  useEffect(() => {
+    if (!isConnected && !isBlockchainLoading) {
+      initialize();
+    }
+  }, [isConnected, isBlockchainLoading, initialize]);
+  
   const handleFileButtonClick = () => {
     fileInputRef.current?.click();
   };

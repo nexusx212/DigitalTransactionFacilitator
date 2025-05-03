@@ -87,9 +87,9 @@ export type SupplyChainFinancing = {
   isRepaid: boolean;
 };
 
-let provider: ethers.providers.Web3Provider | null = null;
-let signer: ethers.Signer | null = null;
-let tradeFinanceContract: ethers.Contract | null = null;
+let provider: any = null;
+let signer: any = null;
+let tradeFinanceContract: any = null;
 
 /**
  * Initialize Ethereum connection and contract
@@ -109,9 +109,9 @@ export const initializeEthereum = async (): Promise<boolean> => {
     // Request account access
     await window.ethereum.request({ method: 'eth_requestAccounts' });
     
-    // Create ethers provider
-    provider = new ethers.providers.Web3Provider(window.ethereum);
-    signer = provider.getSigner();
+    // Create ethers provider and signer
+    provider = new ethers.BrowserProvider(window.ethereum);
+    signer = await provider.getSigner();
     
     // Create contract instance
     tradeFinanceContract = new ethers.Contract(
@@ -151,10 +151,10 @@ export const createInvoice = async (
     }
     
     // Convert amount to Wei (smallest Ethereum unit)
-    const amountInWei = ethers.utils.parseEther(amount);
+    const amountInWei = ethers.parseEther(amount);
     
     // Call the smart contract
-    const tx = await tradeFinanceContract!.createInvoice(
+    const tx = await tradeFinanceContract.createInvoice(
       invoiceId, 
       amountInWei, 
       exporterAddress, 
@@ -198,7 +198,7 @@ export const approveInvoice = async (invoiceId: string): Promise<boolean> => {
     }
     
     // Call the smart contract
-    const tx = await tradeFinanceContract!.approveInvoice(invoiceId);
+    const tx = await tradeFinanceContract.approveInvoice(invoiceId);
     
     // Wait for transaction to be mined
     const receipt = await tx.wait();
@@ -236,10 +236,10 @@ export const payInvoice = async (invoiceId: string, amount: string): Promise<boo
     }
     
     // Convert amount to Wei
-    const amountInWei = ethers.utils.parseEther(amount);
+    const amountInWei = ethers.parseEther(amount);
     
     // Call the smart contract with value
-    const tx = await tradeFinanceContract!.payInvoice(invoiceId, {
+    const tx = await tradeFinanceContract.payInvoice(invoiceId, {
       value: amountInWei
     });
     
@@ -285,10 +285,10 @@ export const createLetterOfCredit = async (
     }
     
     // Convert amount to Wei
-    const amountInWei = ethers.utils.parseEther(amount);
+    const amountInWei = ethers.parseEther(amount);
     
     // Call the smart contract with value
-    const tx = await tradeFinanceContract!.createLetterOfCredit(
+    const tx = await tradeFinanceContract.createLetterOfCredit(
       lcId,
       importerAddress,
       exporterAddress,
@@ -342,13 +342,13 @@ export const createSupplyChainFinancing = async (
     }
     
     // Convert amount to Wei
-    const amountInWei = ethers.utils.parseEther(amount);
+    const amountInWei = ethers.parseEther(amount);
     
     // Convert interest rate to basis points (1% = 100 basis points)
     const interestRateBps = Math.round(interestRate * 100);
     
     // Call the smart contract
-    const tx = await tradeFinanceContract!.createSupplyChainFinancing(
+    const tx = await tradeFinanceContract.createSupplyChainFinancing(
       scfId,
       supplierAddress,
       buyerAddress,
