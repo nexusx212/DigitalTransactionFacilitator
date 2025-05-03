@@ -15,6 +15,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { AppContext } from "@/context/app-context";
+import { ChatTranslator } from "@/components/chat-translator";
 
 // Mock data types
 type TradeContact = {
@@ -64,6 +65,7 @@ export default function TradeManagement() {
   const [activeContactId, setActiveContactId] = useState<string | null>(null);
   const [newMessage, setNewMessage] = useState("");
   const [filter, setFilter] = useState("all");
+  const [activeTranslation, setActiveTranslation] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Mock data for initial states
@@ -483,9 +485,9 @@ export default function TradeManagement() {
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3 }}
-                            className={`flex ${message.senderId === "user" ? "justify-end" : "justify-start"}`}
+                            className={`flex flex-col ${message.senderId === "user" ? "items-end" : "items-start"}`}
                           >
-                            <div className={`max-w-[80%] ${message.senderId === "user" 
+                            <div className={`max-w-[80%] relative group ${message.senderId === "user" 
                               ? "bg-primary-500 text-white rounded-2xl rounded-tr-sm" 
                               : "bg-neutral-100 text-neutral-800 rounded-2xl rounded-tl-sm"
                             } p-3`}>
@@ -496,7 +498,29 @@ export default function TradeManagement() {
                                   <span className="material-icons text-xs ml-1">done_all</span>
                                 )}
                               </div>
+                              
+                              {/* Translation button - only show for messages from others */}
+                              {message.senderId !== "user" && (
+                                <button 
+                                  onClick={() => setActiveTranslation(activeTranslation === message.id ? null : message.id)}
+                                  className={`absolute -top-3 -right-3 bg-white shadow-md text-primary rounded-full h-6 w-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity ${
+                                    activeTranslation === message.id ? "opacity-100 text-primary" : "text-neutral-400 hover:text-primary"
+                                  }`}
+                                >
+                                  <span className="material-icons text-xs">translate</span>
+                                </button>
+                              )}
                             </div>
+                            
+                            {/* Show translator if this message is being translated */}
+                            {activeTranslation === message.id && (
+                              <div className="mt-2 mb-3 max-w-[90%]">
+                                <ChatTranslator 
+                                  originalMessage={message.content}
+                                  onClose={() => setActiveTranslation(null)}
+                                />
+                              </div>
+                            )}
                           </motion.div>
                         ))}
                         <div ref={messagesEndRef} />
@@ -733,9 +757,26 @@ export default function TradeManagement() {
                               <span className="font-medium">Product:</span> {request.productName}
                             </p>
                           )}
-                          <p className="text-sm text-neutral-700 mt-2 bg-neutral-50 p-3 rounded-md">
-                            {request.message}
-                          </p>
+                          <div className="text-sm text-neutral-700 mt-2 bg-neutral-50 p-3 rounded-md relative group">
+                            <p>{request.message}</p>
+                            {request.type === "incoming" && (
+                              <button 
+                                onClick={() => setActiveTranslation(activeTranslation === request.id ? null : request.id)}
+                                className="absolute top-2 right-2 bg-white shadow-sm text-primary rounded-full h-6 w-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-50"
+                              >
+                                <span className="material-icons text-xs">translate</span>
+                              </button>
+                            )}
+                            
+                            {activeTranslation === request.id && (
+                              <div className="mt-3 pt-3 border-t border-neutral-200">
+                                <ChatTranslator 
+                                  originalMessage={request.message}
+                                  onClose={() => setActiveTranslation(null)}
+                                />
+                              </div>
+                            )}
+                          </div>
                           <p className="text-xs text-neutral-500 mt-2">
                             {new Date(request.date).toLocaleDateString()} • {new Date(request.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>

@@ -83,6 +83,7 @@ function AppShell({ children, isAuthPage = false }: { children: React.ReactNode,
       </div>
       <MobileNav />
       <AvaAIAssistant />
+      {!isAuthPage && <TranslationWidget />}
     </div>
   );
 }
