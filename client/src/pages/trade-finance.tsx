@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useSmartContracts } from "@/hooks/use-smart-contracts";
 import { formatCurrency, formatDate } from "@/lib/utils";

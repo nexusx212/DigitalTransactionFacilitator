@@ -34,6 +34,7 @@ const LazyProfilePage = lazy(() => import("@/pages/profile"));
 const LazySettingsPage = lazy(() => import("@/pages/settings"));
 const LazyHelpSupportPage = lazy(() => import("@/pages/help-support"));
 const LazyUpgradePage = lazy(() => import("@/pages/upgrade"));
+const LazyFinanceComparison = lazy(() => import("@/pages/finance-comparison"));
 
 // Loading indicator component
 function LoadingIndicator() {
@@ -127,6 +128,7 @@ function App() {
       <ProtectedRoute path="/help-support" component={LazyHelpSupportPage} />
       <ProtectedRoute path="/upgrade" component={LazyUpgradePage} />
       <ProtectedRoute path="/badges" component={LazyBadgesDemo} />
+      <ProtectedRoute path="/finance-comparison" component={LazyFinanceComparison} />
       <Route path="/auth" component={LazyAuthPage} />
       <Route component={NotFound} />
     </Switch>
