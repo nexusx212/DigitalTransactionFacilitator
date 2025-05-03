@@ -577,25 +577,27 @@ export default function TradeFinance() {
               relative overflow-hidden rounded-xl transition-all duration-300 cursor-pointer
               ${!option.available ? 'opacity-80 grayscale-[30%]' : ''}
               ${activeFinanceType === option.id as FinanceType
-                ? 'shadow-lg shadow-primary-500/10 ring-2 ring-primary-500 transform scale-[1.02]' 
-                : 'shadow-md hover:shadow-lg border border-gray-100 hover:border-primary-200 hover:-translate-y-1'}
+                ? 'shadow-xl shadow-primary-500/20 ring-2 ring-primary-500 transform scale-[1.03] bg-gradient-to-r from-primary-50 to-white' 
+                : 'shadow-md hover:shadow-lg border border-gray-100 hover:border-primary-200 hover:-translate-y-1 hover:bg-neutral-50'}
             `}
             onClick={() => option.available && setActiveFinanceType(option.id as FinanceType)}
           >
-            <div className={`h-3 w-full ${activeFinanceType === option.id as FinanceType ? 'bg-primary-500' : 'bg-gray-200'}`}></div>
+            <div className={`h-3 w-full ${activeFinanceType === option.id as FinanceType ? 'bg-gradient-to-r from-primary-600 to-primary-400' : 'bg-gray-200'}`}></div>
             <div className="p-6">
               <div className="flex items-start mb-4">
                 <div className={`
                   h-14 w-14 rounded-lg flex items-center justify-center mr-4
                   ${activeFinanceType === option.id as FinanceType 
-                    ? 'bg-gradient-to-br from-primary-500 to-primary-700 text-white shadow-md' 
-                    : 'bg-gray-100 text-neutral-700'}
+                    ? 'bg-gradient-to-br from-primary-600 to-primary-800 text-white shadow-lg' 
+                    : 'bg-neutral-100 text-neutral-600 hover:bg-primary-100 hover:text-primary-700 transition-colors'}
                 `}>
                   <span className="material-icons text-2xl">{option.icon}</span>
                 </div>
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg text-neutral-800 mb-1">{option.name}</h3>
-                  <p className="text-sm text-neutral-600">{option.description}</p>
+                  <p className={`text-sm ${activeFinanceType === option.id as FinanceType ? 'text-neutral-800 font-medium' : 'text-neutral-600'}`}>
+                    {option.description}
+                  </p>
                 </div>
               </div>
               
@@ -693,8 +695,15 @@ export default function TradeFinance() {
 
       <div className="grid md:grid-cols-2 gap-6">
         {/* Finance Application Card */}
-        <Card>
-          <CardContent className="p-6 lg:p-8">
+        <motion.div
+          initial={{ opacity: 0.8, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          key={activeFinanceType}
+        >
+          <Card className="border-primary-200 shadow-lg overflow-hidden">
+            <div className="h-2 bg-gradient-to-r from-primary-600 to-primary-400 w-full"></div>
+            <CardContent className="p-6 lg:p-8">
             <h3 className="text-xl font-heading font-semibold mb-4">
               {activeFinanceType === 'factoring' && 'Apply for Factoring'}
               {activeFinanceType === 'export' && 'Apply for Export Finance'}
