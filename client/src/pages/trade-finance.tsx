@@ -87,7 +87,10 @@ export default function TradeFinance() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeFinanceType, setActiveFinanceType] = useState<FinanceType>('factoring');
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  
   const { 
     isConnected, 
     isLoading: isBlockchainLoading, 
@@ -97,6 +100,26 @@ export default function TradeFinance() {
     createLetterOfCredit,
     createSupplyChainFinancing
   } = useSmartContracts();
+  
+  // Handle file selection
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
+      setUploadedFiles(prev => [...prev, ...newFiles]);
+      
+      toast({
+        title: `${newFiles.length} file${newFiles.length > 1 ? 's' : ''} added`,
+        description: "Document upload successful",
+        variant: "default",
+      });
+    }
+  };
+  
+  // Handle clicking on the file upload area
+  const handleFileButtonClick = () => {
+    fileInputRef.current?.click();
+  };
   
   // Sample active contracts
   const [activeContracts, setActiveContracts] = useState<FinanceContract[]>([
@@ -231,7 +254,6 @@ export default function TradeFinance() {
   }, [activeFinanceType, form]);
   
   // Fade-in animation setup
-  const sectionRef = useRef<HTMLElement>(null);
   
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -262,8 +284,29 @@ export default function TradeFinance() {
     }
   }, [isConnected, isBlockchainLoading, initialize]);
   
-  const handleFileButtonClick = () => {
-    fileInputRef.current?.click();
+  // Display uploaded files
+  const renderUploadedFilesList = () => {
+    if (uploadedFiles.length === 0) return null;
+    
+    return (
+      <div className="mt-4">
+        <div className="flex items-center mb-2">
+          <span className="material-icons text-success mr-2 text-sm">check_circle</span>
+          <span className="text-sm font-medium">Uploaded Documents</span>
+        </div>
+        <ul className="space-y-1">
+          {uploadedFiles.map((file, index) => (
+            <li key={index} className="text-xs flex items-center text-neutral-600 bg-neutral-50 px-2 py-1 rounded">
+              <span className="material-icons text-xs mr-1">
+                {file.type.includes('pdf') ? 'picture_as_pdf' : 
+                 file.type.includes('image') ? 'image' : 'description'}
+              </span>
+              {file.name} ({Math.round(file.size / 1024)} KB)
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   };
   
   const onSubmit = async (data: any) => {
