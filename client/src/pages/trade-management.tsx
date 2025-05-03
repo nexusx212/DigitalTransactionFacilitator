@@ -46,9 +46,26 @@ export default function TradeManagement() {
   const [newContactModalOpen, setNewContactModalOpen] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Define chat message interface
+  interface ChatMessage {
+    id: string;
+    content: string;
+    senderId: string;
+    timestamp: string;
+    isRead: boolean;
+  }
+  
+  // Define chat session interface
+  interface ChatSession {
+    id: string;
+    contact: TradeContact;
+    messages: ChatMessage[];
+    unreadCount: number;
+  }
 
-  // Dummy data
-  const [chatSessions, setChatSessions] = useState([
+  // Chat data
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([
     {
       id: "chat-1",
       contact: {
@@ -240,8 +257,22 @@ export default function TradeManagement() {
     }
   ]);
 
+  // Define contact interface
+  interface TradeContact {
+    id: number;
+    name: string;
+    company: string;
+    country: string;
+    avatar: string;
+    status: string;
+    tradeRole: string;
+    isFavorite?: boolean;
+    lastActivity?: string;
+    products?: string[];
+  }
+  
   // Apply filters to contacts
-  const applyContactFilters = (contacts) => {
+  const applyContactFilters = (contacts: TradeContact[]): TradeContact[] => {
     let filtered = contacts;
     
     // Apply search filter
@@ -262,9 +293,10 @@ export default function TradeManagement() {
       filtered = filtered.filter(contact => contact.isFavorite);
     } else if (activeFilter === "recents") {
       // Sort by last activity and take the top 10
-      filtered = [...filtered].sort((a, b) => 
-        new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()
-      ).slice(0, 10);
+      filtered = [...filtered].sort((a, b) => {
+        if (!a.lastActivity || !b.lastActivity) return 0;
+        return new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime();
+      }).slice(0, 10);
     }
     
     return filtered;
@@ -283,8 +315,22 @@ export default function TradeManagement() {
   const activeChatSession = activeContactId ? 
     chatSessions.find(session => session.contact.id === activeContactId) : null;
 
+  // Define trade request interface
+  interface TradeRequest {
+    id: string;
+    name: string;
+    company: string;
+    avatar: string;
+    country: string;
+    productName?: string;
+    type: "incoming" | "outgoing";
+    status: "pending" | "accepted" | "declined";
+    date: string;
+    message: string;
+  }
+  
   // Apply filters to requests
-  const applyRequestFilters = (requests: any[]) => {
+  const applyRequestFilters = (requests: TradeRequest[]): TradeRequest[] => {
     // First apply search filter
     let filtered = requests.filter(request =>
       request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
