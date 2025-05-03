@@ -399,13 +399,124 @@ export default function TradeFinance() {
 
   return (
     <section id="trade-finance" className="mb-16 fade-in" ref={sectionRef}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
+      {/* Hero Section */}
+      <div className="relative mb-10 bg-gradient-to-br from-primary-700 to-primary-900 text-white rounded-xl overflow-hidden">
+        <div className="absolute inset-0 opacity-10 bg-[url('https://images.unsplash.com/photo-1507608616759-54f48f0af0ee?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80')] bg-cover bg-center"></div>
+        <div className="relative z-10 px-6 py-10 lg:py-14 max-w-screen-xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            <div>
+              <motion.h1 
+                className="text-3xl sm:text-4xl lg:text-5xl font-heading font-bold mb-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+              >
+                Trade Finance Solutions
+              </motion.h1>
+              <motion.p 
+                className="text-lg lg:text-xl mb-6 text-white/90 max-w-2xl"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                Access instant blockchain-powered financing tailored to your business needs with smart contract approval systems that reduce processing time by up to 80%.
+              </motion.p>
+              <motion.div
+                className="flex flex-wrap gap-4 items-center"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+              >
+                <div className="flex items-center mr-6 mb-2">
+                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                    <span className="material-icons text-white">verified</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm text-white/80">Finance Amount</span>
+                    <span className="font-semibold">Up to $5M</span>
+                  </div>
+                </div>
+                <div className="flex items-center mr-6 mb-2">
+                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                    <span className="material-icons text-white">schedule</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm text-white/80">Processing Time</span>
+                    <span className="font-semibold">24-48 Hours</span>
+                  </div>
+                </div>
+                <div className="flex items-center mb-2">
+                  <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center mr-3">
+                    <span className="material-icons text-white">security</span>
+                  </div>
+                  <div>
+                    <span className="block text-sm text-white/80">Security</span>
+                    <span className="font-semibold">Blockchain Backed</span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+            <div className="hidden lg:block relative">
+              <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-500 opacity-20 rounded-full blur-3xl"></div>
+              <div className="absolute -bottom-10 -left-10 w-48 h-48 bg-purple-500 opacity-20 rounded-full blur-3xl"></div>
+              <motion.div
+                className="bg-white/10 backdrop-blur-md rounded-xl p-6 shadow-xl border border-white/20"
+                animate={{ 
+                  y: [0, -10, 0], 
+                  rotateZ: [0, 1, 0] 
+                }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 5,
+                  ease: "easeInOut"
+                }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center">
+                    <span className="material-icons mr-2 text-green-400">savings</span>
+                    <h3 className="font-semibold">DTFS Smart Contract</h3>
+                  </div>
+                  <span className="px-2 py-1 bg-green-500/20 text-green-400 text-xs rounded-full">Active</span>
+                </div>
+                <div className="mb-6">
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-white/60 text-xs mb-1">Funding amount</p>
+                      <p className="font-mono font-medium">$125,000.00</p>
+                    </div>
+                    <div>
+                      <p className="text-white/60 text-xs mb-1">Term</p>
+                      <p className="font-mono font-medium">60 Days</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <p className="text-white/60 text-xs mb-1">Interest rate</p>
+                      <p className="font-mono font-medium">4.5% p.a.</p>
+                    </div>
+                    <div>
+                      <p className="text-white/60 text-xs mb-1">Status</p>
+                      <p className="font-mono font-medium">Funded</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="p-3 bg-white/5 rounded-lg border border-white/10 text-center">
+                  <p className="text-xs mb-1 text-white/60">Smart Contract ID</p>
+                  <p className="font-mono text-xs">0xF3b4...A92c</p>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
         <div>
-          <h2 className="text-2xl font-heading font-bold text-neutral-800 mb-1">Trade Finance</h2>
-          <p className="text-neutral-600">Quick access to financing through smart-contract approvals</p>
+          <h2 className="text-2xl font-heading font-bold text-neutral-800 mb-1">Choose Your Finance Option</h2>
+          <p className="text-neutral-600">Select from our range of specialized trade finance solutions</p>
         </div>
         <a href="#" className="mt-3 md:mt-0 text-primary-500 hover:text-primary-700 font-medium flex items-center">
-          View All Finance Options <span className="material-icons ml-1">arrow_forward</span>
+          View Comparison Guide <span className="material-icons ml-1">arrow_forward</span>
         </a>
       </div>
       
