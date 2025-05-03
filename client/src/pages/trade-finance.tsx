@@ -29,6 +29,7 @@ import {
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ethers } from "ethers";
 
 // Data types
 type FinanceContract = {
@@ -558,9 +559,9 @@ export default function TradeFinance() {
           <h2 className="text-2xl font-heading font-bold text-neutral-800 mb-1">Choose Your Finance Option</h2>
           <p className="text-neutral-600">Select from our range of specialized trade finance solutions</p>
         </div>
-        <a href="#" className="mt-3 md:mt-0 text-primary-500 hover:text-primary-700 font-medium flex items-center">
+        <Link href="/finance-comparison" className="mt-3 md:mt-0 text-primary-500 hover:text-primary-700 font-medium flex items-center">
           View Comparison Guide <span className="material-icons ml-1">arrow_forward</span>
-        </a>
+        </Link>
       </div>
       
       {/* Finance Options */}
@@ -674,7 +675,17 @@ export default function TradeFinance() {
             {isBlockchainLoading && (
               <span className="h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
             )}
-            {isConnected ? 'Refresh Connection' : 'Connect Wallet'}
+            {isConnected ? (
+              <>
+                <span className="material-icons text-sm mr-1.5">refresh</span>
+                Refresh Connection
+              </>
+            ) : (
+              <>
+                <span className="material-icons text-sm mr-1.5">account_balance_wallet</span>
+                Connect Wallet
+              </>
+            )}
           </Button>
         </div>
       </div>
