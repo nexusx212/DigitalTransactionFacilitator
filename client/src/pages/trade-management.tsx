@@ -1,18 +1,30 @@
-import { useState, useEffect, useRef, useContext } from "react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
+  Tabs, 
+  TabsContent, 
+  TabsList, 
+  TabsTrigger 
+} from "@/components/ui/tabs";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
+import {
+  Avatar,
+  AvatarFallback,
+  AvatarImage,
+} from "@/components/ui/avatar";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import ChatTranslator from '@/components/chat-translator';
+import { AdBanner } from '@/components/ad-banner';
+import { PartnersSection } from '@/components/partners-section';
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -20,322 +32,354 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
-import { motion } from "framer-motion";
-import { AppContext } from "@/context/app-context";
-import { ChatTranslator } from "@/components/chat-translator";
-import { PartnersSection } from "@/components/partners-section";
-import { AdBanner } from "@/components/ad-banner";
-
-// Mock data types
-type TradeContact = {
-  id: string;
-  name: string;
-  company: string;
-  avatar: string;
-  status: "online" | "offline" | "away";
-  country: string;
-  lastActive: Date;
-};
-
-type TradeRequest = {
-  id: string;
-  type: "incoming" | "outgoing";
-  name: string;
-  company: string;
-  avatar: string;
-  productName?: string;
-  message: string;
-  date: Date;
-  status: "pending" | "accepted" | "declined";
-};
-
-type ChatMessage = {
-  id: string;
-  senderId: string;
-  senderName: string;
-  content: string;
-  timestamp: Date;
-  isRead: boolean;
-};
-
-type ChatSession = {
-  id: string;
-  contact: TradeContact;
-  messages: ChatMessage[];
-  unreadCount: number;
-  lastMessage?: ChatMessage;
-};
 
 export default function TradeManagement() {
-  const { toast } = useToast();
-  const { user } = useContext(AppContext);
   const [activeTab, setActiveTab] = useState("chat");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeContactId, setActiveContactId] = useState<string | null>(null);
+  const [activeContactId, setActiveContactId] = useState<number | null>(null);
   const [newMessage, setNewMessage] = useState("");
-  const [filter, setFilter] = useState("all");
   const [activeTranslation, setActiveTranslation] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState("all");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Mock data for initial states
-  const [contacts, setContacts] = useState<TradeContact[]>([
-    {
-      id: "contact-1",
-      name: "John Doe",
-      company: "Global Exports Ltd.",
-      avatar: "",
-      status: "online",
-      country: "United States",
-      lastActive: new Date()
-    },
-    {
-      id: "contact-2",
-      name: "Linda Chen",
-      company: "Asian Markets Inc.",
-      avatar: "",
-      status: "offline",
-      country: "Singapore",
-      lastActive: new Date(Date.now() - 86400000) // 1 day ago
-    },
-    {
-      id: "contact-3",
-      name: "Mohammed Al-Fayed",
-      company: "Gulf Trade Partners",
-      avatar: "",
-      status: "away",
-      country: "United Arab Emirates",
-      lastActive: new Date(Date.now() - 3600000) // 1 hour ago
-    }
-  ]);
-  
-  const [tradeRequests, setTradeRequests] = useState<TradeRequest[]>([
-    {
-      id: "request-1",
-      type: "incoming",
-      name: "James Wilson",
-      company: "EuroTrade GmbH",
-      avatar: "",
-      productName: "Organic Cocoa Beans",
-      message: "Interested in purchasing your latest batch of organic cocoa beans. Can we discuss pricing and shipping terms?",
-      date: new Date(Date.now() - 172800000), // 2 days ago
-      status: "pending"
-    },
-    {
-      id: "request-2",
-      type: "outgoing",
-      name: "Fatima Nkosi",
-      company: "African Agri Solutions",
-      avatar: "",
-      productName: "Solar Irrigation Systems",
-      message: "Following up on our discussion about solar irrigation systems. We'd like to place an initial order for 10 units.",
-      date: new Date(Date.now() - 604800000), // 1 week ago
-      status: "accepted"
-    },
-    {
-      id: "request-3",
-      type: "incoming",
-      name: "Carlos Rodriguez",
-      company: "South American Exports",
-      avatar: "",
-      productName: "Coffee Beans",
-      message: "We have premium coffee beans available. Would you be interested in a sample shipment?",
-      date: new Date(Date.now() - 345600000), // 4 days ago
-      status: "declined"
-    }
-  ]);
-  
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([
+
+  // Dummy data
+  const [chatSessions, setChatSessions] = useState([
     {
       id: "chat-1",
-      contact: contacts[0],
+      contact: {
+        id: 1,
+        name: "John Doe",
+        company: "Global Imports Ltd",
+        country: "USA",
+        avatar: "",
+        status: "online",
+        tradeRole: "importer"
+      },
       messages: [
-        {
-          id: "msg-1",
-          senderId: "contact-1",
-          senderName: "John Doe",
-          content: "Hi there, I saw your listing for cotton fabrics. Do you ship to North America?",
-          timestamp: new Date(Date.now() - 3600000 * 2), // 2 hours ago
-          isRead: true
-        },
-        {
-          id: "msg-2",
-          senderId: "user",
-          senderName: user?.username || "You",
-          content: "Yes, we do ship to North America. We have partnerships with several logistics companies that specialize in textile shipping.",
-          timestamp: new Date(Date.now() - 3600000 * 1.5), // 1.5 hours ago
-          isRead: true
-        },
-        {
-          id: "msg-3",
-          senderId: "contact-1",
-          senderName: "John Doe",
-          content: "Great! What would be the lead time for an order of about 5,000 yards?",
-          timestamp: new Date(Date.now() - 3600000), // 1 hour ago
-          isRead: false
-        }
+        { id: "m1", content: "Hello, I'm interested in your cotton exports. Do you have availability for next month?", senderId: "contact-1", timestamp: new Date(2023, 4, 15, 10, 30).toISOString(), isRead: true },
+        { id: "m2", content: "Hi John! Yes, we have cotton available for export next month. What quantity are you looking for?", senderId: "user", timestamp: new Date(2023, 4, 15, 10, 35).toISOString(), isRead: true },
+        { id: "m3", content: "We need about 500 tons. What's your pricing model and delivery timeframe?", senderId: "contact-1", timestamp: new Date(2023, 4, 15, 10, 40).toISOString(), isRead: true },
+      ],
+      unreadCount: 0
+    },
+    {
+      id: "chat-2",
+      contact: {
+        id: 2,
+        name: "Maria Garcia",
+        company: "European Distributors SA",
+        country: "Spain",
+        avatar: "",
+        status: "away",
+        tradeRole: "importer"
+      },
+      messages: [
+        { id: "m4", content: "Buenos días, ¿tienen disponibilidad de productos agrícolas orgánicos?", senderId: "contact-2", timestamp: new Date(2023, 4, 16, 9, 10).toISOString(), isRead: true },
+        { id: "m5", content: "Good morning Maria! Yes, we have organic agricultural products available. What specifically are you looking for?", senderId: "user", timestamp: new Date(2023, 4, 16, 9, 15).toISOString(), isRead: true },
+        { id: "m6", content: "Estamos interesados en café orgánico, cacao y azúcar. ¿Qué volúmenes pueden suministrar?", senderId: "contact-2", timestamp: new Date(2023, 4, 16, 9, 20).toISOString(), isRead: false },
       ],
       unreadCount: 1
     },
     {
-      id: "chat-2",
-      contact: contacts[2],
+      id: "chat-3",
+      contact: {
+        id: 3,
+        name: "Akio Tanaka",
+        company: "Tokyo Traders Inc.",
+        country: "Japan",
+        avatar: "",
+        status: "offline",
+        tradeRole: "importer"
+      },
       messages: [
-        {
-          id: "msg-4",
-          senderId: "contact-3",
-          senderName: "Mohammed Al-Fayed",
-          content: "Hello, I'm interested in your agricultural machinery. Do you have any special models for desert conditions?",
-          timestamp: new Date(Date.now() - 86400000 * 2), // 2 days ago
-          isRead: true
-        },
-        {
-          id: "msg-5",
-          senderId: "user",
-          senderName: user?.username || "You",
-          content: "Hello Mohammed, yes we do. Our D-Series tractors are specially designed for arid conditions with enhanced cooling systems and sand filters.",
-          timestamp: new Date(Date.now() - 86400000), // 1 day ago
-          isRead: true
-        }
+        { id: "m7", content: "こんにちは、ナイジェリアのシアバターについて詳細情報をいただけますか？", senderId: "contact-3", timestamp: new Date(2023, 4, 14, 15, 5).toISOString(), isRead: true },
+        { id: "m8", content: "Hello Akio! I'd be happy to provide details about our Nigerian shea butter. What aspects are you most interested in?", senderId: "user", timestamp: new Date(2023, 4, 14, 15, 10).toISOString(), isRead: true },
+        { id: "m9", content: "価格と品質証明書について知りたいです。また、最小注文数量はありますか？", senderId: "contact-3", timestamp: new Date(2023, 4, 14, 15, 15).toISOString(), isRead: true },
+        { id: "m10", content: "We can provide all quality certificates and our pricing is competitive. Minimum order is 200kg. Would you like me to send our catalog?", senderId: "user", timestamp: new Date(2023, 4, 14, 15, 20).toISOString(), isRead: true },
       ],
       unreadCount: 0
     }
   ]);
 
-  // Find active chat session
-  const activeChatSession = chatSessions.find(
-    session => session.contact.id === activeContactId
+  const [tradeContacts, setTradeContacts] = useState([
+    {
+      id: 1,
+      name: "John Doe",
+      company: "Global Imports Ltd",
+      country: "USA",
+      avatar: "",
+      status: "online",
+      tradeRole: "importer",
+      lastActivity: new Date(2023, 5, 10).toISOString(),
+      products: ["Cotton", "Cocoa"],
+      isFavorite: false
+    },
+    {
+      id: 2,
+      name: "Maria Garcia",
+      company: "European Distributors SA",
+      country: "Spain",
+      avatar: "",
+      status: "away",
+      tradeRole: "importer",
+      lastActivity: new Date(2023, 5, 9).toISOString(),
+      products: ["Organic Coffee", "Shea Butter"],
+      isFavorite: true
+    },
+    {
+      id: 3,
+      name: "Akio Tanaka",
+      company: "Tokyo Traders Inc.",
+      country: "Japan",
+      avatar: "",
+      status: "offline",
+      tradeRole: "importer",
+      lastActivity: new Date(2023, 5, 5).toISOString(),
+      products: ["Textiles", "Shea Butter"],
+      isFavorite: false
+    },
+    {
+      id: 4,
+      name: "Chen Wei",
+      company: "Shanghai Exports Co.",
+      country: "China",
+      avatar: "",
+      status: "online",
+      tradeRole: "exporter",
+      lastActivity: new Date(2023, 5, 12).toISOString(),
+      products: ["Electronics", "Solar Panels"],
+      isFavorite: false
+    },
+    {
+      id: 5,
+      name: "Olabisi Adenuga",
+      company: "Lagos Commodities Ltd",
+      country: "Nigeria",
+      avatar: "",
+      status: "online",
+      tradeRole: "exporter",
+      lastActivity: new Date(2023, 5, 11).toISOString(),
+      products: ["Cashew Nuts", "Cocoa"],
+      isFavorite: true
+    },
+    {
+      id: 6,
+      name: "Fatima Al-Farsi",
+      company: "Gulf Trade Partners",
+      country: "UAE",
+      avatar: "",
+      status: "away",
+      tradeRole: "importer",
+      lastActivity: new Date(2023, 5, 8).toISOString(),
+      products: ["Textiles", "Agricultural Products"],
+      isFavorite: false
+    }
+  ]);
+
+  const [tradeRequests, setTradeRequests] = useState([
+    {
+      id: "req-1",
+      name: "Sarah Johnson",
+      company: "Canadian Imports Inc.",
+      avatar: "",
+      country: "Canada",
+      type: "incoming",
+      status: "pending",
+      date: new Date(2023, 4, 16).toISOString(),
+      message: "Hello, we are interested in sourcing organic cocoa beans from your suppliers. Could you provide information on your available quantities, pricing, and certification?"
+    },
+    {
+      id: "req-2",
+      name: "Mohamed Al-Farsi",
+      company: "Middle East Trade LLC",
+      avatar: "",
+      country: "Saudi Arabia",
+      type: "outgoing",
+      status: "accepted",
+      date: new Date(2023, 4, 15).toISOString(),
+      message: "I'd like to discuss a potential partnership for importing premium Nigerian textiles to Saudi Arabia. Please let me know your availability for a meeting."
+    },
+    {
+      id: "req-3",
+      name: "Rajiv Patel",
+      company: "Indian Spice Traders",
+      avatar: "",
+      country: "India",
+      type: "incoming",
+      status: "pending",
+      date: new Date(2023, 4, 14).toISOString(),
+      message: "We are looking for high-quality African spices, particularly from East Africa. Can you connect us with reliable suppliers?"
+    },
+    {
+      id: "req-4",
+      name: "Elena Vasquez",
+      company: "South American Distributors",
+      avatar: "",
+      country: "Brazil",
+      type: "outgoing",
+      status: "declined",
+      date: new Date(2023, 4, 13).toISOString(),
+      message: "Request for partnership in distributing African coffee beans in South American markets."
+    },
+    {
+      id: "req-5",
+      name: "Liu Wei",
+      company: "Asian Market Solutions",
+      avatar: "",
+      country: "China",
+      productName: "Premium Cashew Nuts",
+      type: "incoming",
+      status: "pending",
+      date: new Date(2023, 4, 12).toISOString(),
+      message: "Interested in establishing a regular supply of premium cashew nuts. Looking for 10 tons per month with organic certification."
+    }
+  ]);
+
+  // Apply filters to contacts
+  const applyContactFilters = (contacts) => {
+    let filtered = contacts;
+    
+    // Apply search filter
+    filtered = filtered.filter(contact =>
+      contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      contact.country.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    
+    // Apply role/status filters
+    if (activeFilter === "online") {
+      filtered = filtered.filter(contact => contact.status === "online");
+    } else if (activeFilter === "importers") {
+      filtered = filtered.filter(contact => contact.tradeRole === "importer");
+    } else if (activeFilter === "exporters") {
+      filtered = filtered.filter(contact => contact.tradeRole === "exporter");
+    } else if (activeFilter === "frequent") {
+      filtered = filtered.filter(contact => contact.isFavorite);
+    } else if (activeFilter === "recents") {
+      // Sort by last activity and take the top 10
+      filtered = [...filtered].sort((a, b) => 
+        new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime()
+      ).slice(0, 10);
+    }
+    
+    return filtered;
+  };
+
+  // Filter chat sessions based on search query
+  const filteredChatSessions = chatSessions.filter(session =>
+    session.contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    session.contact.company.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Handle sending a new message
+  // Filter contacts with applied filters
+  const filteredContacts = applyContactFilters(tradeContacts);
+
+  // Filter trade requests based on search query
+  const filteredRequests = tradeRequests.filter(request =>
+    request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    request.message.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  // Get active chat session
+  const activeChatSession = activeContactId ? 
+    chatSessions.find(session => session.contact.id === activeContactId) : null;
+
+  // Send a new message
   const handleSendMessage = () => {
     if (!newMessage.trim() || !activeContactId) return;
 
     const updatedSessions = chatSessions.map(session => {
       if (session.contact.id === activeContactId) {
-        const newMsg: ChatMessage = {
-          id: `msg-${Date.now()}`,
-          senderId: "user",
-          senderName: user?.username || "You",
-          content: newMessage,
-          timestamp: new Date(),
-          isRead: true
-        };
-        
         return {
           ...session,
-          messages: [...session.messages, newMsg],
-          lastMessage: newMsg
+          messages: [
+            ...session.messages,
+            {
+              id: `m-${Date.now()}`,
+              content: newMessage,
+              senderId: "user",
+              timestamp: new Date().toISOString(),
+              isRead: false
+            }
+          ]
         };
       }
       return session;
     });
-    
+
     setChatSessions(updatedSessions);
     setNewMessage("");
-    
-    // Simulate receiving a response after 2 seconds
-    setTimeout(() => {
-      const replies = [
-        "Thank you for the information. Let me discuss this with my team.",
-        "That sounds good. When can we schedule a call to discuss further?",
-        "I appreciate your prompt response. This is exactly what we need.",
-        "Perfect! I'll get back to you with our purchase order soon."
-      ];
-      
-      const randomReply = replies[Math.floor(Math.random() * replies.length)];
-      
-      const updatedSessionsWithReply = chatSessions.map(session => {
+  };
+
+  // Auto scroll to bottom of messages
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [activeChatSession?.messages]);
+
+  // Mark messages as read when changing active contact
+  useEffect(() => {
+    if (activeContactId) {
+      const updatedSessions = chatSessions.map(session => {
         if (session.contact.id === activeContactId) {
-          const replyMsg: ChatMessage = {
-            id: `msg-${Date.now()}`,
-            senderId: activeContactId,
-            senderName: session.contact.name,
-            content: randomReply,
-            timestamp: new Date(),
+          const updatedMessages = session.messages.map(msg => ({
+            ...msg,
             isRead: true
-          };
+          }));
           
           return {
             ...session,
-            messages: [...session.messages, replyMsg],
-            lastMessage: replyMsg
+            messages: updatedMessages,
+            unreadCount: 0
           };
         }
         return session;
       });
       
-      setChatSessions(updatedSessionsWithReply);
-    }, 2000);
-  };
+      setChatSessions(updatedSessions);
+    }
+  }, [activeContactId]);
 
-  // Handle accepting/declining trade requests
-  const handleTradeRequestAction = (requestId: string, action: "accept" | "decline") => {
+  // Handle trade request action (accept/decline)
+  const handleTradeRequestAction = (requestId: string, action: 'accept' | 'decline') => {
     const updatedRequests = tradeRequests.map(request => {
       if (request.id === requestId) {
         return {
           ...request,
-          status: action === "accept" ? "accepted" as const : "declined" as const
+          status: action === 'accept' ? 'accepted' : 'declined'
         };
       }
       return request;
     });
     
     setTradeRequests(updatedRequests);
-    
-    toast({
-      title: `Request ${action === "accept" ? "Accepted" : "Declined"}`,
-      description: `You have ${action === "accept" ? "accepted" : "declined"} the trade request.`,
-      variant: action === "accept" ? "default" : "destructive",
-    });
   };
 
-  // Scroll to bottom of messages when active chat changes
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [activeChatSession, chatSessions]);
-
-  // Filter contacts based on search query
-  const filteredContacts = contacts.filter(contact => 
-    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    contact.company.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Filter requests based on filter and search
-  const filteredRequests = tradeRequests.filter(request => {
-    const matchesSearch = request.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      request.company.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    if (filter === "all") return matchesSearch;
-    if (filter === "incoming") return request.type === "incoming" && matchesSearch;
-    if (filter === "outgoing") return request.type === "outgoing" && matchesSearch;
-    if (filter === "pending") return request.status === "pending" && matchesSearch;
-    
-    return matchesSearch;
-  });
-  
-  // Status indicators for contacts
-  const getStatusIndicator = (status: "online" | "offline" | "away") => {
+  // Get status indicator color
+  const getStatusIndicator = (status: string) => {
     switch (status) {
       case "online":
-        return "bg-success";
+        return "bg-green-500";
       case "away":
-        return "bg-warning";
-      case "offline":
-        return "bg-neutral-400";
+        return "bg-amber-500";
+      default:
+        return "bg-neutral-300";
     }
   };
 
-  // Get a color for the request status badge
-  const getRequestStatusColor = (status: "pending" | "accepted" | "declined") => {
+  // Get request status color
+  const getRequestStatusColor = (status: string) => {
     switch (status) {
-      case "pending":
-        return "bg-warning/10 text-warning border border-warning/20";
       case "accepted":
-        return "bg-success/10 text-success border border-success/20";
+        return "bg-green-100 text-green-700 border-green-200";
       case "declined":
+        return "bg-red-100 text-red-700 border-red-200";
+      case "pending":
+        return "bg-amber-100 text-amber-700 border-amber-200";
+      default:
         return "bg-destructive/10 text-destructive border border-destructive/20";
     }
   };
@@ -653,119 +697,220 @@ export default function TradeManagement() {
             </Button>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredContacts.map(contact => (
-              <motion.div
-                key={contact.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start space-x-4">
-                        <div className="relative">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage src={contact.avatar} alt={contact.name} />
-                            <AvatarFallback>{contact.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <span 
-                            className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${getStatusIndicator(contact.status)}`} 
-                          />
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{contact.name}</h3>
-                          <p className="text-sm text-neutral-500">{contact.company}</p>
-                          <div className="flex items-center mt-1">
-                            <span className="text-xs flex items-center text-neutral-500">
-                              <span className="material-icons text-xs mr-1">public</span>
-                              {contact.country}
-                            </span>
-                            <span className="mx-2 text-neutral-300">•</span>
-                            <span className="text-xs text-neutral-500">
-                              {contact.status === "online" 
-                                ? "Online now" 
-                                : contact.status === "away"
-                                  ? "Away"
-                                  : `Last active ${new Date(contact.lastActive).toLocaleDateString()}`
-                              }
-                            </span>
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {/* Contact Filters */}
+              <Card className="col-span-full">
+                <CardContent className="p-4 flex flex-wrap gap-3 justify-center md:justify-start">
+                  <Button 
+                    variant={activeFilter === "all" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter("all")}
+                    className="rounded-full"
+                  >
+                    All Contacts
+                  </Button>
+                  <Button 
+                    variant={activeFilter === "online" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter("online")}
+                    className="rounded-full"
+                  >
+                    <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
+                    Online
+                  </Button>
+                  <Button 
+                    variant={activeFilter === "frequent" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter("frequent")}
+                    className="rounded-full"
+                  >
+                    <span className="material-icons text-sm mr-1">star</span>
+                    Frequent
+                  </Button>
+                  <Button 
+                    variant={activeFilter === "importers" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter("importers")}
+                    className="rounded-full"
+                  >
+                    <span className="material-icons text-sm mr-1">shopping_cart</span>
+                    Importers
+                  </Button>
+                  <Button 
+                    variant={activeFilter === "exporters" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter("exporters")}
+                    className="rounded-full"
+                  >
+                    <span className="material-icons text-sm mr-1">local_shipping</span>
+                    Exporters
+                  </Button>
+                  <Button 
+                    variant={activeFilter === "recents" ? "default" : "outline"} 
+                    size="sm"
+                    onClick={() => setActiveFilter("recents")}
+                    className="rounded-full"
+                  >
+                    <span className="material-icons text-sm mr-1">history</span>
+                    Recent
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredContacts.map(contact => (
+                <motion.div
+                  key={contact.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start space-x-4">
+                          <div className="relative">
+                            <Avatar className="h-12 w-12">
+                              <AvatarImage src={contact.avatar} alt={contact.name} />
+                              <AvatarFallback>{contact.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                            </Avatar>
+                            <span 
+                              className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${getStatusIndicator(contact.status)}`} 
+                            />
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-1">
+                              <h3 className="font-medium">{contact.name}</h3>
+                              {contact.isFavorite && (
+                                <span className="material-icons text-amber-400 text-sm">star</span>
+                              )}
+                            </div>
+                            <p className="text-sm text-neutral-500">{contact.company}</p>
+                            <div className="flex items-center mt-1">
+                              <span className="text-xs flex items-center text-neutral-500">
+                                <span className="material-icons text-xs mr-1">public</span>
+                                {contact.country}
+                              </span>
+                              <span className="mx-2 text-neutral-300">•</span>
+                              <span className="text-xs text-neutral-500">
+                                {contact.status === "online" 
+                                  ? "Online now" 
+                                  : contact.status === "away"
+                                    ? "Away"
+                                    : "Offline"
+                                }
+                              </span>
+                            </div>
+                            {contact.tradeRole && (
+                              <Badge className="mt-2" variant="outline">
+                                {contact.tradeRole === "importer" ? "Importer" : "Exporter"}
+                              </Badge>
+                            )}
+                            {contact.products && contact.products.length > 0 && (
+                              <div className="mt-3 flex flex-wrap gap-1">
+                                {contact.products.map((product, index) => (
+                                  <Badge key={index} variant="secondary" className="text-xs">
+                                    {product}
+                                  </Badge>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </div>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <span className="material-icons">more_vert</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                              <span className="material-icons text-sm">
+                                {contact.isFavorite ? "star" : "star_outline"}
+                              </span>
+                              <span>{contact.isFavorite ? "Remove from Favorites" : "Add to Favorites"}</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                              <span className="material-icons text-sm">inventory</span>
+                              <span>View Products</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                              <span className="material-icons text-sm">person_remove</span>
+                              <span>Remove Contact</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
-                      <Button variant="ghost" size="icon">
-                        <span className="material-icons">more_vert</span>
-                      </Button>
-                    </div>
-                    
-                    <div className="flex justify-between mt-6">
-                      <Button 
-                        variant="outline" 
-                        className="flex items-center gap-1"
-                        onClick={() => {
-                          // Find if there's already a chat session with this contact
-                          const existingSession = chatSessions.find(
-                            session => session.contact.id === contact.id
-                          );
-                          
-                          if (!existingSession) {
-                            // Create a new chat session
-                            setChatSessions([
-                              ...chatSessions,
-                              {
-                                id: `chat-${Date.now()}`,
-                                contact,
-                                messages: [],
-                                unreadCount: 0
-                              }
-                            ]);
-                          }
-                          
-                          // Activate the chat tab and select this contact
-                          setActiveTab("chat");
-                          setActiveContactId(contact.id);
-                        }}
-                      >
-                        <span className="material-icons text-sm">chat</span>
-                        Message
-                      </Button>
-                      <Button variant="outline" className="flex items-center gap-1">
-                        <span className="material-icons text-sm">business</span>
-                        View Profile
-                      </Button>
-                      <Button variant="outline" className="flex items-center gap-1">
-                        <span className="material-icons text-sm">shopping_cart</span>
-                        Products
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-            
-            {filteredContacts.length === 0 && (
-              <div className="col-span-full p-10 text-center border rounded-lg bg-neutral-50">
-                <span className="material-icons text-5xl text-neutral-300 mb-3">people</span>
-                <h3 className="font-medium text-lg mb-2">No contacts found</h3>
-                <p className="text-neutral-500 mb-4">
-                  {searchQuery 
-                    ? `No results found for "${searchQuery}"`
-                    : "You don't have any trade connections yet"}
-                </p>
-                <Button className="flex items-center gap-2 mx-auto">
-                  <span className="material-icons">person_add</span>
-                  Add New Contact
-                </Button>
-              </div>
-            )}
+                      
+                      <div className="grid grid-cols-2 gap-2 mt-6">
+                        <Button 
+                          variant="outline" 
+                          className="flex items-center gap-1"
+                          onClick={() => {
+                            // Find if there's already a chat session with this contact
+                            const existingSession = chatSessions.find(
+                              session => session.contact.id === contact.id
+                            );
+                            
+                            if (!existingSession) {
+                              // Create a new chat session
+                              setChatSessions([
+                                ...chatSessions,
+                                {
+                                  id: `chat-${Date.now()}`,
+                                  contact,
+                                  messages: [],
+                                  unreadCount: 0
+                                }
+                              ]);
+                            }
+                            
+                            // Activate the chat tab and select this contact
+                            setActiveTab("chat");
+                            setActiveContactId(contact.id);
+                          }}
+                        >
+                          <span className="material-icons text-sm">chat</span>
+                          Message
+                        </Button>
+                        <Button 
+                          variant="outline"
+                          className="flex items-center gap-1"
+                        >
+                          <span className="material-icons text-sm">description</span>
+                          View Profile
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+              
+              {filteredContacts.length === 0 && (
+                <div className="col-span-full p-10 text-center border rounded-lg bg-neutral-50">
+                  <span className="material-icons text-5xl text-neutral-300 mb-3">people</span>
+                  <h3 className="font-medium text-lg mb-2">No contacts found</h3>
+                  <p className="text-neutral-500 mb-4">
+                    {searchQuery 
+                      ? `No results found for "${searchQuery}"`
+                      : "You don't have any trade contacts yet"}
+                  </p>
+                  <Button className="flex items-center gap-2 mx-auto">
+                    <span className="material-icons">person_add</span>
+                    Add New Contact
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </TabsContent>
         
         {/* Trade Requests Tab */}
         <TabsContent value="requests" className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div className="relative w-full sm:max-w-md">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="relative w-full max-w-md">
               <Input 
                 placeholder="Search requests..." 
                 value={searchQuery}
@@ -776,25 +921,46 @@ export default function TradeManagement() {
                 search
               </span>
             </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <Select 
-                value={filter} 
-                onValueChange={setFilter}
-              >
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Filter Requests" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Requests</SelectItem>
-                  <SelectItem value="incoming">Incoming</SelectItem>
-                  <SelectItem value="outgoing">Outgoing</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex gap-3">
               <Button className="flex items-center gap-2">
                 <span className="material-icons">add</span>
-                New Request
+                Create Request
               </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2">
+                    <span className="material-icons text-sm">filter_list</span>
+                    Filter
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                    <span className="material-icons text-sm">all_inbox</span>
+                    <span>All Requests</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                    <span className="material-icons text-sm">inbox</span>
+                    <span>Incoming Requests</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                    <span className="material-icons text-sm">outbox</span>
+                    <span>Outgoing Requests</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                    <span className="material-icons text-sm">pending</span>
+                    <span>Pending</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                    <span className="material-icons text-sm">check_circle</span>
+                    <span>Accepted</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                    <span className="material-icons text-sm">cancel</span>
+                    <span>Declined</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           
