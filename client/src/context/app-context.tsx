@@ -1,19 +1,21 @@
 import { createContext, ReactNode, useState, useEffect } from 'react';
-import { apiRequest } from '@/lib/queryClient';
+import { useAuth } from '@/hooks/use-auth';
 
 // Define types
 export type User = {
-  id: string;
+  id: number;
   name: string;
   email: string;
   username?: string;
-  photoUrl?: string;
+  photoUrl?: string | null;
+  createdAt?: Date;
 };
 
 type AppContextType = {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
+  selectedLanguage: string;
+  setSelectedLanguage: (lang: string) => void;
+  isOfflineMode: boolean;
+  toggleOfflineMode: () => void;
   login: (username: string, password: string) => Promise<User>;
   register: (userData: any) => Promise<User>;
   logout: () => void;
