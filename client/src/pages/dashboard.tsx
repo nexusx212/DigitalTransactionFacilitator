@@ -117,6 +117,9 @@ export default function Dashboard() {
                 <a href="/marketplace" className="bg-gradient-to-r from-teal-500 to-emerald-600 text-white hover:from-teal-600 hover:to-emerald-700 font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
                   Explore Marketplace
                 </a>
+                <a href="/training" className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+                  Start Training
+                </a>
               </motion.div>
             </div>
             <div className="hidden lg:block lg:col-span-5">
@@ -222,7 +225,10 @@ export default function Dashboard() {
             <CardContent className="p-6 bg-gradient-to-b from-white to-gray-50">
               <h3 className="text-xl font-heading font-semibold mb-2">Trade Expertise Training</h3>
               <p className="text-neutral-600 mb-4">Build your export capabilities through our certified learning modules and resources.</p>
-              <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold shadow-sm hover:from-purple-600 hover:to-purple-700">Certification Available</Badge>
+              <div className="flex items-center justify-between">
+                <Badge className="bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold shadow-sm hover:from-purple-600 hover:to-purple-700">Certification Available</Badge>
+                <a href="/training" className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 text-xs font-semibold px-3 py-1.5 rounded-md shadow transition-all">Start Training</a>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -303,7 +309,10 @@ export default function Dashboard() {
             
             <div className="mt-8 flex flex-wrap items-center gap-4">
               <a href="/trade-finance" className="bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
-                Get Started
+                Apply for Finance
+              </a>
+              <a href="/training" className="bg-gradient-to-r from-purple-500 to-indigo-600 text-white hover:from-purple-600 hover:to-indigo-700 font-semibold px-6 py-3 rounded-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all">
+                Start Training
               </a>
               <a href="#" className="bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-primary-700 font-semibold px-6 py-3 rounded-lg shadow-md hover:shadow-lg border border-gray-200 transform hover:-translate-y-1 transition-all flex items-center">
                 Learn More <span className="material-icons ml-1">arrow_forward</span>
