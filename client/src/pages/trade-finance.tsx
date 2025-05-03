@@ -761,9 +761,13 @@ export default function TradeFinance() {
                       className="hidden"
                       accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                       multiple
+                      onChange={handleFileChange}
                     />
                   </div>
                   <p className="text-xs text-center text-neutral-500 mt-2">Uploading all required documents will speed up the approval process</p>
+                  
+                  {/* Show uploaded files */}
+                  {renderUploadedFilesList()}
                 </div>
                 
                 {/* Factoring specific fields */}
