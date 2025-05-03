@@ -12,10 +12,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { AppContext } from "@/context/app-context";
 import { ChatTranslator } from "@/components/chat-translator";
+import { PartnersSection } from "@/components/partners-section";
+import { AdBanner } from "@/components/ad-banner";
 
 // Mock data types
 type TradeContact = {
@@ -332,10 +342,73 @@ export default function TradeManagement() {
 
   return (
     <section className="mb-16 fade-in">
+      <AdBanner type="horizontal" position="top" className="mb-6" />
+      
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
         <div>
           <h2 className="text-2xl font-heading font-bold text-neutral-800 mb-1">Trade Management</h2>
           <p className="text-neutral-600">Connect, chat, and manage your trade partnerships</p>
+        </div>
+        
+        <div className="flex mt-4 md:mt-0 gap-3">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <span className="material-icons text-sm">add_circle</span>
+                Create New
+                <span className="material-icons text-sm">expand_more</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>Create New</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <span className="material-icons text-sm text-primary">chat</span>
+                <span>Start Trade Chat</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <span className="material-icons text-sm text-primary">person_add</span>
+                <span>Add Trade Contact</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <span className="material-icons text-sm text-primary">description</span>
+                <span>Send Trade Request</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <span className="material-icons text-sm text-primary">payments</span>
+                <span>Initialize Escrow</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <span className="material-icons">more_vert</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <span className="material-icons text-sm">settings</span>
+                <span>Trade Settings</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <span className="material-icons text-sm">cloud_download</span>
+                <span>Export Contacts</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <span className="material-icons text-sm">content_copy</span>
+                <span>Import Contacts</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                <span className="material-icons text-sm">help_outline</span>
+                <span>Help & Guidelines</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
