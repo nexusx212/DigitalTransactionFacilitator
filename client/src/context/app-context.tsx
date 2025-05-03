@@ -1,25 +1,6 @@
-import { createContext, ReactNode, useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-
-// Define types
-export type User = {
-  id: number;
-  name: string;
-  email: string;
-  username?: string;
-  photoUrl?: string | null;
-  createdAt?: Date;
-};
+import { createContext, ReactNode, useState } from 'react';
 
 type AppContextType = {
-  selectedLanguage: string;
-  setSelectedLanguage: (lang: string) => void;
-  isOfflineMode: boolean;
-  toggleOfflineMode: () => void;
-  login: (username: string, password: string) => Promise<User>;
-  register: (userData: any) => Promise<User>;
-  logout: () => void;
-  updateUser: (userData: Partial<User>) => void;
   selectedLanguage: string;
   setSelectedLanguage: (lang: string) => void;
   isOfflineMode: boolean;
@@ -28,13 +9,6 @@ type AppContextType = {
 
 // Create context with default values
 export const AppContext = createContext<AppContextType>({
-  user: null,
-  isAuthenticated: false,
-  isLoading: true,
-  login: async () => ({ id: '', name: '', email: '' }),
-  register: async () => ({ id: '', name: '', email: '' }),
-  logout: () => {},
-  updateUser: () => {},
   selectedLanguage: 'en',
   setSelectedLanguage: () => {},
   isOfflineMode: false,
@@ -43,83 +17,8 @@ export const AppContext = createContext<AppContextType>({
 
 // Provider component
 export const AppProvider = ({ children }: { children: ReactNode }) => {
-  // For demo purposes, we'll use a default user while implementing proper auth
-  // In a production app, we would use localStorage and a proper auth system
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [isOfflineMode, setIsOfflineMode] = useState(false);
-  
-  // Check if user is already logged in on mount
-  useEffect(() => {
-    const checkAuthStatus = async () => {
-      // Add a small delay to ensure UI renders correctly before auth check
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      try {
-        // Try to fetch the current user
-        const response = await apiRequest('GET', '/api/user');
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        }
-      } catch (error) {
-        // If error, user is not authenticated
-        console.log('Not authenticated');
-      } finally {
-        // For demo purposes, we'll simulate a logged-in user
-        // Remove this in a production environment
-        if (!user) {
-          setUser({
-            id: 'user-1',
-            name: 'Sarah Johnson',
-            email: 'sarah@company.com',
-            username: 'sarahj',
-            photoUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'
-          });
-        }
-        
-        // Set isLoading to false after a short delay to ensure UI has time to render
-        setTimeout(() => {
-          setIsLoading(false);
-        }, 300);
-      }
-    };
-    
-    checkAuthStatus();
-  }, []);
-  
-  const login = async (username: string, password: string): Promise<User> => {
-    try {
-      const response = await apiRequest('POST', '/api/auth/login', { username, password });
-      const userData = await response.json();
-      setUser(userData);
-      return userData;
-    } catch (error) {
-      throw new Error('Login failed');
-    }
-  };
-  
-  const register = async (userData: any): Promise<User> => {
-    try {
-      const response = await apiRequest('POST', '/api/auth/register', userData);
-      const newUser = await response.json();
-      return newUser;
-    } catch (error) {
-      throw new Error('Registration failed');
-    }
-  };
-  
-  const logout = () => {
-    // In a real app, we would call an API endpoint to invalidate the session
-    setUser(null);
-  };
-  
-  const updateUser = (userData: Partial<User>) => {
-    if (user) {
-      setUser({ ...user, ...userData });
-    }
-  };
   
   const toggleOfflineMode = () => {
     setIsOfflineMode(!isOfflineMode);
@@ -127,13 +26,6 @@ export const AppProvider = ({ children }: { children: ReactNode }) => {
   
   // Value to be provided to consumers
   const contextValue: AppContextType = {
-    user,
-    isAuthenticated: !!user,
-    isLoading,
-    login,
-    register,
-    logout,
-    updateUser,
     selectedLanguage,
     setSelectedLanguage,
     isOfflineMode,
