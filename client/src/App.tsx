@@ -11,6 +11,7 @@ import Chat from "@/pages/chat";
 import AuthPage from "@/pages/auth-page";
 import { AppProvider } from "@/context/app-context";
 import { AuthProvider } from "@/hooks/use-auth";
+import { I18nProvider } from "@/hooks/use-i18n";
 import { lazy, Suspense, useEffect, useState, useContext } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -28,7 +29,11 @@ const LazyWallet = lazy(() => import("@/pages/wallet"));
 const LazyChat = lazy(() => import("@/pages/chat"));
 const LazyAuthPage = lazy(() => import("@/pages/auth-page"));
 const LazyBadgesDemo = lazy(() => import("@/pages/badges-demo"));
-const LazyTradeManagement = lazy(() => import("@/pages/trade-management"));
+// New pages
+const LazyProfilePage = lazy(() => import("@/pages/profile"));
+const LazySettingsPage = lazy(() => import("@/pages/settings"));
+const LazyHelpSupportPage = lazy(() => import("@/pages/help-support"));
+const LazyUpgradePage = lazy(() => import("@/pages/upgrade"));
 
 // Loading indicator component
 function LoadingIndicator() {
@@ -117,8 +122,11 @@ function App() {
       <ProtectedRoute path="/training" component={LazyTraining} />
       <ProtectedRoute path="/wallet" component={LazyWallet} />
       <ProtectedRoute path="/chat/:id" component={LazyChat} />
+      <ProtectedRoute path="/profile" component={LazyProfilePage} />
+      <ProtectedRoute path="/settings" component={LazySettingsPage} />
+      <ProtectedRoute path="/help-support" component={LazyHelpSupportPage} />
+      <ProtectedRoute path="/upgrade" component={LazyUpgradePage} />
       <ProtectedRoute path="/badges" component={LazyBadgesDemo} />
-      <ProtectedRoute path="/trade-management" component={LazyTradeManagement} />
       <Route path="/auth" component={LazyAuthPage} />
       <Route component={NotFound} />
     </Switch>
@@ -127,14 +135,16 @@ function App() {
   return (
     <AuthProvider>
       <AppProvider>
-        <TooltipProvider>
-          <Toaster />
-          <AppShell isAuthPage={isAuthPage}>
-            <Suspense fallback={<LoadingIndicator />}>
-              <Router />
-            </Suspense>
-          </AppShell>
-        </TooltipProvider>
+        <I18nProvider>
+          <TooltipProvider>
+            <Toaster />
+            <AppShell isAuthPage={isAuthPage}>
+              <Suspense fallback={<LoadingIndicator />}>
+                <Router />
+              </Suspense>
+            </AppShell>
+          </TooltipProvider>
+        </I18nProvider>
       </AppProvider>
     </AuthProvider>
   );

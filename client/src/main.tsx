@@ -4,6 +4,7 @@ import "./index.css";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import "./lib/i18n";
+import { I18nProvider } from "./hooks/use-i18n";
 
 // Register service worker - do it later to improve initial page load
 const registerSW = () => {
