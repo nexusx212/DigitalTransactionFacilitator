@@ -8,12 +8,16 @@ import { User as SelectUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
+type LogoutResponse = {
+  message: string;
+};
+
 type AuthContextType = {
   user: SelectUser | null;
   isLoading: boolean;
   error: Error | null;
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
-  logoutMutation: UseMutationResult<void, Error, void>;
+  logoutMutation: UseMutationResult<LogoutResponse, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
 };
 
@@ -91,22 +95,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("POST", "/api/logout");
+      const res = await apiRequest("POST", "/api/logout");
+      return await res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data: { message: string }) => {
+      // Clear all query cache to ensure complete data reset
+      queryClient.clear();
+      
+      // Explicitly set user to null to ensure UI updates immediately
       queryClient.setQueryData(["/api/user"], null);
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out",
         variant: "default",
       });
-      // Redirect to auth page after successful logout
+      
+      // Invalidate the session cookie instantly
+      document.cookie = "connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
+      // We'll use location to navigate to auth page, because on logout we want a full page reload
+      // This ensures all React Query caches and app state are completely reset
       window.location.href = '/auth';
     },
     onError: (error: Error) => {
+      console.error("Logout error:", error);
       toast({
         title: "Logout failed",
-        description: error.message,
+        description: "There was a problem logging out. Please try again.",
         variant: "destructive",
       });
     },

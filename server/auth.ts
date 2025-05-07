@@ -127,14 +127,30 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
+    if (!req.isAuthenticated()) {
+      return res.status(200).json({ message: "No active session" });
+    }
+    
     req.logout((err) => {
       if (err) return next(err);
+      
+      // Destroy the session
       req.session.destroy((sessionErr) => {
         if (sessionErr) {
           console.error("Session destruction error:", sessionErr);
+          return next(sessionErr);
         }
-        res.clearCookie("connect.sid");
-        res.sendStatus(200);
+        
+        // Clear the session cookie with proper options that match creation
+        res.clearCookie("connect.sid", {
+          path: "/",
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: 'lax',
+        });
+        
+        console.log("User successfully logged out");
+        return res.status(200).json({ message: "Logout successful" });
       });
     });
   });

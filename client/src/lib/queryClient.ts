@@ -2,8 +2,33 @@ import { QueryClient, QueryFunction } from "@tanstack/react-query";
 
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
-    const text = (await res.text()) || res.statusText;
-    throw new Error(`${res.status}: ${text}`);
+    const contentType = res.headers.get('content-type');
+    // Try to get a structured error message if available
+    let errorMessage: string;
+    
+    if (contentType && contentType.includes('application/json')) {
+      try {
+        const errorData = await res.json();
+        errorMessage = errorData.message || errorData.error || res.statusText;
+      } catch (e) {
+        // If JSON parsing fails, fall back to raw text
+        errorMessage = res.statusText;
+      }
+    } else {
+      // If not JSON, get raw text
+      errorMessage = await res.text() || res.statusText;
+    }
+    
+    // Special handling for auth errors
+    if (res.status === 401) {
+      // Redirect to auth page if user tries to access protected resource without authentication
+      if (window.location.pathname !== '/auth') {
+        console.warn('Authentication required, redirecting to login');
+        window.location.href = '/auth';
+      }
+    }
+    
+    throw new Error(`${res.status}: ${errorMessage}`);
   }
 }
 
