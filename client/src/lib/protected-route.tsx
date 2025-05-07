@@ -45,6 +45,19 @@ export function ProtectedRoute({
   }
 
   if (!user) {
+    // Force direct browser redirect to /auth rather than using Redirect component
+    // to ensure a complete page reload that clears all state
+    if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
+      window.location.href = '/auth';
+      return (
+        <Route path={path}>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" />
+          </div>
+        </Route>
+      );
+    }
+    
     return (
       <Route path={path}>
         <Redirect to="/auth" />
