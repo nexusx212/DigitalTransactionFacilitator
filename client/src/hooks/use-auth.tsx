@@ -135,9 +135,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "Redirecting to login page...",
       });
       
-      // FORCE a hard redirect to login page - this is the most reliable way
-      // to ensure all state is cleared and the user is truly logged out
-      window.location.replace("/auth");
+      // FORCE a hard redirect to login page with a timestamp parameter to avoid caching
+      // and prevent any potential client-side redirection issues
+      console.log("Redirecting to auth page from logout success handler");
+      setTimeout(() => {
+        // Add a random query parameter to ensure we never get a cached page
+        const timestamp = new Date().getTime();
+        window.location.href = `/auth?nocache=${timestamp}`; 
+      }, 250);
     },
     onError: () => {
       // Even on error, still perform the client-side logout
@@ -159,8 +164,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         description: "Redirecting to login page",
       });
       
-      // Hard redirect
-      window.location.replace("/auth");
+      // Hard redirect with debug
+      console.log("Redirecting to auth page from logout error handler");
+      setTimeout(() => {
+        // Add a random query parameter to ensure we never get a cached page
+        const timestamp = new Date().getTime();
+        window.location.href = `/auth?nocache=${timestamp}`;
+      }, 250);
     },
   });
 
