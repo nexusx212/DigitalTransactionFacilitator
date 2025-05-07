@@ -13,65 +13,66 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, LogIn, UserPlus, CheckCircle2, AlertCircle } from 'lucide-react';
 
 // Form validation schemas
 const loginSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
+  rememberMe: z.boolean().optional(),
 });
 
 const registerSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
+  username: z.string().min(3, 'Username must be at least 3 characters')
+    .regex(/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores and dashes'),
   email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  password: z.string().min(8, 'Password must be at least 8 characters')
+    .regex(/.*[A-Z].*/, 'Password must contain at least one uppercase letter')
+    .regex(/.*[a-z].*/, 'Password must contain at least one lowercase letter')
+    .regex(/.*\d.*/, 'Password must contain at least one number'),
+  confirmPassword: z.string(),
+  company: z.string().optional(),
+  country: z.string().optional(),
+  role: z.enum(['importer', 'exporter', 'both']),
+  terms: z.literal(true, {
+    errorMap: () => ({ message: 'You must accept the terms and conditions' }),
+  }),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ["confirmPassword"],
+  path: ['confirmPassword'],
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
-  const [activeTab, setActiveTab] = useState<string>('login');
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [, navigate] = useLocation();
+  const [activeTab, setActiveTab] = useState('login');
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const { loginMutation, registerMutation, user } = useAuth();
+  const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const { user, loginMutation, registerMutation } = useAuth();
 
-  // Redirect if user is already logged in, but with a slight delay to allow page to render first
-  const [pageLoaded, setPageLoaded] = useState(false);
-  
+  // Redirect to dashboard if already logged in
   useEffect(() => {
-    // Set a flag after the component has mounted
-    const timer = setTimeout(() => {
-      setPageLoaded(true);
-    }, 500); // Short delay to ensure the page renders first
-    
-    return () => clearTimeout(timer);
-  }, []);
-  
-  useEffect(() => {
-    // Only redirect after the page has had time to load
-    if (pageLoaded && user && user.id) {
-      navigate('/');
+    if (user) {
+      setLocation('/');
     }
-  }, [user, navigate, pageLoaded]);
+  }, [user, setLocation]);
 
-  // Login form setup
+  // Setup login form with validation
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: '',
       password: '',
+      rememberMe: false,
     },
   });
 
-  // Register form setup
+  // Setup registration form with validation
   const registerForm = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -80,344 +81,448 @@ export default function AuthPage() {
       email: '',
       password: '',
       confirmPassword: '',
+      company: '',
+      country: '',
+      role: 'both',
+      terms: false,
     },
   });
 
-  // Form submission handlers
-  const onLoginSubmit = async (values: LoginFormValues) => {
-    setIsLoggingIn(true);
-    loginMutation.mutate(values, {
-      onSuccess: () => {
-        toast({
-          title: 'Login Successful',
-          description: 'Welcome back to DTFS!',
-          variant: 'default',
-        });
-        navigate('/');
-      },
-      onError: (error: any) => {
-        toast({
-          title: 'Login Failed',
-          description: error.message || 'Please check your credentials and try again.',
-          variant: 'destructive',
-        });
-      },
-      onSettled: () => {
-        setIsLoggingIn(false);
-      }
+  // Handle login form submission
+  const onLoginSubmit = (values: LoginFormValues) => {
+    loginMutation.mutate({
+      username: values.username,
+      password: values.password,
     });
   };
 
-  const onRegisterSubmit = async (values: RegisterFormValues) => {
-    setIsRegistering(true);
-    // Remove confirmPassword since it's not part of our API schema
-    const { confirmPassword, ...userData } = values;
+  // Handle registration form submission
+  const onRegisterSubmit = (values: RegisterFormValues) => {
+    const { confirmPassword, terms, ...registrationData } = values;
     
-    registerMutation.mutate(userData, {
-      onSuccess: () => {
-        toast({
-          title: 'Registration Successful',
-          description: 'Your account has been created! You can now log in.',
-          variant: 'default',
-        });
-        setActiveTab('login');
-        loginForm.setValue('username', registerForm.getValues('username'));
-      },
-      onError: (error: any) => {
-        toast({
-          title: 'Registration Failed',
-          description: error.message || 'There was a problem creating your account.',
-          variant: 'destructive',
-        });
-      },
-      onSettled: () => {
-        setIsRegistering(false);
-      }
-    });
+    registerMutation.mutate(registrationData);
   };
+
+  // Detect when redirecting to show a loading state
+  useEffect(() => {
+    if (loginMutation.isSuccess || registerMutation.isSuccess) {
+      setIsRedirecting(true);
+      const timer = setTimeout(() => {
+        setLocation('/');
+      }, 1500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [loginMutation.isSuccess, registerMutation.isSuccess, setLocation]);
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left side - Authentication forms */}
-      <div className="w-full md:w-1/2 flex items-center justify-center p-4 md:p-8 bg-white">
-        <Card className="w-full max-w-md shadow-xl border-0">
-          <CardHeader className="text-center space-y-1">
-            <CardTitle className="text-2xl font-bold tracking-tight">
-              Welcome to DTFS
-            </CardTitle>
-            <CardDescription>
-              Digital Trade Finance System for global commerce
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+    <div className="min-h-screen flex">
+      {/* Left side: Auth forms */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center p-8">
+        <div className="w-full max-w-md mx-auto">
+          <div className="flex items-center space-x-3 mb-8">
+            <div className="gradient-primary w-12 h-12 rounded-xl flex items-center justify-center text-white shadow-lg">
+              <span className="font-heading font-bold text-xl">D</span>
+            </div>
+            <div>
+              <h1 className="font-heading font-bold text-2xl text-neutral-800">DTFS</h1>
+              <div className="text-sm text-neutral-500">Digital Trade Finance System</div>
+            </div>
+          </div>
+
+          {isRedirecting ? (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <div className="flex flex-col items-center py-10">
+                  <CheckCircle2 className="h-16 w-16 text-primary mb-4 animate-bounce" />
+                  <h2 className="text-xl font-semibold mb-2">Authentication Successful</h2>
+                  <p className="text-neutral-600 mb-4">Redirecting you to the dashboard...</p>
+                  <Loader2 className="h-5 w-5 animate-spin text-neutral-400" />
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Tabs defaultValue="login" value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Register</TabsTrigger>
               </TabsList>
-              
-              {/* Login Form */}
+
+              {/* Login Tab */}
               <TabsContent value="login">
-                <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                    <FormField
-                      control={loginForm.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Enter your username" 
-                              {...field} 
-                              autoComplete="username"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={loginForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Enter your password" 
-                              {...field} 
-                              autoComplete="current-password"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full mt-6" 
-                      disabled={isLoggingIn}
-                    >
-                      {isLoggingIn ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Signing in...
-                        </>
-                      ) : (
-                        <>
-                          <LogIn className="mr-2 h-4 w-4" />
-                          Sign In
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </Form>
-                
-                <div className="mt-4 text-center text-sm">
-                  <span className="text-muted-foreground">Don't have an account?</span>{' '}
-                  <button 
-                    onClick={() => setActiveTab('register')} 
-                    className="text-primary hover:underline transition-all font-medium"
-                  >
-                    Register now
-                  </button>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Welcome Back</CardTitle>
+                    <CardDescription>Enter your credentials to access your account</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...loginForm}>
+                      <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                        <FormField
+                          control={loginForm.control}
+                          name="username"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Username</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  placeholder="Enter your username" 
+                                  {...field} 
+                                  autoComplete="username"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={loginForm.control}
+                          name="password"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Password</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="password" 
+                                  placeholder="Enter your password" 
+                                  {...field} 
+                                  autoComplete="current-password"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="flex items-center justify-between">
+                          <FormField
+                            control={loginForm.control}
+                            name="rememberMe"
+                            render={({ field }) => (
+                              <FormItem className="flex flex-row items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={field.value}
+                                    onCheckedChange={field.onChange}
+                                  />
+                                </FormControl>
+                                <FormLabel className="text-sm font-normal cursor-pointer">Remember me</FormLabel>
+                              </FormItem>
+                            )}
+                          />
+                          <a href="#" className="text-sm text-primary hover:underline">Forgot password?</a>
+                        </div>
+
+                        <Button 
+                          type="submit" 
+                          className="w-full"
+                          disabled={loginMutation.isPending}
+                        >
+                          {loginMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Logging in...
+                            </>
+                          ) : (
+                            <>
+                              <LogIn className="mr-2 h-4 w-4" />
+                              Login
+                            </>
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                  <CardFooter className="flex flex-col">
+                    <Separator className="my-4" />
+                    <div className="text-sm text-center text-neutral-600">
+                      Don't have an account?{' '}
+                      <button 
+                        className="text-primary hover:underline font-medium" 
+                        onClick={() => setActiveTab('register')}
+                      >
+                        Create one now
+                      </button>
+                    </div>
+                  </CardFooter>
+                </Card>
               </TabsContent>
-              
-              {/* Register Form */}
+
+              {/* Register Tab */}
               <TabsContent value="register">
-                <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
-                    <FormField
-                      control={registerForm.control}
-                      name="name"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Enter your full name" 
-                              {...field} 
-                              autoComplete="name"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="username"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Username</FormLabel>
-                          <FormControl>
-                            <Input 
-                              placeholder="Choose a username" 
-                              {...field} 
-                              autoComplete="username"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="email"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Email</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="email" 
-                              placeholder="Enter your email" 
-                              {...field} 
-                              autoComplete="email"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="password"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Create a password" 
-                              {...field} 
-                              autoComplete="new-password"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <FormField
-                      control={registerForm.control}
-                      name="confirmPassword"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
-                          <FormControl>
-                            <Input 
-                              type="password" 
-                              placeholder="Confirm your password" 
-                              {...field} 
-                              autoComplete="new-password"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    <Button 
-                      type="submit" 
-                      className="w-full mt-6" 
-                      disabled={isRegistering}
-                    >
-                      {isRegistering ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating Account...
-                        </>
-                      ) : (
-                        <>
-                          <UserPlus className="mr-2 h-4 w-4" />
-                          Create Account
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </Form>
-                
-                <div className="mt-4 text-center text-sm">
-                  <span className="text-muted-foreground">Already have an account?</span>{' '}
-                  <button 
-                    onClick={() => setActiveTab('login')} 
-                    className="text-primary hover:underline transition-all font-medium"
-                  >
-                    Sign in
-                  </button>
-                </div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Create an Account</CardTitle>
+                    <CardDescription>Join DTFS to access trade finance solutions</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...registerForm}>
+                      <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={registerForm.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Full Name</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Enter your full name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={registerForm.control}
+                            name="username"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Username</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Choose a username" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={registerForm.control}
+                          name="email"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Email</FormLabel>
+                              <FormControl>
+                                <Input 
+                                  type="email" 
+                                  placeholder="Enter your email address" 
+                                  {...field} 
+                                  autoComplete="email"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={registerForm.control}
+                            name="password"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Password</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="password" 
+                                    placeholder="Create a password" 
+                                    {...field} 
+                                    autoComplete="new-password"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={registerForm.control}
+                            name="confirmPassword"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Confirm Password</FormLabel>
+                                <FormControl>
+                                  <Input 
+                                    type="password" 
+                                    placeholder="Confirm your password" 
+                                    {...field} 
+                                    autoComplete="new-password"
+                                  />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <FormField
+                            control={registerForm.control}
+                            name="company"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Company (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Your company name" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+
+                          <FormField
+                            control={registerForm.control}
+                            name="country"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Country (Optional)</FormLabel>
+                                <FormControl>
+                                  <Input placeholder="Your country" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+
+                        <FormField
+                          control={registerForm.control}
+                          name="role"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>I am a</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select your role" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="importer">Importer</SelectItem>
+                                  <SelectItem value="exporter">Exporter</SelectItem>
+                                  <SelectItem value="both">Both Importer & Exporter</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+
+                        <FormField
+                          control={registerForm.control}
+                          name="terms"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0 p-4 bg-neutral-50 rounded-md">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value}
+                                  onCheckedChange={field.onChange}
+                                />
+                              </FormControl>
+                              <div className="space-y-1 leading-none">
+                                <FormLabel>
+                                  I agree to the{' '}
+                                  <a href="#" className="text-primary hover:underline">
+                                    Terms of Service
+                                  </a>{' '}
+                                  and{' '}
+                                  <a href="#" className="text-primary hover:underline">
+                                    Privacy Policy
+                                  </a>
+                                </FormLabel>
+                                <FormMessage />
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+
+                        <Button 
+                          type="submit" 
+                          className="w-full"
+                          disabled={registerMutation.isPending}
+                        >
+                          {registerMutation.isPending ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Creating Account...
+                            </>
+                          ) : (
+                            <>
+                              <UserPlus className="mr-2 h-4 w-4" />
+                              Create Account
+                            </>
+                          )}
+                        </Button>
+                      </form>
+                    </Form>
+                  </CardContent>
+                  <CardFooter className="flex flex-col">
+                    <Separator className="my-4" />
+                    <div className="text-sm text-center text-neutral-600">
+                      Already have an account?{' '}
+                      <button 
+                        className="text-primary hover:underline font-medium" 
+                        onClick={() => setActiveTab('login')}
+                      >
+                        Log in here
+                      </button>
+                    </div>
+                  </CardFooter>
+                </Card>
               </TabsContent>
             </Tabs>
-          </CardContent>
-          <CardFooter className="flex flex-col space-y-4 pt-0">
-            <Separator className="my-2" />
-            <div className="text-center text-sm text-muted-foreground">
-              By continuing, you agree to our
-              <button className="text-primary mx-1 hover:underline">Terms of Service</button>
-              and
-              <button className="text-primary mx-1 hover:underline">Privacy Policy</button>
-            </div>
-          </CardFooter>
-        </Card>
+          )}
+        </div>
       </div>
-      
-      {/* Right side - Hero content */}
-      <div className="w-full md:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-800 text-white p-8 flex flex-col justify-center items-center hidden md:flex">
-        <div className="max-w-lg space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-4xl font-bold tracking-tight">Digital Trade Finance System</h1>
-            <p className="text-xl opacity-90">
-              Your gateway to seamless international trade and finance management.
+
+      {/* Right side: Promotional content */}
+      <div className="hidden lg:block lg:w-1/2 bg-primary-700">
+        <div className="h-full p-8 flex flex-col justify-center items-center text-white">
+          <div className="max-w-lg text-center mb-8">
+            <h2 className="text-4xl font-heading font-bold mb-4">
+              Streamline Your Trade Finance Operations
+            </h2>
+            <p className="mb-8 text-primary-100">
+              DTFS provides a secure, end-to-end digital platform for all your trade finance needs, 
+              connecting exporters and importers worldwide while ensuring fast, secure transactions.
             </p>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <CheckCircle2 className="h-6 w-6 text-green-400 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-lg">Global Trade Marketplace</h3>
-                <p className="opacity-80">Connect with trusted partners worldwide for importing and exporting goods</p>
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center mb-3">
+                  <span className="material-icons mr-2">payments</span>
+                  <h3 className="font-medium">Secure Payments</h3>
+                </div>
+                <p className="text-sm text-primary-100">Blockchain-secured transactions with full audit trail</p>
               </div>
-            </div>
-            
-            <div className="flex items-start space-x-3">
-              <CheckCircle2 className="h-6 w-6 text-green-400 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-lg">Secure Payment Solutions</h3>
-                <p className="opacity-80">Manage transactions with escrow services and dispute resolution</p>
+              <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center mb-3">
+                  <span className="material-icons mr-2">verified</span>
+                  <h3 className="font-medium">Verified Partners</h3>
+                </div>
+                <p className="text-sm text-primary-100">Trade with confidence through our verified network</p>
               </div>
-            </div>
-            
-            <div className="flex items-start space-x-3">
-              <CheckCircle2 className="h-6 w-6 text-green-400 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-lg">Trade Finance Options</h3>
-                <p className="opacity-80">Access factoring, import/export financing, and supply chain funding</p>
+              <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center mb-3">
+                  <span className="material-icons mr-2">bolt</span>
+                  <h3 className="font-medium">Fast Approval</h3>
+                </div>
+                <p className="text-sm text-primary-100">Get finance approvals in as little as 24 hours</p>
               </div>
-            </div>
-            
-            <div className="flex items-start space-x-3">
-              <CheckCircle2 className="h-6 w-6 text-green-400 flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-lg">Professional Training</h3>
-                <p className="opacity-80">Learn international trade best practices and compliance requirements</p>
+              <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center mb-3">
+                  <span className="material-icons mr-2">local_shipping</span>
+                  <h3 className="font-medium">Global Reach</h3>
+                </div>
+                <p className="text-sm text-primary-100">Connect with trading partners across Africa and beyond</p>
               </div>
             </div>
           </div>
-          
-          <div className="bg-white/10 rounded-lg p-4 backdrop-blur-sm">
-            <blockquote className="text-lg italic">
-              "DTFS has revolutionized how we manage our cross-border trade operations and financing needs."
-            </blockquote>
-            <p className="text-sm mt-2 font-medium">— John Smith, CEO of Global Imports</p>
+          <div className="flex items-center gap-6 mt-auto">
+            <div className="flex items-center">
+              <span className="material-icons text-primary-300 mr-2">check_circle</span>
+              <span className="text-sm text-primary-100">ISO 27001 Certified</span>
+            </div>
+            <div className="flex items-center">
+              <span className="material-icons text-primary-300 mr-2">check_circle</span>
+              <span className="text-sm text-primary-100">PAPSS Integrated</span>
+            </div>
+            <div className="flex items-center">
+              <span className="material-icons text-primary-300 mr-2">check_circle</span>
+              <span className="text-sm text-primary-100">24/7 Support</span>
+            </div>
           </div>
         </div>
       </div>

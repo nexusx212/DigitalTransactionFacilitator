@@ -8,19 +8,7 @@ import { User as SelectUser } from "@shared/schema";
 import { getQueryFn, apiRequest, queryClient } from "../lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
-type LogoutResponse = {
-  message: string;
-};
-
-type AuthContextType = {
-  user: SelectUser | null;
-  isLoading: boolean;
-  error: Error | null;
-  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
-  logoutMutation: UseMutationResult<LogoutResponse, Error, void>;
-  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
-};
-
+// Request and response types
 type LoginData = {
   username: string;
   password: string;
@@ -36,6 +24,20 @@ type RegisterData = {
   role?: "importer" | "exporter" | "both";
 };
 
+type AuthResponse = {
+  message: string;
+};
+
+// Auth context type
+type AuthContextType = {
+  user: SelectUser | null;
+  isLoading: boolean;
+  error: Error | null;
+  loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
+  logoutMutation: UseMutationResult<AuthResponse, Error, void>;
+  registerMutation: UseMutationResult<SelectUser, Error, RegisterData>;
+};
+
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -49,7 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const loginMutation = useMutation({
+  const loginMutation = useMutation<SelectUser, Error, LoginData>({
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
       return await res.json();
@@ -71,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const registerMutation = useMutation({
+  const registerMutation = useMutation<SelectUser, Error, RegisterData>({
     mutationFn: async (credentials: RegisterData) => {
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
@@ -93,12 +95,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const logoutMutation = useMutation({
+  const logoutMutation = useMutation<AuthResponse, Error, void>({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/logout");
       return await res.json();
     },
-    onSuccess: (data: { message: string }) => {
+    onSuccess: (data) => {
       // Clear all query cache to ensure complete data reset
       queryClient.clear();
       
@@ -114,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Invalidate the session cookie instantly
       document.cookie = "connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
       
-      // We'll use location to navigate to auth page, because on logout we want a full page reload
+      // Use location to navigate to auth page, as we want a full page reload
       // This ensures all React Query caches and app state are completely reset
       window.location.href = '/auth';
     },
