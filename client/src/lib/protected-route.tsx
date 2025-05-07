@@ -48,7 +48,14 @@ export function ProtectedRoute({
     // Force direct browser redirect to /auth rather than using Redirect component
     // to ensure a complete page reload that clears all state
     if (typeof window !== 'undefined' && window.location.pathname !== '/auth') {
-      window.location.href = '/auth';
+      // Add a timestamp parameter to prevent caching issues
+      const timestamp = new Date().getTime();
+      console.log("ProtectedRoute redirecting to auth page");
+      
+      // First redirect to logout to properly clear server-side session,
+      // the logout page will then redirect to /auth
+      window.location.href = `/logout?nocache=${timestamp}`;
+      
       return (
         <Route path={path}>
           <div className="flex items-center justify-center min-h-screen">

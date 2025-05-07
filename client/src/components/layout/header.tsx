@@ -228,8 +228,11 @@ export function Header() {
                   description: "Please wait while we log you out",
                 });
                 
-                // Then trigger the actual logout
-                setTimeout(() => logoutMutation.mutate(), 300);
+                // Redirect to the dedicated logout page instead of directly
+                // triggering the logout mutation
+                setTimeout(() => {
+                  window.location.href = "/logout";
+                }, 300);
               }}
               disabled={logoutMutation.isPending}
             >
