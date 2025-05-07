@@ -97,15 +97,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logoutMutation = useMutation<AuthResponse, Error, void>({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/logout");
-      return await res.json();
+      try {
+        // Try to log out using the API
+        const res = await apiRequest("POST", "/api/logout");
+        return await res.json();
+      } catch (error) {
+        // Even if the API call fails, we should still clean up local state
+        console.warn("Server logout failed, performing client-side cleanup only");
+        
+        // Return a fake success response so we can still redirect the user
+        return { success: true, message: "Client-side logout" };
+      }
     },
-    onSuccess: (data) => {
-      // Clear all query cache to ensure complete data reset
-      queryClient.clear();
-      
+    onMutate: () => {
+      // Immediately invalidate session cookie to prevent subsequent authenticated requests
+      document.cookie = "connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    },
+    onSuccess: () => {
       // Explicitly set user to null to ensure UI updates immediately
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Clear all query cache 
+      queryClient.clear();
       
       toast({
         title: "Logged out",
@@ -113,20 +126,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "default",
       });
       
-      // Invalidate the session cookie instantly
-      document.cookie = "connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      
-      // Use location to navigate to auth page, as we want a full page reload
-      // This ensures all React Query caches and app state are completely reset
-      window.location.href = '/auth';
+      // Force redirect to auth page with a slight delay to let toast appear
+      setTimeout(() => {
+        // Use window.location for a true page reload to clear any lingering state
+        window.location.href = '/auth';
+      }, 500);
     },
     onError: (error: Error) => {
       console.error("Logout error:", error);
+      
+      // Still set user to null even if logout fails - this ensures UI reacts correctly
+      queryClient.setQueryData(["/api/user"], null);
+      
       toast({
-        title: "Logout failed",
-        description: "There was a problem logging out. Please try again.",
-        variant: "destructive",
+        title: "Logging out...",
+        description: "Redirecting to login page",
+        variant: "default",
       });
+      
+      // Force redirect to auth page even on error
+      setTimeout(() => {
+        window.location.href = '/auth';
+      }, 1000);
     },
   });
 

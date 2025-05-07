@@ -127,31 +127,47 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
+    // Check if user is actually authenticated before attempting logout
     if (!req.isAuthenticated()) {
-      return res.status(200).json({ message: "No active session" });
+      // Just return success to avoid confusing errors
+      // This is a legitimate case if the session expired or was manually deleted
+      return res.status(200).json({ message: "No active session to log out" });
     }
     
+    // First let Passport handle the logout
     req.logout((err) => {
-      if (err) return next(err);
+      if (err) {
+        console.error("Passport logout error:", err);
+        return next(err);
+      }
       
-      // Destroy the session
-      req.session.destroy((sessionErr) => {
-        if (sessionErr) {
-          console.error("Session destruction error:", sessionErr);
-          return next(sessionErr);
-        }
+      // Then destroy the session completely
+      if (req.session) {
+        const sessionId = req.sessionID;
         
-        // Clear the session cookie with proper options that match creation
-        res.clearCookie("connect.sid", {
-          path: "/",
-          httpOnly: true,
-          secure: process.env.NODE_ENV === "production",
-          sameSite: 'lax',
+        req.session.destroy((sessionErr) => {
+          if (sessionErr) {
+            console.error("Session destruction error:", sessionErr);
+            return res.status(500).json({ message: "Error destroying session" });
+          }
+          
+          console.log(`Session ${sessionId} destroyed successfully`);
+          
+          // Clear the session cookie with proper options that match creation
+          res.clearCookie("connect.sid", {
+            path: "/",
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: 'lax',
+          });
+          
+          console.log("User successfully logged out");
+          return res.status(200).json({ success: true, message: "Logout successful" });
         });
-        
-        console.log("User successfully logged out");
-        return res.status(200).json({ message: "Logout successful" });
-      });
+      } else {
+        // No session found, still return success
+        return res.status(200).json({ success: true, message: "Logout successful (no session)" });
+      }
     });
   });
 

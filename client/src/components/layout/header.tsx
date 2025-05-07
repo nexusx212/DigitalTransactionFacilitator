@@ -13,10 +13,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 export function Header() {
-  const { user, selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode } = useContext(AppContext);
-  const { logoutMutation } = useAuth();
+  const { selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode } = useContext(AppContext);
+  const { user, logoutMutation } = useAuth();
+  const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -218,10 +221,29 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-error"
-              onClick={() => logoutMutation.mutate()}
+              onClick={() => {
+                // First display a transitional message
+                toast({
+                  title: "Signing out...",
+                  description: "Please wait while we log you out",
+                });
+                
+                // Then trigger the actual logout
+                setTimeout(() => logoutMutation.mutate(), 300);
+              }}
+              disabled={logoutMutation.isPending}
             >
-              <span className="material-icons text-[18px] mr-2">logout</span>
-              Sign Out
+              {logoutMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Signing Out...
+                </>
+              ) : (
+                <>
+                  <span className="material-icons text-[18px] mr-2">logout</span>
+                  Sign Out
+                </>
+              )}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

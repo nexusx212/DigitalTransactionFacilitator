@@ -39,7 +39,7 @@ export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
-  options?: { cache?: boolean }
+  options?: { cache?: boolean; skipErrorHandling?: boolean }
 ): Promise<Response> {
   // Use request caching for GET requests to improve performance
   const cacheKey = method === 'GET' ? url : `${method}:${url}:${JSON.stringify(data)}`;
@@ -49,6 +49,8 @@ export async function apiRequest(
     return requestCache.get(cacheKey)!.then(res => res.clone());
   }
   
+  const skipErrorHandling = options?.skipErrorHandling || false;
+  
   const fetchPromise = fetch(url, {
     method,
     headers: data ? { "Content-Type": "application/json" } : {},
@@ -57,7 +59,18 @@ export async function apiRequest(
     // Add performance hints
     priority: method === 'GET' ? 'high' : 'auto',
   }).then(async (res) => {
-    await throwIfResNotOk(res);
+    // Special case for /api/logout - always consider it a success regardless of status
+    if (url === '/api/logout' && method === 'POST') {
+      // For logout, we just want to make sure the request completed, successful or not
+      // We'll handle session cleanup on client side regardless
+      return res;
+    }
+    
+    // For other requests, apply normal error handling unless specifically skipped
+    if (!skipErrorHandling) {
+      await throwIfResNotOk(res);
+    }
+    
     return res;
   });
   
