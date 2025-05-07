@@ -99,55 +99,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async () => {
       try {
         // Try to log out using the API
-        const res = await apiRequest("POST", "/api/logout");
-        return await res.json();
-      } catch (error) {
-        // Even if the API call fails, we should still clean up local state
-        console.warn("Server logout failed, performing client-side cleanup only");
+        await fetch("/api/logout", {
+          method: "POST",
+          credentials: "include"
+        });
         
-        // Return a fake success response so we can still redirect the user
+        // Even if the API doesn't respond as expected, we'll perform client-side logout
+        return { success: true, message: "Logged out" };
+      } catch (error) {
+        // If there's a network error, still return success
+        console.warn("Server logout failed, continuing with client-side cleanup");
         return { success: true, message: "Client-side logout" };
+      } finally {
+        // Forcibly delete the cookie no matter what happens with the request
+        document.cookie = "connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+        
+        // Force clear any localStorage values that might be related to auth
+        localStorage.clear();
+        
+        // Clear session storage too
+        sessionStorage.clear();
       }
     },
-    onMutate: () => {
-      // Immediately invalidate session cookie to prevent subsequent authenticated requests
-      document.cookie = "connect.sid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-    },
     onSuccess: () => {
-      // Explicitly set user to null to ensure UI updates immediately
+      // Hard reset React Query state
+      queryClient.clear();
+      queryClient.resetQueries();
+      
+      // Explicitly remove user data
       queryClient.setQueryData(["/api/user"], null);
       
-      // Clear all query cache 
-      queryClient.clear();
-      
+      // Show a toast
       toast({
         title: "Logged out",
-        description: "You have been successfully logged out",
-        variant: "default",
+        description: "Redirecting to login page...",
       });
       
-      // Force redirect to auth page with a slight delay to let toast appear
-      setTimeout(() => {
-        // Use window.location for a true page reload to clear any lingering state
-        window.location.href = '/auth';
-      }, 500);
+      // FORCE a hard redirect to login page - this is the most reliable way
+      // to ensure all state is cleared and the user is truly logged out
+      window.location.replace("/auth");
     },
-    onError: (error: Error) => {
-      console.error("Logout error:", error);
-      
-      // Still set user to null even if logout fails - this ensures UI reacts correctly
+    onError: () => {
+      // Even on error, still perform the client-side logout
+      queryClient.clear();
+      queryClient.resetQueries();
       queryClient.setQueryData(["/api/user"], null);
+      
+      // Force clear any cookies
+      document.cookie.split(";").forEach(function(c) {
+        document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/");
+      });
+      
+      // Force clear storages
+      localStorage.clear();
+      sessionStorage.clear();
       
       toast({
         title: "Logging out...",
         description: "Redirecting to login page",
-        variant: "default",
       });
       
-      // Force redirect to auth page even on error
-      setTimeout(() => {
-        window.location.href = '/auth';
-      }, 1000);
+      // Hard redirect
+      window.location.replace("/auth");
     },
   });
 

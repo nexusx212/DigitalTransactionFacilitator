@@ -126,49 +126,71 @@ export function setupAuth(app: Express) {
     })(req, res, next);
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    // Check if user is actually authenticated before attempting logout
-    if (!req.isAuthenticated()) {
-      // Just return success to avoid confusing errors
-      // This is a legitimate case if the session expired or was manually deleted
-      return res.status(200).json({ message: "No active session to log out" });
-    }
-    
-    // First let Passport handle the logout
-    req.logout((err) => {
-      if (err) {
-        console.error("Passport logout error:", err);
-        return next(err);
-      }
+  app.post("/api/logout", (req, res) => {
+    try {
+      // Get the session ID before destruction for logging
+      const sessionId = req.sessionID || 'unknown';
       
-      // Then destroy the session completely
-      if (req.session) {
-        const sessionId = req.sessionID;
-        
-        req.session.destroy((sessionErr) => {
-          if (sessionErr) {
-            console.error("Session destruction error:", sessionErr);
-            return res.status(500).json({ message: "Error destroying session" });
+      // Attempt to log out with Passport
+      if (req.isAuthenticated()) {
+        req.logout((err) => {
+          if (err) {
+            console.error("Passport logout error:", err);
+            // Continue anyway - we'll destroy the session and clear cookies
           }
           
-          console.log(`Session ${sessionId} destroyed successfully`);
-          
-          // Clear the session cookie with proper options that match creation
-          res.clearCookie("connect.sid", {
-            path: "/",
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: 'lax',
-          });
-          
-          console.log("User successfully logged out");
-          return res.status(200).json({ success: true, message: "Logout successful" });
+          // Force destroy the session
+          if (req.session) {
+            req.session.destroy((sessionErr) => {
+              if (sessionErr) {
+                console.error("Session destruction error:", sessionErr);
+                // Continue anyway - still clear the cookie
+              }
+              
+              console.log(`Session ${sessionId} destroyed`);
+            });
+          }
         });
-      } else {
-        // No session found, still return success
-        return res.status(200).json({ success: true, message: "Logout successful (no session)" });
       }
-    });
+      
+      // Always clear the cookie regardless of auth status or errors
+      res.clearCookie("connect.sid", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: 'lax',
+        maxAge: 0,
+        expires: new Date(0),
+      });
+      
+      console.log("Logout complete - cookie cleared");
+      
+      // Always return success
+      return res.status(200).json({ 
+        success: true, 
+        message: "Logout successful", 
+        timestamp: new Date().toISOString() 
+      });
+    } catch (error) {
+      console.error("Critical error during logout:", error);
+      
+      // Even on critical error, try to clear the cookie
+      res.clearCookie("connect.sid", {
+        path: "/",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: 'lax',
+        maxAge: 0,
+        expires: new Date(0),
+      });
+      
+      // Still return success to the client
+      return res.status(200).json({ 
+        success: true, 
+        message: "Attempted logout with error recovery",
+        timestamp: new Date().toISOString()
+      });
+    }
   });
 
   app.get("/api/user", (req, res) => {
