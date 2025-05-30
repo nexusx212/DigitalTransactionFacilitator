@@ -24,11 +24,13 @@ export default function LogoutPage() {
       window.location.href = `/auth?t=${timestamp}`;
     }, 1000);
     
-    // Also trigger the mutation for server-side cleanup
-    logoutMutation.mutate();
+    // Also trigger the mutation for server-side cleanup - but only once
+    if (!logoutMutation.isPending) {
+      logoutMutation.mutate();
+    }
     
     return () => clearTimeout(timer);
-  }, [logoutMutation]);
+  }, []); // Remove logoutMutation from dependencies to prevent infinite loop
   
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50">

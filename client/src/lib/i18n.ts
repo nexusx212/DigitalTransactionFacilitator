@@ -397,18 +397,20 @@ const resources = {
   }
 };
 
-// Initialize i18next
-i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    debug: true,
-    initImmediate: true,
-    resources,
-    fallbackLng: ['en'],
-    interpolation: {
-      escapeValue: false,
-    },
-  });
+// Initialize i18next only if not already initialized
+if (!i18n.isInitialized) {
+  i18n
+    .use(LanguageDetector)
+    .use(initReactI18next)
+    .init({
+      debug: false, // Disable debug to reduce console warnings
+      initImmediate: false,
+      resources,
+      fallbackLng: ['en'],
+      interpolation: {
+        escapeValue: false,
+      },
+    });
+}
 
 export default i18n;

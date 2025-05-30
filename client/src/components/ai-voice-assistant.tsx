@@ -14,13 +14,13 @@ type Message = {
 
 const MAX_MESSAGES = 50;
 
-export default function AvaAIAssistant() {
+export default function AIVoiceAssistant() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
       sender: "ai",
-      text: "Hello! I'm Ava, your AI assistant for digital trade and finance. How can I help you today?",
+      text: "Hello! I'm your AI Voice Assistant for digital trade and finance. How can I help you today?",
       timestamp: new Date(),
       suggestions: [
         "How do I list a product?",
@@ -159,10 +159,10 @@ export default function AvaAIAssistant() {
               <div className="gradient-primary px-4 py-3 flex items-center justify-between text-white">
                 <div className="flex items-center">
                   <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center mr-3 shadow-sm">
-                    <span className="material-icons">smart_toy</span>
+                    <span className="material-icons">record_voice_over</span>
                   </div>
                   <div>
-                    <h3 className="font-medium">Ava AI Assistant</h3>
+                    <h3 className="font-medium">AI Voice Assistant</h3>
                     <div className="flex items-center text-xs text-white/80">
                       {isOfflineMode ? (
                         <>
@@ -186,7 +186,7 @@ export default function AvaAIAssistant() {
                       setMessages([{
                         id: "welcome",
                         sender: "ai",
-                        text: "Hello! I'm Ava, your AI assistant for digital trade and finance. How can I help you today?",
+                        text: "Hello! I'm your AI Voice Assistant for digital trade and finance. How can I help you today?",
                         timestamp: new Date(),
                         suggestions: [
                           "How do I list a product?",
@@ -216,7 +216,7 @@ export default function AvaAIAssistant() {
                     <div className="flex items-start gap-3 mb-1 max-w-[90%]">
                       {message.sender === 'ai' && (
                         <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white shadow-sm flex-shrink-0">
-                          <span className="material-icons text-[16px]">smart_toy</span>
+                          <span className="material-icons text-[16px]">record_voice_over</span>
                         </div>
                       )}
                       
