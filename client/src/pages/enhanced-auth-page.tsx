@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { ProgressTracker } from "@/components/ui/progress-tracker";
 import { Mic, MicOff, Globe, Wallet, Mail, Phone, Upload, FileText, Users, Building2, Shield, Eye, EyeOff } from "lucide-react";
 
 interface VoiceRecognitionState {
@@ -60,6 +61,10 @@ export default function EnhancedAuthPage() {
   const [userRole, setUserRole] = useState<'individual' | 'business'>('individual');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Progress tracking
+  const totalSteps = 4; // Role selection, Basic info, Verification, Complete
+  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set());
 
   // Voice recognition state
   const [voiceState, setVoiceState] = useState<VoiceRecognitionState>({
@@ -775,6 +780,26 @@ export default function EnhancedAuthPage() {
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Progress Tracker - only show during registration */}
+            {authMode === 'register' && (
+              <motion.div
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="w-full"
+              >
+                <ProgressTracker
+                  currentStep={step}
+                  totalSteps={totalSteps}
+                  userRole={userRole}
+                  onStepComplete={(completedStep) => {
+                    setCompletedSteps(prev => new Set([...Array.from(prev), completedStep]));
+                  }}
+                  className="mb-6"
+                />
+              </motion.div>
+            )}
 
             <AnimatePresence mode="wait">
               {authMode === 'login' && (
