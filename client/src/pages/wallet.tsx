@@ -109,12 +109,23 @@ export default function Wallet() {
     {
       symbol: 'PADC',
       name: 'Pan African Digital Coin',
-      balance: 15420.50,
-      usdValue: 15420.50,
-      change24h: 0.02,
+      balance: 0.00,
+      usdValue: 0.00,
+      change24h: 0.00,
       icon: '🏛️',
       type: 'native',
       network: 'PAPSS'
+    },
+    {
+      symbol: 'GTC',
+      name: 'Global Trade Coin',
+      balance: 8750.25,
+      usdValue: 8750.25,
+      change24h: 0.15,
+      icon: '🌐',
+      type: 'stablecoin',
+      network: 'Ethereum',
+      contractAddress: '0x...'
     },
     {
       symbol: 'USDT',
@@ -447,7 +458,7 @@ export default function Wallet() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-2 h-14">
+        <TabsList className="grid w-full grid-cols-7 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-2 h-14">
           <TabsTrigger value="overview" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
             <span className="material-icons mr-2">dashboard</span>
             Overview
@@ -455,6 +466,10 @@ export default function Wallet() {
           <TabsTrigger value="transactions" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
             <span className="material-icons mr-2">receipt_long</span>
             Transactions
+          </TabsTrigger>
+          <TabsTrigger value="exchange" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">swap_horiz</span>
+            Exchange
           </TabsTrigger>
           <TabsTrigger value="wallets" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
             <span className="material-icons mr-2">account_balance_wallet</span>
@@ -505,20 +520,36 @@ export default function Wallet() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-2xl font-bold text-gray-800">
-                          {coin.balance.toLocaleString()} {coin.symbol}
-                        </p>
-                        <p className="text-lg text-gray-600">
-                          ${coin.usdValue.toLocaleString()}
-                        </p>
-                        <div className={`flex items-center justify-end gap-1 text-sm ${
-                          coin.change24h >= 0 ? 'text-green-600' : 'text-red-600'
-                        }`}>
-                          <span className="material-icons text-xs">
-                            {coin.change24h >= 0 ? 'trending_up' : 'trending_down'}
-                          </span>
-                          {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
-                        </div>
+                        {coin.symbol === 'PADC' ? (
+                          <div>
+                            <p className="text-2xl font-bold text-orange-600">
+                              Coming Soon
+                            </p>
+                            <p className="text-lg text-gray-600">
+                              Pan-African Digital Currency
+                            </p>
+                            <Badge className="px-3 py-1 text-xs bg-orange-100 text-orange-800 font-semibold">
+                              Launch Q2 2025
+                            </Badge>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-2xl font-bold text-gray-800">
+                              {coin.balance.toLocaleString()} {coin.symbol}
+                            </p>
+                            <p className="text-lg text-gray-600">
+                              ${coin.usdValue.toLocaleString()}
+                            </p>
+                            <div className={`flex items-center justify-end gap-1 text-sm ${
+                              coin.change24h >= 0 ? 'text-green-600' : 'text-red-600'
+                            }`}>
+                              <span className="material-icons text-xs">
+                                {coin.change24h >= 0 ? 'trending_up' : 'trending_down'}
+                              </span>
+                              {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                     {coin.contractAddress && (
@@ -567,6 +598,129 @@ export default function Wallet() {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        {/* Exchange Tab */}
+        <TabsContent value="exchange" className="space-y-6">
+          <Card className="border-2 border-gray-200 shadow-xl bg-white/90 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <span className="material-icons text-blue-600">swap_horiz</span>
+                Cryptocurrency Exchange
+              </CardTitle>
+              <CardDescription>
+                Trade between different cryptocurrencies and stablecoins
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                {/* From Section */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-800">From</h3>
+                  <div className="p-4 border-2 border-gray-200 rounded-lg bg-gray-50">
+                    <div className="space-y-3">
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select currency to sell" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cryptoPortfolio.filter(coin => coin.balance > 0).map((coin) => (
+                            <SelectItem key={coin.symbol} value={coin.symbol}>
+                              {coin.icon} {coin.symbol} - {coin.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        placeholder="Amount to sell"
+                        className="text-lg font-semibold"
+                      />
+                      <p className="text-sm text-gray-600">Available: 8,750.25 GTC</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* To Section */}
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-gray-800">To</h3>
+                  <div className="p-4 border-2 border-blue-200 rounded-lg bg-blue-50">
+                    <div className="space-y-3">
+                      <Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select currency to buy" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {cryptoPortfolio.map((coin) => (
+                            <SelectItem key={coin.symbol} value={coin.symbol}>
+                              {coin.icon} {coin.symbol} - {coin.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input
+                        type="number"
+                        placeholder="Amount to receive"
+                        className="text-lg font-semibold"
+                        readOnly
+                      />
+                      <p className="text-sm text-blue-700">Estimated: ~8,750.25 USDT</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Exchange Rate Info */}
+              <div className="bg-gradient-to-r from-green-50 to-blue-50 p-4 rounded-lg border-2 border-green-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-semibold text-green-800">Exchange Rate</p>
+                    <p className="text-sm text-green-700">1 GTC = 1.0005 USDT</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-green-800">Network Fee</p>
+                    <p className="text-sm text-green-700">~0.25 GTC</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Exchange Actions */}
+              <div className="flex gap-4">
+                <Button 
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                  onClick={() => {
+                    console.log("Exchange initiated");
+                  }}
+                >
+                  <span className="material-icons mr-2">swap_horiz</span>
+                  Exchange Now
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50"
+                >
+                  <span className="material-icons mr-2">refresh</span>
+                  Refresh Rates
+                </Button>
+              </div>
+
+              {/* Popular Exchange Pairs */}
+              <div className="mt-6">
+                <h4 className="font-semibold text-gray-800 mb-3">Popular Trading Pairs</h4>
+                <div className="grid gap-2 md:grid-cols-3">
+                  <Button variant="outline" className="justify-start text-sm">
+                    🌐 GTC / 💵 USDT
+                  </Button>
+                  <Button variant="outline" className="justify-start text-sm">
+                    🟡 BTC / 🌐 GTC
+                  </Button>
+                  <Button variant="outline" className="justify-start text-sm">
+                    🔷 ETH / 💵 USDC
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Connected Wallets Tab */}
