@@ -447,7 +447,7 @@ export default function Wallet() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-2 h-14">
+        <TabsList className="grid w-full grid-cols-6 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-2 h-14">
           <TabsTrigger value="overview" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
             <span className="material-icons mr-2">dashboard</span>
             Overview
@@ -459,6 +459,10 @@ export default function Wallet() {
           <TabsTrigger value="wallets" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
             <span className="material-icons mr-2">account_balance_wallet</span>
             Wallets
+          </TabsTrigger>
+          <TabsTrigger value="papss" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">account_balance</span>
+            PAPSS
           </TabsTrigger>
           <TabsTrigger value="settings" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
             <span className="material-icons mr-2">settings</span>
@@ -616,6 +620,101 @@ export default function Wallet() {
               </Card>
             ))}
           </div>
+        </TabsContent>
+
+        {/* PAPSS Payment Tab */}
+        <TabsContent value="papss" className="space-y-6">
+          <Card className="border-2 border-gray-200 shadow-xl bg-white/90 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <span className="material-icons text-blue-600">account_balance</span>
+                PAPSS Payment Gateway
+              </CardTitle>
+              <CardDescription>
+                Pan-African Payment and Settlement System for cross-border transactions
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="papss-amount" className="text-sm font-semibold">Amount</Label>
+                    <Input
+                      id="papss-amount"
+                      type="number"
+                      placeholder="Enter amount"
+                      className="mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="papss-currency" className="text-sm font-semibold">Currency</Label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="USD">USD - US Dollar</SelectItem>
+                        <SelectItem value="EUR">EUR - Euro</SelectItem>
+                        <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                        <SelectItem value="NGN">NGN - Nigerian Naira</SelectItem>
+                        <SelectItem value="KES">KES - Kenyan Shilling</SelectItem>
+                        <SelectItem value="ZAR">ZAR - South African Rand</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="papss-recipient" className="text-sm font-semibold">Recipient Bank Account</Label>
+                    <Input
+                      id="papss-recipient"
+                      placeholder="Enter recipient account details"
+                      className="mt-1"
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-4 rounded-lg border-2 border-blue-200">
+                    <h3 className="font-semibold text-blue-800 mb-2">PAPSS Benefits</h3>
+                    <ul className="text-sm text-blue-700 space-y-1">
+                      <li>• Real-time cross-border payments</li>
+                      <li>• Lower transaction fees</li>
+                      <li>• Multi-currency support</li>
+                      <li>• Enhanced security protocols</li>
+                    </ul>
+                  </div>
+                  <div className="bg-green-50 p-4 rounded-lg border-2 border-green-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="material-icons text-green-600">security</span>
+                      <span className="font-semibold text-green-800">Secure & Verified</span>
+                    </div>
+                    <p className="text-sm text-green-700">
+                      All transactions are processed through the official PAPSS network with bank-grade security.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex gap-4">
+                <Button 
+                  className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                  onClick={() => {
+                    console.log("PAPSS payment initiated");
+                    // Handle PAPSS payment logic here
+                  }}
+                >
+                  <span className="material-icons mr-2">send</span>
+                  Send Payment via PAPSS
+                </Button>
+                <Button 
+                  variant="outline"
+                  className="border-blue-300 text-blue-700 hover:bg-blue-50"
+                >
+                  <span className="material-icons mr-2">history</span>
+                  Payment History
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Settings Tab */}

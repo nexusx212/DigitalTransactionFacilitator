@@ -654,10 +654,7 @@ Be helpful, professional, and concise. Provide specific guidance about DTFS feat
   });
 
   // AI Assistant endpoints
-  app.get("/api/ai/messages", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
+  app.get("/api/ai/messages", authenticateUser, async (req, res) => {
 
     try {
       const messages = await storage.getAiMessagesByUserId((req as any).user.id);
@@ -668,10 +665,7 @@ Be helpful, professional, and concise. Provide specific guidance about DTFS feat
     }
   });
 
-  app.post("/api/ai/messages", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.sendStatus(401);
-    }
+  app.post("/api/ai/messages", authenticateUser, async (req, res) => {
 
     try {
       const { text, language = 'en' } = req.body;
