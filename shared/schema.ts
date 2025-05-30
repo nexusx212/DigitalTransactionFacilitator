@@ -10,6 +10,14 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   photoUrl: text("photo_url"),
+  walletAddress: text("wallet_address"),
+  role: text("role").notNull().default("individual"), // individual, business
+  language: text("language").notNull().default("en"), // en, ha, yo, fr, sw
+  country: text("country"),
+  phoneNumber: text("phone_number"),
+  twoFactorEnabled: boolean("two_factor_enabled").default(false),
+  kycStatus: text("kyc_status").default("pending"), // pending, verified, rejected
+  kybStatus: text("kyb_status").default("pending"), // pending, verified, rejected
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -19,6 +27,95 @@ export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
   email: true,
   photoUrl: true,
+  walletAddress: true,
+  role: true,
+  language: true,
+  country: true,
+  phoneNumber: true,
+});
+
+// KYC Profiles
+export const kycProfiles = pgTable("kyc_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  govIdType: text("gov_id_type"), // passport, nin, drivers_license
+  govIdNumber: text("gov_id_number"),
+  selfieUrl: text("selfie_url"),
+  idDocumentUrl: text("id_document_url"),
+  proofOfAddressUrl: text("proof_of_address_url"),
+  status: text("status").notNull().default("pending"), // pending, verified, rejected
+  notes: text("notes"),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+});
+
+export const insertKycProfileSchema = createInsertSchema(kycProfiles).omit({
+  id: true,
+  submittedAt: true,
+  reviewedAt: true,
+  reviewedBy: true,
+});
+
+// KYB Profiles
+export const kybProfiles = pgTable("kyb_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  businessName: text("business_name").notNull(),
+  registrationNumber: text("registration_number"),
+  taxId: text("tax_id"),
+  businessAddress: text("business_address"),
+  businessType: text("business_type"), // llc, corporation, partnership
+  incorporationCountry: text("incorporation_country"),
+  businessCertificateUrl: text("business_certificate_url"),
+  utilityBillUrl: text("utility_bill_url"),
+  directorList: jsonb("director_list"), // Array of director information
+  status: text("status").notNull().default("pending"), // pending, verified, rejected
+  notes: text("notes"),
+  submittedAt: timestamp("submitted_at").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewed_at"),
+  reviewedBy: integer("reviewed_by").references(() => users.id),
+});
+
+export const insertKybProfileSchema = createInsertSchema(kybProfiles).omit({
+  id: true,
+  submittedAt: true,
+  reviewedAt: true,
+  reviewedBy: true,
+});
+
+// Business Entities
+export const businessEntities = pgTable("business_entities", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  companyName: text("company_name").notNull(),
+  trustScore: integer("trust_score").default(0),
+  rating: decimal("rating", { precision: 3, scale: 2 }).default("0.00"),
+  tradeVolume: decimal("trade_volume", { precision: 15, scale: 2 }).default("0.00"),
+  products: jsonb("products"), // Array of product categories
+  region: text("region"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertBusinessEntitySchema = createInsertSchema(businessEntities).omit({
+  id: true,
+  createdAt: true,
+});
+
+// Two Factor Authentication
+export const twoFactorAuth = pgTable("two_factor_auth", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  method: text("method").notNull(), // sms, email
+  code: text("code").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  verified: boolean("verified").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTwoFactorAuthSchema = createInsertSchema(twoFactorAuth).omit({
+  id: true,
+  createdAt: true,
 });
 
 // Trade Finance
@@ -294,3 +391,15 @@ export type InsertEscrow = z.infer<typeof insertEscrowSchema>;
 
 export type Dispute = typeof disputes.$inferSelect;
 export type InsertDispute = z.infer<typeof insertDisputeSchema>;
+
+export type KycProfile = typeof kycProfiles.$inferSelect;
+export type InsertKycProfile = z.infer<typeof insertKycProfileSchema>;
+
+export type KybProfile = typeof kybProfiles.$inferSelect;
+export type InsertKybProfile = z.infer<typeof insertKybProfileSchema>;
+
+export type BusinessEntity = typeof businessEntities.$inferSelect;
+export type InsertBusinessEntity = z.infer<typeof insertBusinessEntitySchema>;
+
+export type TwoFactorAuth = typeof twoFactorAuth.$inferSelect;
+export type InsertTwoFactorAuth = z.infer<typeof insertTwoFactorAuthSchema>;

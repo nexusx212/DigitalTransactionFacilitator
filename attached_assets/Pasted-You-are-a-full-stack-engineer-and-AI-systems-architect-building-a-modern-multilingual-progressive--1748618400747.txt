@@ -1,0 +1,118 @@
+You are a full-stack engineer and AI systems architect building a modern, multilingual, progressive web application (PWA) for the **DTFS Platform** — a decentralized AI-native digital trade finance ecosystem empowering African SMEs.
+
+---
+
+### 🔐 OBJECTIVE:
+Design and implement a secure, AI-assisted onboarding system with:
+1. User Authentication (Email/Password, Wallet, Google, Telegram)
+2. 2FA (OTP via SMS/Email)
+3. Decentralized Identity (DID) ready
+4. Voice-guided onboarding & navigation (multilingual)
+5. **KYC (Know Your Customer)**
+6. **KYB (Know Your Business)**
+7. Multilingual UI/UX with speech recognition
+8. Mobile-first, responsive, PWA-ready
+
+---
+
+### 🎨 AUTH + KYC + KYB UI PAGES (React + TailwindCSS)
+
+**1. Beautiful Login Page**
+- Inputs: Email, Password
+- Login via: Google, Telegram, Wallet (Web3Modal)
+- Voice icon: “Log me in as a buyer”
+- Language selector (EN, HA, YO, FR, SW)
+
+**2. Signup Page**
+- Multi-step onboarding (Form + Voice):
+  - Role: Individual (KYC) / Business (KYB)
+  - Language, Country, Product category
+  - Wallet connect
+  - KYC/KYB initiation
+
+**3. KYC Flow**
+- Voice-aided: "I am Ada, from Nigeria. Register me."
+- Manual Upload:
+  - Gov ID (Passport/NIN)
+  - Selfie
+  - Address proof
+- AI reviews voice, pre-fills fields
+- GPT explains requirements in user language
+
+**4. KYB Flow**
+- Voice-guided: "Register my shea butter company — Ada Shea Ltd."
+- Form Uploads:
+  - Business registration certificate
+  - Company tax ID
+  - Director list & IDs
+  - Business address
+  - Utility bill or lease agreement
+- Optional: CAC number lookup (Nigeria)
+- KYB Status Tracker: “Pending / Verified / Rejected”
+- Admin dashboard for review + feedback
+
+---
+
+### 📊 DATABASE STRUCTURE (Firebase or Supabase)
+
+**users**
+- user_id, name, email, wallet_address, role, language, country, 2fa_enabled, created_at
+
+**kyc_profiles**
+- user_id, gov_id_type, selfie_url, id_url, proof_address_url, status, notes, submitted_at
+
+**kyb_profiles**
+- user_id, business_name, reg_number, doc_urls[], director_list[], tax_id, address, status, notes
+
+**business_entities**
+- company_name, trust_score, rating, trade_volume, products, region
+
+---
+
+### 🧠 AI & VOICE ENGINE (GPT + Whisper + TTS)
+
+- Users speak: “Register my business Ada Shea in Nigeria”
+- Whisper → Text → GPT parses → Fills KYB/KYC fields
+- GPT explains steps:
+  - “Upload your CAC certificate and utility bill”
+- Voice UI: TTS reads instructions in Hausa, Yoruba, Swahili, French
+- GPT also answers:
+  - “What’s the next KYB step?”
+  - “When will my KYB be approved?”
+
+---
+
+### ⚙️ TECH STACK SUMMARY
+- **Frontend**: React, Vite, TailwindCSS, PWA
+- **Voice**: Whisper (speech-to-text), ElevenLabs (text-to-speech)
+- **AI**: GPT (Natural Language, Form Assistant)
+- **Backend**: Firebase / Supabase
+- **Wallet Auth**: Web3Modal + WalletConnect
+- **KYC/KYB Verification**: Manual + optional 3rd-party (e.g. Sumsub, IDfy, SmileIdentity)
+- **Multilingual Support**: i18next + voice localization
+- **Admin Panel**: View/Verify KYC/KYB, send notes
+
+---
+
+### 💡 EXAMPLE USER FLOW (KYB)
+1. Amina selects **“Business Owner”** and taps mic:
+   > “Register Ada Shea Ltd in Lagos, Nigeria”
+2. GPT responds in Yoruba:
+   > “Upload your CAC certificate and director list”
+3. Amina uploads CAC, utility bill, and her photo ID
+4. KYB dashboard shows status: “Under Review”
+5. Admin reviews + GPT notifies her when approved
+6. She now accesses trade requests, escrow, and finance pool
+
+---
+
+### ✅ DELIVERABLE MODULES
+- Authentication UI (Email/Password, Social, Wallet)
+- KYC Flow (Voice + Upload)
+- KYB Flow (Voice + Upload)
+- AI assistant for onboarding
+- Multilingual Voice/NLP system
+- Firebase/Supabase integration
+- Admin KYB/KYC dashboard
+- PWA support + mobile UI
+

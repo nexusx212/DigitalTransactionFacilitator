@@ -9,6 +9,7 @@ import Training from "@/pages/training";
 import Wallet from "@/pages/wallet";
 import Chat from "@/pages/chat";
 import AuthPage from "@/pages/auth-page";
+import EnhancedAuthPage from "@/pages/enhanced-auth-page";
 import { AppProvider } from "@/context/app-context";
 import { AuthProvider } from "@/hooks/use-auth";
 import { I18nProvider } from "@/hooks/use-i18n";
@@ -129,6 +130,7 @@ function App() {
       <ProtectedRoute path="/badges" component={LazyBadgesDemo} />
       <ProtectedRoute path="/finance-comparison" component={LazyFinanceComparison} />
       <Route path="/auth" component={LazyAuthPage} />
+      <Route path="/auth-enhanced" component={EnhancedAuthPage} />
       <Route path="/logout" component={LazyLogoutPage} />
       <Route component={NotFound} />
     </Switch>
