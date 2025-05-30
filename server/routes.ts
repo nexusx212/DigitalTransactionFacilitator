@@ -10,6 +10,12 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { ZodError } from "zod-validation-error";
+import OpenAI from "openai";
+
+// Initialize OpenAI
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 // Middleware to check if user exists in auth routes (simplified for demo)
 const authenticateUser = async (req: Request, res: Response, next: Function) => {
@@ -456,36 +462,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.createAiMessage(data);
       
-      // Simulate AI response
-      setTimeout(async () => {
-        let responseText = "I don't have specific information about that yet. Would you like to know about listing products, customs documentation, or how trade finance works?";
-        
-        // Simple pattern matching for demo purposes
-        const lowerText = text.toLowerCase();
-        if (lowerText.includes("list a product") || lowerText.includes("marketplace")) {
-          responseText = "To list a product on our marketplace, follow these steps:\n" +
-            "1. Go to the Marketplace section\n" +
-            "2. Click on 'Sell Products' button\n" +
-            "3. Fill out the product details form\n" +
-            "4. Upload high-quality images\n" +
-            "5. Set your pricing and shipping options\n" +
-            "6. Submit for verification\n\n" +
-            "Your listing will be reviewed and published within 24 hours. Anything else you'd like to know?";
-        } else if (lowerText.includes("customs doc") || lowerText.includes("documentation")) {
-          responseText = "Customs documentation typically includes:\n" +
-            "• Commercial Invoice: Details of goods and transaction\n" +
-            "• Packing List: Itemized packaging details\n" +
-            "• Certificate of Origin: Confirms where products were manufactured\n" +
-            "• Bill of Lading/Airway Bill: Transport document and receipt\n" +
-            "• Customs Declaration Form: Official documentation for authorities\n\n" +
-            "Our Training section has a full course on customs documentation if you'd like to learn more!";
-        } else if (lowerText.includes("trade finance") || lowerText.includes("financing")) {
-          responseText = "Trade finance bridges the gap between exporters and importers by providing funding and risk mitigation. In DTFS, we offer:\n" +
-            "• Invoice Financing: Get immediate funds against outstanding invoices\n" +
-            "• Purchase Order Financing: Secure capital to fulfill large orders\n" +
-            "• Supply Chain Financing: Optimize working capital throughout the supply chain\n\n" +
-            "Would you like to apply for any specific type of financing?";
-        }
+      // Generate AI response using OpenAI
+      try {
+        const systemPrompt = `You are Ava, an AI assistant for DTFS (Digital Trade and Financial Services), a comprehensive trade finance platform. You help users with:
+
+1. Trade Finance: Invoice factoring, export finance, supply chain finance, import finance, non-interest finance, startup trade finance
+2. Marketplace: Product listings, buyer-seller connections, product categories
+3. Digital Wallet: Multi-currency support, stablecoins (USDT, USDC, DAI, BUSD, FRAX), PAPSS payments
+4. Trade Management: Order tracking, contracts, shipment monitoring
+5. Training: Trade finance courses, customs documentation, international trade
+6. Platform Navigation: How to use various features
+
+Be helpful, professional, and concise. Provide specific guidance about DTFS features. If asked about technical issues, guide users to appropriate sections of the platform.`;
+
+        const completion = await openai.chat.completions.create({
+          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: text }
+          ],
+          max_tokens: 500,
+          temperature: 0.7
+        });
+
+        const responseText = completion.choices[0].message.content || "I apologize, but I'm having trouble generating a response right now. Please try again.";
         
         const aiResponse = insertAiMessageSchema.parse({
           userId: user.id,
@@ -496,6 +496,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
         
         await storage.createAiMessage(aiResponse);
+      } catch (openaiError) {
+        console.error("OpenAI API error:", openaiError);
+        
+        // Fallback response if OpenAI fails
+        const fallbackResponse = insertAiMessageSchema.parse({
+          userId: user.id,
+          sender: "ai",
+          text: "I'm currently experiencing some technical difficulties. Please try again in a moment, or contact support if the issue persists.",
+          timestamp: new Date(),
+          language
+        });
+        
+        await storage.createAiMessage(fallbackResponse);
+      }
+      
+      setTimeout(async () => {
+        // This completes the async AI response generation
       }, 1000);
       
       res.status(201).json({ success: true, message: "Message received" });
@@ -505,6 +522,133 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Create AI message error:", error);
       res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // PAPSS Payment Gateway Integration
+  app.post("/api/payments/papss/initiate", authenticateUser, async (req, res) => {
+    try {
+      const { amount, currency, recipientBank, recipientAccount, purpose, reference } = req.body;
+      
+      if (!amount || !currency || !recipientBank || !recipientAccount) {
+        return res.status(400).json({ message: "Missing required payment fields" });
+      }
+      
+      // PAPSS payment initiation
+      const paymentRequest = {
+        transactionId: `PAPSS_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        amount: parseFloat(amount),
+        currency,
+        senderAccount: "DTFS_MAIN_ACCOUNT",
+        recipientBank,
+        recipientAccount,
+        purpose: purpose || "Trade Finance Payment",
+        reference: reference || `DTFS_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        status: "initiated"
+      };
+      
+      // In a real implementation, you would call the PAPSS API here
+      // For now, we'll simulate the response
+      const papssResponse = {
+        success: true,
+        transactionId: paymentRequest.transactionId,
+        status: "pending",
+        estimatedSettlement: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        fees: {
+          papssNetworkFee: amount * 0.001, // 0.1% network fee
+          currencyConversionFee: currency !== "USD" ? amount * 0.005 : 0
+        }
+      };
+      
+      // Store transaction in our system
+      const transactionData = {
+        userId: (req as any).user.id,
+        type: "papss_payment" as const,
+        amount: parseFloat(amount),
+        currency,
+        description: `PAPSS payment to ${recipientBank}`,
+        status: "pending" as const,
+        reference: paymentRequest.transactionId
+      };
+      
+      await storage.createTransaction(transactionData);
+      
+      res.json(papssResponse);
+    } catch (error) {
+      console.error("PAPSS payment initiation error:", error);
+      res.status(500).json({ message: "Payment initiation failed" });
+    }
+  });
+
+  app.get("/api/payments/papss/status/:transactionId", authenticateUser, async (req, res) => {
+    try {
+      const { transactionId } = req.params;
+      
+      // In a real implementation, you would query the PAPSS API for transaction status
+      // For now, we'll simulate different statuses based on transaction age
+      const transaction = await storage.getTransactionsByUserId((req as any).user.id);
+      const foundTransaction = transaction.find(t => t.reference === transactionId);
+      
+      if (!foundTransaction) {
+        return res.status(404).json({ message: "Transaction not found" });
+      }
+      
+      // Simulate status progression
+      const createdTime = new Date(foundTransaction.createdAt).getTime();
+      const currentTime = Date.now();
+      const timeDiff = currentTime - createdTime;
+      
+      let status = "pending";
+      if (timeDiff > 10000) { // After 10 seconds, mark as processing
+        status = "processing";
+      }
+      if (timeDiff > 30000) { // After 30 seconds, mark as completed
+        status = "completed";
+      }
+      
+      res.json({
+        transactionId,
+        status,
+        amount: foundTransaction.amount,
+        currency: foundTransaction.currency,
+        timestamp: foundTransaction.createdAt,
+        settlementTime: status === "completed" ? new Date().toISOString() : null
+      });
+    } catch (error) {
+      console.error("PAPSS status check error:", error);
+      res.status(500).json({ message: "Status check failed" });
+    }
+  });
+
+  app.post("/api/payments/papss/webhook", async (req, res) => {
+    try {
+      // PAPSS webhook handler for payment status updates
+      const { transactionId, status, settlementAmount, fees } = req.body;
+      
+      // Verify webhook signature (in real implementation)
+      // const signature = req.headers['x-papss-signature'];
+      
+      // Find and update transaction
+      const allUsers = await storage.getAllUsers();
+      for (const user of allUsers) {
+        const transactions = await storage.getTransactionsByUserId(user.id);
+        const transaction = transactions.find(t => t.reference === transactionId);
+        
+        if (transaction) {
+          // Update transaction status
+          await storage.updateTransaction(transaction.id, {
+            status: status === "settled" ? "completed" : status,
+            updatedAt: new Date()
+          });
+          break;
+        }
+      }
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("PAPSS webhook error:", error);
+      res.status(500).json({ message: "Webhook processing failed" });
     }
   });
 

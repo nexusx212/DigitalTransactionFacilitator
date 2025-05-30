@@ -110,7 +110,7 @@ export default function HelpSupportPage() {
         {
           id: 'ts2',
           question: 'Can I use the platform offline?',
-          answer: 'Yes, DTFS is a Progressive Web App (PWA) with offline capabilities. You can install it on your device and access certain features without an internet connection. Your data will sync once you're back online.'
+          answer: 'Yes, DTFS is a Progressive Web App (PWA) with offline capabilities. You can install it on your device and access certain features without an internet connection. Your data will sync once you are back online.'
         },
         {
           id: 'ts3',
