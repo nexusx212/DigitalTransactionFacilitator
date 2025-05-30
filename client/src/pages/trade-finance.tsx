@@ -406,50 +406,92 @@ export default function TradeFinance() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-900 to-primary-800 text-white rounded-2xl overflow-hidden mb-8">
-        <div className="relative z-10 px-6 py-12 md:py-16 lg:py-20 max-w-screen-xl mx-auto">
-          <div className="max-w-xl">
-            <div className="inline-block text-xs px-2 py-1 rounded-full bg-white/20 font-medium mb-3">
-              <span className="flex items-center">
-                <span className="material-icons text-xs mr-1">schedule</span>
-                Fast approval in 24-48 hours
-              </span>
-            </div>
-            <h1 className="text-3xl md:text-4xl font-heading font-bold mb-4">
-              Trade Finance Solutions for <br className="hidden sm:block" />
-              Global Business Growth
-            </h1>
-            <p className="text-white/80 mb-6 max-w-lg">
-              Unlock capital, manage cash flow, and fund international trade
-              with our comprehensive suite of trade finance solutions.
-            </p>
-            
-            <div className="flex flex-wrap gap-3 mt-6">
-              <Button variant="secondary" size="lg" className="font-medium">
-                <span className="material-icons mr-2 text-lg">arrow_downward</span>
-                View Finance Options
-              </Button>
-              <Link href="/finance-comparison">
-                <Button variant="outline" className="font-medium bg-white/10 hover:bg-white/20 text-white border-white/30">
-                  <span className="material-icons mr-2 text-lg">compare</span>
-                  Comparison Guide
-                </Button>
-              </Link>
+      {/* Enhanced Hero Banner */}
+      <section className="relative bg-gradient-to-br from-blue-600 via-purple-600 to-teal-600 text-white rounded-3xl overflow-hidden mb-8 shadow-2xl">
+        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="relative z-10 px-8 py-16 md:py-20 lg:py-24">
+          <div className="max-w-6xl mx-auto">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 backdrop-blur-sm font-semibold mb-6 border border-white/30">
+                  <span className="material-icons text-sm">flash_on</span>
+                  Fast approval in 24-48 hours
+                </div>
+                <h1 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold mb-6 leading-tight">
+                  Trade Finance
+                  <span className="block bg-gradient-to-r from-yellow-300 to-orange-300 bg-clip-text text-transparent">
+                    Solutions
+                  </span>
+                </h1>
+                <p className="text-xl text-blue-100 mb-8 max-w-lg leading-relaxed">
+                  Unlock capital, manage cash flow, and fund international trade
+                  with our comprehensive suite of trade finance solutions.
+                </p>
+                
+                <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                  <Button 
+                    size="lg" 
+                    className="bg-white text-blue-600 hover:bg-blue-50 font-bold px-8 py-4 rounded-xl shadow-lg border-0"
+                    onClick={() => sectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                  >
+                    <span className="material-icons mr-2 text-xl">trending_up</span>
+                    Start Application
+                  </Button>
+                  <Link href="/finance-comparison">
+                    <Button 
+                      variant="outline" 
+                      size="lg"
+                      className="font-bold bg-white/10 hover:bg-white/20 text-white border-white/30 backdrop-blur-sm px-8 py-4 rounded-xl"
+                    >
+                      <span className="material-icons mr-2 text-xl">compare</span>
+                      Compare Options
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20">
+                  <div className="text-3xl font-bold text-yellow-300 mb-2">$2.5M+</div>
+                  <div className="text-blue-100">Total Funded</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20">
+                  <div className="text-3xl font-bold text-green-300 mb-2">500+</div>
+                  <div className="text-blue-100">Active Clients</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20">
+                  <div className="text-3xl font-bold text-orange-300 mb-2">48hrs</div>
+                  <div className="text-blue-100">Avg Approval</div>
+                </div>
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20">
+                  <div className="text-3xl font-bold text-pink-300 mb-2">99.8%</div>
+                  <div className="text-blue-100">Success Rate</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+        
+        {/* Decorative elements */}
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-white/10 to-transparent rounded-full -translate-y-48 translate-x-48"></div>
+        <div className="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-tr from-white/5 to-transparent rounded-full translate-y-36 -translate-x-36"></div>
+        <div className="absolute top-1/2 right-1/4 w-24 h-24 bg-white/20 rounded-full animate-pulse"></div>
+        <div className="absolute top-1/4 left-1/3 w-16 h-16 bg-yellow-300/30 rounded-full animate-bounce"></div>
       </section>
       
       {/* Finance Options */}
       <section className="mb-10" ref={sectionRef as React.RefObject<HTMLElement>}>
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
-          <div>
-            <h2 className="text-2xl font-heading font-bold text-neutral-800 mb-2">Finance Options</h2>
-            <p className="text-neutral-600 max-w-2xl">
-              Select the finance option that best suits your business needs
-            </p>
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 font-semibold mb-4">
+            <span className="material-icons text-sm">account_balance</span>
+            Finance Solutions
           </div>
+          <h2 className="text-3xl md:text-4xl font-heading font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            Choose Your Finance Option
+          </h2>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Select the finance option that best suits your business needs and get approved in 24-48 hours
+          </p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -460,70 +502,102 @@ export default function TradeFinance() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
               className={`
-                relative overflow-hidden rounded-xl transition-all duration-300 cursor-pointer
-                ${!option.available ? 'opacity-80 grayscale-[30%]' : ''}
+                relative overflow-hidden rounded-2xl transition-all duration-300 cursor-pointer border-2
+                ${!option.available ? 'opacity-70 grayscale-[20%]' : ''}
                 ${activeFinanceType === option.id as FinanceType
-                  ? 'shadow-xl shadow-primary-500/20 ring-2 ring-primary-500 transform scale-[1.03] bg-gradient-to-r from-primary-50 to-white' 
-                  : 'shadow-md hover:shadow-lg border border-gray-100 hover:border-primary-200 hover:-translate-y-1 hover:bg-neutral-50'}
+                  ? 'shadow-2xl shadow-blue-500/30 border-blue-500 transform scale-[1.05] bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50' 
+                  : 'shadow-lg hover:shadow-xl border-gray-200 hover:border-blue-300 hover:-translate-y-2 hover:bg-gradient-to-br hover:from-blue-25 hover:to-purple-25'}
               `}
               onClick={() => option.available && setActiveFinanceType(option.id as FinanceType)}
             >
-              <div className={`h-3 w-full ${activeFinanceType === option.id as FinanceType ? 'bg-gradient-to-r from-primary-600 to-primary-400' : 'bg-gray-200'}`}></div>
+              <div className={`h-2 w-full ${
+                activeFinanceType === option.id as FinanceType 
+                  ? 'bg-gradient-to-r from-blue-500 via-purple-500 to-teal-500' 
+                  : 'bg-gradient-to-r from-gray-300 to-gray-400'
+              }`}></div>
               <div className="p-6">
                 <div className="flex items-start mb-4">
                   <div className={`
-                    h-14 w-14 rounded-lg flex items-center justify-center mr-4
+                    h-16 w-16 rounded-2xl flex items-center justify-center mr-4 shadow-lg
                     ${activeFinanceType === option.id as FinanceType 
-                      ? 'bg-gradient-to-br from-primary-600 to-primary-800 text-white shadow-lg' 
-                      : 'bg-neutral-100 text-neutral-600 hover:bg-primary-100 hover:text-primary-700 transition-colors'}
+                      ? 'bg-gradient-to-br from-blue-500 to-purple-600 text-white' 
+                      : 'bg-gradient-to-br from-gray-100 to-gray-200 text-gray-600 hover:from-blue-100 hover:to-purple-100 hover:text-blue-700 transition-all'}
                   `}>
                     <span className="material-icons text-2xl">{option.icon}</span>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg text-neutral-800 mb-1">{option.name}</h3>
-                    <p className={`text-sm ${activeFinanceType === option.id as FinanceType ? 'text-neutral-800 font-medium' : 'text-neutral-600'}`}>
+                    <h3 className={`font-bold text-xl mb-2 ${
+                      activeFinanceType === option.id as FinanceType 
+                        ? 'text-blue-800' 
+                        : 'text-gray-800'
+                    }`}>
+                      {option.name}
+                    </h3>
+                    <p className={`text-sm leading-relaxed ${
+                      activeFinanceType === option.id as FinanceType 
+                        ? 'text-blue-700 font-medium' 
+                        : 'text-gray-600'
+                    }`}>
                       {option.description}
                     </p>
                   </div>
                 </div>
+                {activeFinanceType === option.id as FinanceType && (
+                  <div className="mt-4 p-3 bg-white/60 backdrop-blur-sm rounded-xl border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-semibold text-blue-800">Selected Option</span>
+                      <span className="material-icons text-blue-600">check_circle</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           ))}
         </div>
 
-        {/* Blockchain Connection Status */}
-        <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 mb-6 mt-8">
+        {/* Enhanced Blockchain Connection Status */}
+        <div className={`bg-gradient-to-r ${isConnected ? 'from-green-50 to-emerald-50 border-green-200' : 'from-orange-50 to-red-50 border-orange-200'} border-2 rounded-2xl p-6 mb-8 mt-8 shadow-lg`}>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h3 className="text-sm font-medium text-neutral-800 mb-1">Blockchain Wallet Status</h3>
-              <div className="flex items-center">
-                <div className={`h-2.5 w-2.5 rounded-full mr-2 ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                <p className="text-sm text-neutral-600">
-                  {isConnected 
-                    ? `Connected: ${currentAddress?.slice(0, 6)}...${currentAddress?.slice(-4)}` 
-                    : 'Disconnected - Connect MetaMask to deploy smart contracts'}
-                </p>
+            <div className="flex items-start gap-4">
+              <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${isConnected ? 'bg-green-500' : 'bg-orange-500'} text-white shadow-lg`}>
+                <span className="material-icons text-xl">
+                  {isConnected ? 'account_balance_wallet' : 'warning'}
+                </span>
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-gray-800 mb-2">Blockchain Wallet Status</h3>
+                <div className="flex items-center gap-2">
+                  <div className={`h-3 w-3 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-orange-500 animate-bounce'}`}></div>
+                  <p className={`text-sm font-medium ${isConnected ? 'text-green-700' : 'text-orange-700'}`}>
+                    {isConnected 
+                      ? `Connected: ${currentAddress?.slice(0, 6)}...${currentAddress?.slice(-4)}` 
+                      : 'Connect MetaMask to deploy smart contracts and secure transactions'}
+                  </p>
+                </div>
               </div>
             </div>
             <Button 
               type="button" 
-              variant={isConnected ? "outline" : "default"} 
-              size="sm"
+              size="lg"
               disabled={isBlockchainLoading}
               onClick={() => initialize()}
-              className="flex items-center"
+              className={`font-bold px-6 py-3 rounded-xl shadow-lg border-0 ${
+                isConnected 
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white' 
+                  : 'bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white'
+              }`}
             >
               {isBlockchainLoading && (
-                <span className="h-4 w-4 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                <span className="h-5 w-5 mr-2 border-2 border-current border-t-transparent rounded-full animate-spin" />
               )}
               {isConnected ? (
                 <>
-                  <span className="material-icons text-sm mr-1.5">refresh</span>
+                  <span className="material-icons text-lg mr-2">refresh</span>
                   Refresh Connection
                 </>
               ) : (
                 <>
-                  <span className="material-icons text-sm mr-1.5">account_balance_wallet</span>
+                  <span className="material-icons text-lg mr-2">account_balance_wallet</span>
                   Connect Wallet
                 </>
               )}
@@ -539,25 +613,32 @@ export default function TradeFinance() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="border-primary-200 shadow-lg overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-primary-600 to-primary-400 w-full"></div>
+            <Card className="border-2 border-blue-200 shadow-2xl overflow-hidden bg-gradient-to-br from-blue-50 to-purple-50">
+              <div className="h-3 bg-gradient-to-r from-blue-500 via-purple-500 to-teal-500 w-full"></div>
               <CardContent className="p-6 lg:p-8">
-                <h3 className="text-xl font-heading font-semibold mb-4">
-                  {activeFinanceType === 'factoring' && 'Apply for Factoring'}
-                  {activeFinanceType === 'export' && 'Apply for Export Finance'}
-                  {activeFinanceType === 'supply' && 'Apply for Supply Chain Finance'}
-                  {activeFinanceType === 'import' && 'Apply for Import Finance'}
-                  {activeFinanceType === 'noninterest' && 'Apply for Non Interest Finance'}
-                  {activeFinanceType === 'startup' && 'Apply for Startup Trade Finance'}
-                </h3>
-                <p className="text-neutral-600 mb-6">
-                  {activeFinanceType === 'factoring' && 'Convert your accounts receivable into immediate cash flow by uploading your invoice below.'}
-                  {activeFinanceType === 'export' && 'Secure funding for your export operations by providing your shipment and invoice details.'}
-                  {activeFinanceType === 'supply' && 'Optimize working capital throughout your supply chain with our advanced financing solutions.'}
-                  {activeFinanceType === 'import' && 'Get financing for international purchases and secure your import operations.'}
-                  {activeFinanceType === 'noninterest' && 'Access ethical financing solutions with no interest charges for your trade operations.'}
-                  {activeFinanceType === 'startup' && 'Specialized financing solutions for early-stage trading businesses.'}
-                </p>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <span className="material-icons text-lg">description</span>
+                  </div>
+                  <h3 className="text-2xl font-heading font-bold text-gray-800">
+                    {activeFinanceType === 'factoring' && 'Apply for Factoring'}
+                    {activeFinanceType === 'export' && 'Apply for Export Finance'}
+                    {activeFinanceType === 'supply' && 'Apply for Supply Chain Finance'}
+                    {activeFinanceType === 'import' && 'Apply for Import Finance'}
+                    {activeFinanceType === 'noninterest' && 'Apply for Non Interest Finance'}
+                    {activeFinanceType === 'startup' && 'Apply for Startup Trade Finance'}
+                  </h3>
+                </div>
+                <div className="bg-white/60 backdrop-blur-sm rounded-xl p-4 mb-6 border border-blue-200">
+                  <p className="text-gray-700 font-medium leading-relaxed">
+                    {activeFinanceType === 'factoring' && 'Convert your accounts receivable into immediate cash flow by uploading your invoice below.'}
+                    {activeFinanceType === 'export' && 'Secure funding for your export operations by providing your shipment and invoice details.'}
+                    {activeFinanceType === 'supply' && 'Optimize working capital throughout your supply chain with our advanced financing solutions.'}
+                    {activeFinanceType === 'import' && 'Get financing for international purchases and secure your import operations.'}
+                    {activeFinanceType === 'noninterest' && 'Access ethical financing solutions with no interest charges for your trade operations.'}
+                    {activeFinanceType === 'startup' && 'Specialized financing solutions for early-stage trading businesses.'}
+                  </p>
+                </div>
                 
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -789,18 +870,19 @@ export default function TradeFinance() {
                     <Button
                       type="submit"
                       disabled={isSubmitting}
-                      className="w-full mt-4"
+                      size="lg"
+                      className="w-full mt-6 bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 hover:from-blue-700 hover:via-purple-700 hover:to-teal-700 text-white font-bold py-4 px-8 rounded-xl shadow-xl border-0 transform hover:scale-[1.02] transition-all duration-200"
                     >
                       {isSubmitting ? (
-                        <span className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Processing...
+                        <span className="flex items-center justify-center">
+                          <div className="animate-spin w-6 h-6 mr-3 border-3 border-white border-t-transparent rounded-full"></div>
+                          Processing Application...
                         </span>
                       ) : (
-                        "Submit for Approval"
+                        <span className="flex items-center justify-center">
+                          <span className="material-icons mr-3 text-xl">send</span>
+                          Submit for Approval
+                        </span>
                       )}
                     </Button>
                   </form>
