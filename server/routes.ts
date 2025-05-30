@@ -564,11 +564,12 @@ Be helpful, professional, and concise. Provide specific guidance about DTFS feat
       // Store transaction in our system
       const transactionData = {
         userId: (req as any).user.id,
-        type: "papss_payment" as const,
-        amount: parseFloat(amount),
+        type: "papss_payment",
+        amount: amount.toString(),
         currency,
         description: `PAPSS payment to ${recipientBank}`,
-        status: "pending" as const,
+        transactionType: "debit",
+        status: "pending",
         reference: paymentRequest.transactionId
       };
       

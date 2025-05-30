@@ -122,13 +122,14 @@ export const insertWalletSchema = createInsertSchema(wallets).omit({
 export const transactions = pgTable("transactions", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull().references(() => users.id),
-  type: text("type").notNull(), // sent, received, exchanged
+  type: text("type").notNull(), // sent, received, exchanged, papss_payment
   description: text("description").notNull(),
   transactionType: text("transaction_type").notNull(),
   amount: decimal("amount", { precision: 12, scale: 2 }).notNull(),
   currency: text("currency").notNull(),
   date: timestamp("date").defaultNow().notNull(),
   status: text("status").notNull(), // completed, pending, failed
+  reference: text("reference"), // for external references like PAPSS transaction IDs
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

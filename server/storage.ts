@@ -64,6 +64,8 @@ export interface IStorage {
   getTransaction(id: number): Promise<Transaction | undefined>;
   getTransactionsByUserId(userId: number): Promise<Transaction[]>;
   createTransaction(transaction: InsertTransaction): Promise<Transaction>;
+  updateTransaction(id: number, data: Partial<InsertTransaction>): Promise<Transaction | undefined>;
+  getAllUsers(): Promise<User[]>;
 
   // AI Message operations
   getAiMessage(id: number): Promise<AiMessage | undefined>;
@@ -581,6 +583,19 @@ export class MemStorage implements IStorage {
     const newTransaction: Transaction = { ...transaction, id, createdAt: new Date() };
     this.transactions.set(id, newTransaction);
     return newTransaction;
+  }
+
+  async updateTransaction(id: number, data: Partial<InsertTransaction>): Promise<Transaction | undefined> {
+    const transaction = this.transactions.get(id);
+    if (!transaction) return undefined;
+    
+    const updatedTransaction: Transaction = { ...transaction, ...data };
+    this.transactions.set(id, updatedTransaction);
+    return updatedTransaction;
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
   }
 
   // AI Message operations
