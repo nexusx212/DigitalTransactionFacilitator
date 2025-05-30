@@ -18,10 +18,10 @@ export default function LogoutPage() {
     localStorage.clear();
     sessionStorage.clear();
     
-    // Hard redirect to auth page with a slight delay
+    // Hard redirect to enhanced auth page with a slight delay
     const timer = setTimeout(() => {
       const timestamp = Date.now();
-      window.location.href = `/auth?t=${timestamp}`;
+      window.location.href = `/auth-enhanced?t=${timestamp}`;
     }, 1000);
     
     // Also trigger the mutation for server-side cleanup - but only once

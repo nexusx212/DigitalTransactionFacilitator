@@ -97,7 +97,7 @@ function AppShell({ children, isAuthPage = false }: { children: React.ReactNode,
 
 function App() {
   const [location] = useLocation();
-  const isAuthPage = location === '/auth';
+  const isAuthPage = location === '/auth' || location === '/auth-enhanced';
 
   // Register service worker for PWA capabilities
   useEffect(() => {
