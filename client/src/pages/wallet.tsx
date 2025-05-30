@@ -41,7 +41,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogClose
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -49,1203 +48,837 @@ import { Switch } from "@/components/ui/switch";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useToast } from "@/hooks/use-toast";
 
-// Types
-type Transaction = {
+interface CryptoCurrency {
+  symbol: string;
+  name: string;
+  balance: number;
+  usdValue: number;
+  change24h: number;
+  icon: string;
+  type: 'native' | 'stablecoin' | 'token';
+  network: string;
+  contractAddress?: string;
+}
+
+interface Transaction {
   id: string;
-  type: "sent" | "received" | "exchanged";
-  description: string;
-  date: Date;
-  transactionType: string;
+  type: 'send' | 'receive' | 'swap' | 'deposit' | 'withdraw';
   amount: number;
   currency: string;
-  status?: "completed" | "pending" | "failed";
-  recipient?: string;
-};
+  to?: string;
+  from?: string;
+  timestamp: string;
+  status: 'pending' | 'completed' | 'failed';
+  txHash?: string;
+  fee: number;
+}
 
-type WalletBalance = {
+interface WalletConnection {
   id: string;
-  type: string;
-  balance: number;
-  currency: string;
-  usdEquivalent?: number;
-  change?: number; // Percentage change
-  description?: string;
-  icon?: string;
-};
+  name: string;
+  icon: string;
+  isConnected: boolean;
+  address?: string;
+  balance?: number;
+}
 
-// Form schema for payments
-const paymentSchema = z.object({
-  amount: z.string().min(1, "Amount is required").refine(val => !isNaN(Number(val)) && Number(val) > 0, {
-    message: "Amount must be a positive number",
-  }),
-  currency: z.string().min(1, "Currency is required"),
-  recipientCountry: z.string().min(1, "Recipient country is required"),
-  recipient: z.string().min(1, "Recipient is required"),
-  purpose: z.string().min(1, "Payment purpose is required"),
-  smart_contract: z.boolean().optional(),
+const depositSchema = z.object({
+  amount: z.string().min(1, "Amount is required"),
+  currency: z.string().min(1, "Please select a currency"),
+  paymentMethod: z.string().min(1, "Please select a payment method"),
+});
+
+const sendSchema = z.object({
+  amount: z.string().min(1, "Amount is required"),
+  currency: z.string().min(1, "Please select a currency"),
+  recipientAddress: z.string().min(1, "Recipient address is required"),
+  memo: z.string().optional(),
 });
 
 export default function Wallet() {
-  const { toast } = useToast();
-  const [isProcessing, setIsProcessing] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [showQrCode, setShowQrCode] = useState(false);
-  
-  // Wallet balances
-  const balances: WalletBalance[] = [
+  const [showDepositDialog, setShowDepositDialog] = useState(false);
+  const [showSendDialog, setShowSendDialog] = useState(false);
+  const [showWalletConnectDialog, setShowWalletConnectDialog] = useState(false);
+  const [notifications, setNotifications] = useState(true);
+  const [autoConvert, setAutoConvert] = useState(false);
+
+  // Enhanced cryptocurrency portfolio with stablecoins
+  const [cryptoPortfolio, setCryptoPortfolio] = useState<CryptoCurrency[]>([
     {
-      id: "balance-1",
-      type: "PADC",
-      balance: 12450,
-      currency: "PADC",
-      usdEquivalent: 12450,
-      change: 2.4,
-      description: "Pan-African Digital Currency",
-      icon: "account_balance_wallet"
+      symbol: 'PADC',
+      name: 'Pan African Digital Coin',
+      balance: 15420.50,
+      usdValue: 15420.50,
+      change24h: 0.02,
+      icon: '🏛️',
+      type: 'native',
+      network: 'PAPSS'
     },
     {
-      id: "balance-2",
-      type: "DTFS",
-      balance: 580,
-      currency: "DTFS",
-      change: 0,
-      description: "Reward points for platform usage",
-      icon: "token"
+      symbol: 'USDT',
+      name: 'Tether USD',
+      balance: 8750.25,
+      usdValue: 8750.25,
+      change24h: 0.00,
+      icon: '💵',
+      type: 'stablecoin',
+      network: 'Ethereum',
+      contractAddress: '0xdAC17F958D2ee523a2206206994597C13D831ec7'
     },
     {
-      id: "balance-3",
-      type: "BTC",
-      balance: 0.027,
-      currency: "BTC",
-      usdEquivalent: 1648.35,
-      change: -1.2,
-      description: "Bitcoin",
-      icon: "currency_bitcoin"
+      symbol: 'USDC',
+      name: 'USD Coin',
+      balance: 12340.80,
+      usdValue: 12340.80,
+      change24h: 0.01,
+      icon: '🔵',
+      type: 'stablecoin',
+      network: 'Ethereum',
+      contractAddress: '0xA0b86a33E6441b17bF9F8C9D1C99C7f1f02e8B8E'
+    },
+    {
+      symbol: 'DAI',
+      name: 'Dai Stablecoin',
+      balance: 5670.15,
+      usdValue: 5670.15,
+      change24h: -0.01,
+      icon: '🟡',
+      type: 'stablecoin',
+      network: 'Ethereum',
+      contractAddress: '0x6B175474E89094C44Da98b954EedeAC495271d0F'
+    },
+    {
+      symbol: 'BUSD',
+      name: 'Binance USD',
+      balance: 3245.60,
+      usdValue: 3245.60,
+      change24h: 0.00,
+      icon: '🟨',
+      type: 'stablecoin',
+      network: 'BSC',
+      contractAddress: '0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56'
+    },
+    {
+      symbol: 'FRAX',
+      name: 'Frax',
+      balance: 1890.45,
+      usdValue: 1890.45,
+      change24h: 0.02,
+      icon: '🔺',
+      type: 'stablecoin',
+      network: 'Ethereum',
+      contractAddress: '0x853d955aCEf822Db058eb8505911ED77F175b99e'
+    },
+    {
+      symbol: 'ETH',
+      name: 'Ethereum',
+      balance: 3.25,
+      usdValue: 7425.50,
+      change24h: 2.85,
+      icon: '♦️',
+      type: 'native',
+      network: 'Ethereum'
+    },
+    {
+      symbol: 'BTC',
+      name: 'Bitcoin',
+      balance: 0.15,
+      usdValue: 6750.00,
+      change24h: 1.25,
+      icon: '₿',
+      type: 'native',
+      network: 'Bitcoin'
     }
-  ];
-  
-  // Recent transactions
-  const transactions: Transaction[] = [
+  ]);
+
+  // Wallet connection options with WalletConnect
+  const [walletConnections, setWalletConnections] = useState<WalletConnection[]>([
     {
-      id: "tx-001",
-      type: "sent",
-      description: "Sent to GreenHarvest Ltd",
-      date: new Date("2023-06-02"),
-      transactionType: "PADC Transfer",
-      amount: 1250,
-      currency: "PADC",
-      status: "completed",
-      recipient: "GreenHarvest Ltd"
+      id: 'metamask',
+      name: 'MetaMask',
+      icon: '🦊',
+      isConnected: false
     },
     {
-      id: "tx-002",
-      type: "received",
-      description: "Received from AfroCotton Inc",
-      date: new Date("2023-05-29"),
-      transactionType: "PADC Transfer",
-      amount: 3500,
-      currency: "PADC",
-      status: "completed",
-      recipient: "AfroCotton Inc"
+      id: 'walletconnect',
+      name: 'WalletConnect',
+      icon: '🔗',
+      isConnected: false
     },
     {
-      id: "tx-003",
-      type: "exchanged",
-      description: "Currency Exchange",
-      date: new Date("2023-05-25"),
-      transactionType: "USD to PADC",
-      amount: 5000,
-      currency: "PADC",
-      status: "completed"
+      id: 'coinbase',
+      name: 'Coinbase Wallet',
+      icon: '🔵',
+      isConnected: false
     },
     {
-      id: "tx-004",
-      type: "sent",
-      description: "Invoice Payment",
-      date: new Date("2023-05-20"),
-      transactionType: "Smart Contract",
-      amount: 2750,
-      currency: "PADC",
-      status: "pending",
-      recipient: "SunTech Solutions"
+      id: 'trust',
+      name: 'Trust Wallet',
+      icon: '🛡️',
+      isConnected: false
+    },
+    {
+      id: 'papss',
+      name: 'PAPSS Wallet',
+      icon: '🏛️',
+      isConnected: true,
+      address: '0x742d35...9c8f3a',
+      balance: 15420.50
     }
-  ];
-  
-  // Form setup
-  const form = useForm<z.infer<typeof paymentSchema>>({
-    resolver: zodResolver(paymentSchema),
+  ]);
+
+  const [recentTransactions] = useState<Transaction[]>([
+    {
+      id: 'tx-001',
+      type: 'receive',
+      amount: 2500.00,
+      currency: 'USDT',
+      from: '0x8ba1...f2e7',
+      timestamp: '2024-01-20T10:30:00Z',
+      status: 'completed',
+      txHash: '0xabc123...def456',
+      fee: 2.50
+    },
+    {
+      id: 'tx-002',
+      type: 'send',
+      amount: 1200.00,
+      currency: 'PADC',
+      to: '0x9cd2...a1b3',
+      timestamp: '2024-01-19T15:45:00Z',
+      status: 'completed',
+      txHash: '0x789xyz...123abc',
+      fee: 1.00
+    },
+    {
+      id: 'tx-003',
+      type: 'swap',
+      amount: 500.00,
+      currency: 'USDC',
+      timestamp: '2024-01-18T09:20:00Z',
+      status: 'completed',
+      fee: 5.00
+    },
+    {
+      id: 'tx-004',
+      type: 'deposit',
+      amount: 3000.00,
+      currency: 'DAI',
+      timestamp: '2024-01-17T14:10:00Z',
+      status: 'pending',
+      fee: 0.00
+    }
+  ]);
+
+  const depositForm = useForm<z.infer<typeof depositSchema>>({
+    resolver: zodResolver(depositSchema),
+    defaultValues: {
+      amount: "",
+      currency: "USDT",
+      paymentMethod: "bank_transfer",
+    },
+  });
+
+  const sendForm = useForm<z.infer<typeof sendSchema>>({
+    resolver: zodResolver(sendSchema),
     defaultValues: {
       amount: "",
       currency: "PADC",
-      recipientCountry: "",
-      recipient: "",
-      purpose: "",
-      smart_contract: false
+      recipientAddress: "",
+      memo: "",
     },
   });
-  
-  // Fade-in animation setup
-  const sectionRef = useRef<HTMLElement>(null);
-  
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          sectionRef.current?.classList.add("appear");
-          observer.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.1 }
+
+  const totalPortfolioValue = cryptoPortfolio.reduce((sum, coin) => sum + coin.usdValue, 0);
+  const stablecoinValue = cryptoPortfolio
+    .filter(coin => coin.type === 'stablecoin')
+    .reduce((sum, coin) => sum + coin.usdValue, 0);
+
+  const connectWallet = async (walletId: string) => {
+    // Simulate wallet connection
+    setWalletConnections(prev => 
+      prev.map(wallet => 
+        wallet.id === walletId 
+          ? { ...wallet, isConnected: true, address: '0x' + Math.random().toString(16).substr(2, 8) + '...' + Math.random().toString(16).substr(2, 4) }
+          : wallet
+      )
     );
-    
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
-    
-    return () => {
-      if (sectionRef.current) {
-        observer.unobserve(sectionRef.current);
-      }
-    };
-  }, []);
-  
-  const onSubmit = async (data: z.infer<typeof paymentSchema>) => {
-    setIsProcessing(true);
-    
-    try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast({
-        title: "Payment Initiated",
-        description: `Your payment of ${data.amount} ${data.currency} to ${data.recipient} is being processed.`,
-      });
-      
-      // Reset form
-      form.reset();
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Payment Failed",
-        description: "There was an error processing your payment request.",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-  
-  const getTransactionIcon = (type: Transaction['type']) => {
-    switch (type) {
-      case 'sent':
-        return <span className="material-icons text-[18px]">arrow_upward</span>;
-      case 'received':
-        return <span className="material-icons text-[18px]">arrow_downward</span>;
-      case 'exchanged':
-        return <span className="material-icons text-[18px]">sync</span>;
-      default:
-        return <span className="material-icons text-[18px]">swap_horiz</span>;
-    }
-  };
-  
-  const getTransactionBgColor = (type: Transaction['type']) => {
-    switch (type) {
-      case 'sent':
-        return 'bg-primary-light';
-      case 'received':
-        return 'bg-success-light';
-      case 'exchanged':
-        return 'bg-warning-light';
-      default:
-        return 'bg-neutral-100';
-    }
-  };
-  
-  const getTransactionIconColor = (type: Transaction['type']) => {
-    switch (type) {
-      case 'sent':
-        return 'text-primary';
-      case 'received':
-        return 'text-success';
-      case 'exchanged':
-        return 'text-warning';
-      default:
-        return 'text-neutral-500';
-    }
-  };
-  
-  const getAmountColor = (type: Transaction['type']) => {
-    switch (type) {
-      case 'sent':
-        return 'text-error';
-      case 'received':
-        return 'text-success';
-      case 'exchanged':
-        return 'text-neutral-800';
-      default:
-        return 'text-neutral-800';
-    }
-  };
-  
-  const getAmountPrefix = (type: Transaction['type']) => {
-    switch (type) {
-      case 'sent':
-        return '-';
-      case 'received':
-        return '+';
-      case 'exchanged':
-        return '±';
-      default:
-        return '';
-    }
+    setShowWalletConnectDialog(false);
   };
 
-  const getStatusBadge = (status?: string) => {
-    if (!status) return null;
-    
+  const disconnectWallet = (walletId: string) => {
+    setWalletConnections(prev => 
+      prev.map(wallet => 
+        wallet.id === walletId 
+          ? { ...wallet, isConnected: false, address: undefined }
+          : wallet
+      )
+    );
+  };
+
+  const onDepositSubmit = (values: z.infer<typeof depositSchema>) => {
+    console.log("Deposit request:", values);
+    setShowDepositDialog(false);
+    depositForm.reset();
+    // Here you would integrate with your payment processing
+  };
+
+  const onSendSubmit = (values: z.infer<typeof sendSchema>) => {
+    console.log("Send transaction:", values);
+    setShowSendDialog(false);
+    sendForm.reset();
+    // Here you would process the transaction
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-        return <Badge variant="outline" className="bg-success-light text-success border-success/20">Completed</Badge>;
-      case 'pending':
-        return <Badge variant="outline" className="bg-warning-light text-warning border-warning/20">Pending</Badge>;
-      case 'failed':
-        return <Badge variant="outline" className="bg-error-light text-error border-error/20">Failed</Badge>;
-      default:
-        return null;
+      case 'completed': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'failed': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  // State for modal dialogs
-  const [showDepositModal, setShowDepositModal] = useState(false);
-  const [showConnectWalletModal, setShowConnectWalletModal] = useState(false);
-  const [depositMethod, setDepositMethod] = useState<'fiat' | 'crypto'>('fiat');
-  const [selectedCryptoForDeposit, setSelectedCryptoForDeposit] = useState("BTC");
-  const [connectedWallets, setConnectedWallets] = useState<string[]>([]);
-  const [isWalletConnecting, setIsWalletConnecting] = useState(false);
-
-  const handleConnectWallet = (walletType: string) => {
-    setIsWalletConnecting(true);
-    
-    // Simulate wallet connection process
-    setTimeout(() => {
-      setConnectedWallets(prev => [...prev, walletType]);
-      setIsWalletConnecting(false);
-      setShowConnectWalletModal(false);
-      
-      toast({
-        title: "Wallet Connected",
-        description: `Your ${walletType} wallet has been successfully connected.`,
-      });
-    }, 2000);
-  };
-
-  const disconnectWallet = (walletType: string) => {
-    setConnectedWallets(prev => prev.filter(wallet => wallet !== walletType));
-    
-    toast({
-      title: "Wallet Disconnected",
-      description: `Your ${walletType} wallet has been disconnected.`,
-    });
+  const getTransactionIcon = (type: string) => {
+    switch (type) {
+      case 'send': return '📤';
+      case 'receive': return '📥';
+      case 'swap': return '🔄';
+      case 'deposit': return '💰';
+      case 'withdraw': return '💸';
+      default: return '💱';
+    }
   };
 
   return (
-    <section id="wallet" className="mb-16 py-2" ref={sectionRef}>
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-heading font-bold text-neutral-800 mb-1">
-            <span className="gradient-text">Digital Wallet</span>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 p-4 md:p-6">
+      {/* Enhanced Header */}
+      <div className="mb-8">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-green-100 to-teal-100 text-green-800 font-semibold mb-4">
+            <span className="material-icons text-sm">account_balance_wallet</span>
+            Digital Wallet Hub
+          </div>
+          <h1 className="text-3xl md:text-4xl font-heading font-bold bg-gradient-to-r from-green-600 to-teal-600 bg-clip-text text-transparent mb-4">
+            Your Multi-Currency Wallet
           </h1>
-          <p className="text-neutral-600">Manage your digital assets and make secure cross-border payments</p>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Manage fiat and crypto funds with integrated stablecoin support and WalletConnect
+          </p>
         </div>
-        <div className="flex flex-wrap gap-3 mt-4 md:mt-0">
-          <Button variant="outline" className="flex items-center gap-2">
-            <span className="material-icons text-[18px]">history</span>
-            <span>History</span>
-          </Button>
-          <Button 
-            variant="outline" 
-            className="flex items-center gap-2"
-            onClick={() => setShowConnectWalletModal(true)}
-          >
-            <span className="material-icons text-[18px]">link</span>
-            <span>Connect</span>
-          </Button>
-          <Button 
-            className="flex items-center gap-2"
-            onClick={() => setShowDepositModal(true)}
-          >
-            <span className="material-icons text-[18px]">add</span>
-            <span>Deposit</span>
-          </Button>
+
+        {/* Portfolio Overview */}
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          <Card className="border-2 border-green-200 shadow-xl bg-gradient-to-br from-green-50 to-teal-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span className="material-icons text-green-600">account_balance</span>
+                Total Balance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-green-800 mb-2">
+                ${totalPortfolioValue.toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-600">Across all currencies</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-blue-200 shadow-xl bg-gradient-to-br from-blue-50 to-purple-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span className="material-icons text-blue-600">shield</span>
+                Stablecoins
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-blue-800 mb-2">
+                ${stablecoinValue.toLocaleString()}
+              </p>
+              <p className="text-sm text-gray-600">USDT, USDC, DAI, BUSD, FRAX</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-2 border-purple-200 shadow-xl bg-gradient-to-br from-purple-50 to-pink-50">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                <span className="material-icons text-purple-600">link</span>
+                Connected Wallets
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold text-purple-800 mb-2">
+                {walletConnections.filter(w => w.isConnected).length}
+              </p>
+              <p className="text-sm text-gray-600">Active connections</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-200">
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Button 
+              onClick={() => setShowDepositDialog(true)}
+              className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white rounded-xl px-6 py-3 font-semibold"
+            >
+              <span className="material-icons mr-2">add_circle</span>
+              Deposit Funds
+            </Button>
+            <Button 
+              onClick={() => setShowSendDialog(true)}
+              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl px-6 py-3 font-semibold"
+            >
+              <span className="material-icons mr-2">send</span>
+              Send Payment
+            </Button>
+            <Button 
+              onClick={() => setShowWalletConnectDialog(true)}
+              className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-600 hover:to-pink-700 text-white rounded-xl px-6 py-3 font-semibold"
+            >
+              <span className="material-icons mr-2">link</span>
+              Connect Wallet
+            </Button>
+          </div>
         </div>
       </div>
-      
-      <Tabs defaultValue="overview" className="mb-8" onValueChange={setActiveTab}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="overview" className="text-sm">Overview</TabsTrigger>
-          <TabsTrigger value="send" className="text-sm">Send Money</TabsTrigger>
-          <TabsTrigger value="receive" className="text-sm">Receive</TabsTrigger>
-          <TabsTrigger value="exchange" className="text-sm">Exchange</TabsTrigger>
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-2 h-14">
+          <TabsTrigger value="overview" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">dashboard</span>
+            Overview
+          </TabsTrigger>
+          <TabsTrigger value="transactions" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">receipt_long</span>
+            Transactions
+          </TabsTrigger>
+          <TabsTrigger value="wallets" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">account_balance_wallet</span>
+            Wallets
+          </TabsTrigger>
+          <TabsTrigger value="settings" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">settings</span>
+            Settings
+          </TabsTrigger>
         </TabsList>
-        
-        <TabsContent value="overview" className="space-y-8">
-          {/* Balance Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {balances.map((balance, index) => (
+
+        {/* Portfolio Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <div className="grid gap-6">
+            {cryptoPortfolio.map((coin) => (
               <motion.div
-                key={balance.id}
-                className="rounded-xl overflow-hidden shadow-md bg-white"
+                key={coin.symbol}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: index * 0.1 }}
-                whileHover={{ 
-                  y: -5,
-                  boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)',
-                  transition: { duration: 0.2 }
-                }}
+                transition={{ duration: 0.3 }}
               >
-                <div className={`px-6 pt-5 pb-6 ${
-                  balance.type === "PADC" 
-                    ? "gradient-primary" 
-                    : balance.type === "DTFS"
-                      ? "gradient-secondary"
-                      : "bg-gradient-to-r from-neutral-700 to-neutral-900"
-                } text-white`}>
-                  <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-medium">{balance.type}</h3>
-                    <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center">
-                      <span className="material-icons">
-                        {balance.icon || "account_balance_wallet"}
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-3xl font-bold mb-1">
-                    {balance.balance.toLocaleString()} <span className="text-sm font-normal">{balance.currency}</span>
-                  </p>
-                  <p className="text-white/80 text-sm flex items-center">
-                    {balance.usdEquivalent 
-                      ? `≈ ${formatCurrency(balance.usdEquivalent, "USD")}` 
-                      : balance.description}
-                    
-                    {typeof balance.change === 'number' && balance.change !== 0 && (
-                      <span className={`ml-2 text-xs flex items-center ${balance.change > 0 ? 'text-green-300' : 'text-red-300'}`}>
-                        <span className="material-icons text-[14px] mr-0.5">
-                          {balance.change > 0 ? 'trending_up' : 'trending_down'}
-                        </span>
-                        {balance.change > 0 ? '+' : ''}{balance.change}%
-                      </span>
-                    )}
-                  </p>
-                </div>
-                <div className="px-4 py-3 flex items-center justify-between">
-                  <span className="text-xs text-neutral-500">{balance.description}</span>
-                  <div className="flex gap-1">
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                      <span className="material-icons text-[18px] text-neutral-500">info</span>
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0">
-                      <span className="material-icons text-[18px] text-neutral-500">more_vert</span>
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-          
-          {/* Recent Activities & Quick Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle>Recent Activity</CardTitle>
-                  <Button variant="ghost" size="sm" className="text-primary h-8">View All</Button>
-                </div>
-              </CardHeader>
-              <CardContent className="px-6">
-                <div className="space-y-1">
-                  {transactions.map((transaction, index) => (
-                    <motion.div
-                      key={transaction.id}
-                      className="flex items-center justify-between py-4 px-2 rounded-lg hover:bg-neutral-50 transition-all duration-normal border-b border-neutral-100 last:border-b-0"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3, delay: index * 0.05 }}
-                    >
+                <Card className="border-2 border-gray-200 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-4">
-                        <div className={`w-10 h-10 rounded-full ${getTransactionBgColor(transaction.type)} flex items-center justify-center ${getTransactionIconColor(transaction.type)}`}>
-                          {getTransactionIcon(transaction.type)}
+                        <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-2xl flex items-center justify-center text-2xl">
+                          {coin.icon}
                         </div>
                         <div>
+                          <h3 className="text-xl font-bold text-gray-800">{coin.name}</h3>
                           <div className="flex items-center gap-2">
-                            <p className="font-medium text-neutral-800">{transaction.description}</p>
-                            {getStatusBadge(transaction.status)}
+                            <p className="text-sm text-gray-600">{coin.symbol}</p>
+                            <Badge className={`px-2 py-1 text-xs font-semibold ${
+                              coin.type === 'stablecoin' ? 'bg-green-100 text-green-800' :
+                              coin.type === 'native' ? 'bg-blue-100 text-blue-800' :
+                              'bg-purple-100 text-purple-800'
+                            }`}>
+                              {coin.type === 'stablecoin' ? 'Stablecoin' : coin.type === 'native' ? 'Native' : 'Token'}
+                            </Badge>
+                            <Badge className="px-2 py-1 text-xs bg-gray-100 text-gray-700">
+                              {coin.network}
+                            </Badge>
                           </div>
-                          <p className="text-xs text-neutral-500 mt-0.5">
-                            {transaction.date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' })} 
-                            {transaction.recipient && ` • ${transaction.recipient}`}
-                          </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={`font-semibold ${getAmountColor(transaction.type)}`}>
-                          {getAmountPrefix(transaction.type)}{transaction.amount.toLocaleString()} {transaction.currency}
+                        <p className="text-2xl font-bold text-gray-800">
+                          {coin.balance.toLocaleString()} {coin.symbol}
                         </p>
-                        <p className="text-xs text-neutral-500 mt-0.5">{transaction.transactionType}</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-                <CardDescription>Perform common operations</CardDescription>
-              </CardHeader>
-              <CardContent className="px-6">
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="flex-col h-auto py-4 justify-start items-center gap-2">
-                    <span className="material-icons text-primary">send</span>
-                    <span className="text-xs">Send Money</span>
-                  </Button>
-                  <Button variant="outline" className="flex-col h-auto py-4 justify-start items-center gap-2">
-                    <span className="material-icons text-primary">qr_code_scanner</span>
-                    <span className="text-xs">Scan QR</span>
-                  </Button>
-                  <Button variant="outline" className="flex-col h-auto py-4 justify-start items-center gap-2">
-                    <span className="material-icons text-primary">sync_alt</span>
-                    <span className="text-xs">Exchange</span>
-                  </Button>
-                  <Button variant="outline" className="flex-col h-auto py-4 justify-start items-center gap-2">
-                    <span className="material-icons text-primary">history</span>
-                    <span className="text-xs">History</span>
-                  </Button>
-                </div>
-                
-                <Separator className="my-4" />
-                
-                <div className="space-y-3">
-                  <h4 className="text-sm font-medium">Saved Wallets</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary">
-                          <span className="material-icons text-[16px]">person</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">John Doe</p>
-                          <p className="text-xs text-neutral-500">ID: DW28301</p>
+                        <p className="text-lg text-gray-600">
+                          ${coin.usdValue.toLocaleString()}
+                        </p>
+                        <div className={`flex items-center justify-end gap-1 text-sm ${
+                          coin.change24h >= 0 ? 'text-green-600' : 'text-red-600'
+                        }`}>
+                          <span className="material-icons text-xs">
+                            {coin.change24h >= 0 ? 'trending_up' : 'trending_down'}
+                          </span>
+                          {coin.change24h >= 0 ? '+' : ''}{coin.change24h.toFixed(2)}%
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <span className="material-icons text-[18px]">send</span>
-                      </Button>
                     </div>
-                    <div className="flex items-center justify-between py-2 px-3 bg-neutral-50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="bg-primary/10 w-8 h-8 rounded-full flex items-center justify-center text-primary">
-                          <span className="material-icons text-[16px]">business</span>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium">AfroCotton Inc</p>
-                          <p className="text-xs text-neutral-500">ID: DW52910</p>
-                        </div>
+                    {coin.contractAddress && (
+                      <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded font-mono">
+                        Contract: {coin.contractAddress}
                       </div>
-                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <span className="material-icons text-[18px]">send</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </TabsContent>
-        
-        <TabsContent value="send">
-          <Card>
-            <CardHeader>
-              <CardTitle>Send Payment</CardTitle>
-              <CardDescription>Make secure cross-border payments with PAPSS</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Amount & Currency */}
-                    <FormField
-                      control={form.control}
-                      name="amount"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Amount</FormLabel>
-                          <div className="relative">
-                            <FormControl>
-                              <Input
-                                placeholder="0.00"
-                                className="pl-4 pr-20"
-                                {...field}
-                              />
-                            </FormControl>
-                            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                              <FormField
-                                control={form.control}
-                                name="currency"
-                                render={({ field }) => (
-                                  <Select
-                                    onValueChange={field.onChange}
-                                    defaultValue={field.value}
-                                  >
-                                    <SelectTrigger className="border-0 bg-transparent text-neutral-700 focus:ring-0 w-16 px-0">
-                                      <SelectValue placeholder="Currency" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="PADC">PADC</SelectItem>
-                                      <SelectItem value="USD">USD</SelectItem>
-                                      <SelectItem value="EUR">EUR</SelectItem>
-                                      <SelectItem value="BTC">BTC</SelectItem>
-                                    </SelectContent>
-                                  </Select>
-                                )}
-                              />
-                            </div>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {/* Recipient Country */}
-                    <FormField
-                      control={form.control}
-                      name="recipientCountry"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Recipient Country</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select country" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="kenya">Kenya</SelectItem>
-                              <SelectItem value="nigeria">Nigeria</SelectItem>
-                              <SelectItem value="south-africa">South Africa</SelectItem>
-                              <SelectItem value="egypt">Egypt</SelectItem>
-                              <SelectItem value="ghana">Ghana</SelectItem>
-                              <SelectItem value="ethiopia">Ethiopia</SelectItem>
-                              <SelectItem value="tanzania">Tanzania</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  {/* Recipient */}
-                  <FormField
-                    control={form.control}
-                    name="recipient"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Recipient</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Business name, ID, or wallet address"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Payment Purpose */}
-                    <FormField
-                      control={form.control}
-                      name="purpose"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Payment Purpose</FormLabel>
-                          <Select
-                            onValueChange={field.onChange}
-                            defaultValue={field.value}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select purpose" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="goods">Goods Payment</SelectItem>
-                              <SelectItem value="services">Services Payment</SelectItem>
-                              <SelectItem value="invoice">Invoice Settlement</SelectItem>
-                              <SelectItem value="donation">Donation</SelectItem>
-                              <SelectItem value="refund">Refund</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    
-                    {/* Smart Contract */}
-                    <FormField
-                      control={form.control}
-                      name="smart_contract"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-end space-x-3 space-y-0 py-4">
-                          <FormControl>
-                            <input
-                              type="checkbox"
-                              className="h-5 w-5 rounded border-neutral-300 text-primary focus:ring-primary"
-                              checked={field.value}
-                              onChange={field.onChange}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel>Use Smart Contract</FormLabel>
-                            <p className="text-sm text-neutral-500">
-                              Adds escrow protection to your transaction
-                            </p>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  
-                  <div className="bg-primary-light/50 rounded-lg p-4 text-sm text-neutral-700 flex items-start">
-                    <span className="material-icons text-primary mr-3 mt-0.5">info</span>
-                    <div>
-                      <p className="font-medium">Transaction Fee: 0.5%</p>
-                      <p className="mt-1">Estimated delivery time: Instant to 24 hours depending on the recipient's bank.</p>
+
+        {/* Transactions Tab */}
+        <TabsContent value="transactions" className="space-y-6">
+          <div className="grid gap-4">
+            {recentTransactions.map((tx) => (
+              <Card key={tx.id} className="border border-gray-200 shadow-lg bg-white/90 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-2xl">{getTransactionIcon(tx.type)}</div>
+                      <div>
+                        <p className="font-semibold text-gray-800 capitalize">{tx.type}</p>
+                        <p className="text-sm text-gray-600">
+                          {new Date(tx.timestamp).toLocaleString()}
+                        </p>
+                        {tx.txHash && (
+                          <p className="text-xs text-gray-500 font-mono">
+                            {tx.txHash}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold text-gray-800">
+                        {tx.type === 'send' ? '-' : '+'}{tx.amount.toLocaleString()} {tx.currency}
+                      </p>
+                      <Badge className={`px-2 py-1 text-xs font-semibold ${getStatusColor(tx.status)}`}>
+                        {tx.status}
+                      </Badge>
                     </div>
                   </div>
-                  
-                  <Button
-                    type="submit"
-                    disabled={isProcessing}
-                    className="w-full"
-                    size="lg"
-                  >
-                    {isProcessing ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Processing...
-                      </span>
-                    ) : (
-                      <span className="flex items-center">
-                        <span className="material-icons mr-2">send</span>
-                        Send Payment
-                      </span>
-                    )}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
-        
-        <TabsContent value="receive">
-          <Card>
-            <CardHeader className="text-center">
-              <CardTitle>Receive Payment</CardTitle>
-              <CardDescription>Share your wallet details or QR code</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              {!showQrCode ? (
-                <>
-                  <div className="w-24 h-24 mb-6 rounded-full bg-primary-light flex items-center justify-center">
-                    <span className="material-icons text-5xl text-primary">qr_code</span>
-                  </div>
-                  
-                  <div className="text-center mb-8">
-                    <h3 className="text-xl font-medium mb-2">Your Wallet Details</h3>
-                    <p className="text-neutral-600 mb-4">Share these details with the sender</p>
-                    
-                    <div className="space-y-3 text-left max-w-md mx-auto">
-                      <div className="flex justify-between items-center p-3 bg-neutral-50 rounded-lg">
-                        <div>
-                          <p className="text-sm text-neutral-500">Wallet ID</p>
-                          <p className="font-medium">DW729045</p>
-                        </div>
-                        <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={() => {
-                          navigator.clipboard.writeText("DW729045");
-                          toast({
-                            title: "Copied to clipboard",
-                            duration: 2000,
-                          });
-                        }}>
-                          <span className="material-icons text-[16px]">content_copy</span>
-                          <span className="text-xs">Copy</span>
-                        </Button>
-                      </div>
-                      
-                      <div className="flex justify-between items-center p-3 bg-neutral-50 rounded-lg">
-                        <div>
-                          <p className="text-sm text-neutral-500">PADC Address</p>
-                          <p className="font-medium text-sm">padc://0x3a8d...7b4f</p>
-                        </div>
-                        <Button variant="ghost" size="sm" className="h-8 gap-1" onClick={() => {
-                          navigator.clipboard.writeText("padc://0x3a8d...7b4f");
-                          toast({
-                            title: "Copied to clipboard",
-                            duration: 2000,
-                          });
-                        }}>
-                          <span className="material-icons text-[16px]">content_copy</span>
-                          <span className="text-xs">Copy</span>
-                        </Button>
+
+        {/* Connected Wallets Tab */}
+        <TabsContent value="wallets" className="space-y-6">
+          <div className="grid gap-6">
+            {walletConnections.map((wallet) => (
+              <Card key={wallet.id} className="border-2 border-gray-200 shadow-xl bg-white/90 backdrop-blur-sm">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-3xl">{wallet.icon}</div>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">{wallet.name}</h3>
+                        {wallet.address && (
+                          <p className="text-sm text-gray-600 font-mono">{wallet.address}</p>
+                        )}
+                        {wallet.balance && (
+                          <p className="text-sm text-gray-600">
+                            Balance: ${wallet.balance.toLocaleString()}
+                          </p>
+                        )}
                       </div>
                     </div>
-                  </div>
-                  
-                  <Button className="mb-3 gap-2" onClick={() => setShowQrCode(true)}>
-                    <span className="material-icons">qr_code_scanner</span>
-                    <span>Show QR Code</span>
-                  </Button>
-                  <Button variant="outline">
-                    <span>Request Specific Amount</span>
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <div className="p-3 border-4 border-primary rounded-lg mb-6 bg-white">
-                    <div className="w-64 h-64 bg-white flex items-center justify-center">
-                      <div className="p-2 bg-white">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" className="w-full h-full">
-                          {/* This is a simple placeholder for a QR code - in a real app you'd generate this */}
-                          <rect x="0" y="0" width="200" height="200" fill="white" />
-                          <rect x="50" y="50" width="100" height="100" fill="#475BE8" />
-                          <rect x="60" y="60" width="80" height="80" fill="white" />
-                          <rect x="70" y="70" width="60" height="60" fill="#475BE8" />
-                        </svg>
-                      </div>
+                    <div className="flex items-center gap-3">
+                      <Badge className={`px-3 py-1 font-semibold ${
+                        wallet.isConnected ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {wallet.isConnected ? 'Connected' : 'Disconnected'}
+                      </Badge>
+                      {wallet.isConnected ? (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => disconnectWallet(wallet.id)}
+                          className="border-red-300 text-red-700 hover:bg-red-50"
+                        >
+                          Disconnect
+                        </Button>
+                      ) : (
+                        <Button 
+                          size="sm"
+                          onClick={() => connectWallet(wallet.id)}
+                          className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                        >
+                          Connect
+                        </Button>
+                      )}
                     </div>
                   </div>
-                  
-                  <div className="text-center mb-8">
-                    <h3 className="text-xl font-medium mb-2">Scan QR Code</h3>
-                    <p className="text-neutral-600">Have the sender scan this QR code to send you payment</p>
-                  </div>
-                  
-                  <div className="flex gap-3">
-                    <Button variant="outline" className="gap-2" onClick={() => setShowQrCode(false)}>
-                      <span className="material-icons">arrow_back</span>
-                      <span>Back</span>
-                    </Button>
-                    <Button className="gap-2">
-                      <span className="material-icons">download</span>
-                      <span>Download QR</span>
-                    </Button>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
-        
-        <TabsContent value="exchange">
-          <Card>
+
+        {/* Settings Tab */}
+        <TabsContent value="settings" className="space-y-6">
+          <Card className="border-2 border-gray-200 shadow-xl">
             <CardHeader>
-              <CardTitle>Exchange Currencies</CardTitle>
-              <CardDescription>Convert between different currencies with competitive rates</CardDescription>
+              <CardTitle className="text-xl font-bold text-gray-800">Wallet Settings</CardTitle>
+              <CardDescription>Configure your wallet preferences and security settings</CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-4">
-                    <FormLabel>From</FormLabel>
-                    <div className="flex">
-                      <Select defaultValue="PADC">
-                        <SelectTrigger className="rounded-r-none w-28">
-                          <SelectValue placeholder="Select currency" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PADC">PADC</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="BTC">BTC</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input className="rounded-l-none" placeholder="0.00" />
-                    </div>
-                    <div className="text-right text-sm text-neutral-500">
-                      Available: 12,450 PADC
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <FormLabel>To</FormLabel>
-                    <div className="flex">
-                      <Select defaultValue="USD">
-                        <SelectTrigger className="rounded-r-none w-28">
-                          <SelectValue placeholder="Select currency" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="PADC">PADC</SelectItem>
-                          <SelectItem value="USD">USD</SelectItem>
-                          <SelectItem value="EUR">EUR</SelectItem>
-                          <SelectItem value="BTC">BTC</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <Input className="rounded-l-none" placeholder="0.00" readOnly value="12,450.00" />
-                    </div>
-                    <div className="text-right text-sm text-neutral-500">
-                      1 PADC = 1.00 USD
-                    </div>
-                  </div>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-semibold">Transaction Notifications</Label>
+                  <p className="text-sm text-gray-600">Get notified about incoming and outgoing transactions</p>
                 </div>
-                
-                <div className="flex items-center justify-center">
-                  <Button variant="outline" className="rounded-full w-12 h-12 p-0">
-                    <span className="material-icons">swap_vert</span>
-                  </Button>
+                <Switch checked={notifications} onCheckedChange={setNotifications} />
+              </div>
+              <Separator />
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-base font-semibold">Auto-Convert to Stablecoins</Label>
+                  <p className="text-sm text-gray-600">Automatically convert volatile assets to USDT/USDC</p>
                 </div>
-                
-                <div className="bg-neutral-50 p-4 rounded-lg">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-neutral-600">Exchange Rate</span>
-                    <span className="font-medium">1 PADC = 1.00 USD</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-neutral-600">Fee</span>
-                    <span className="font-medium">0.5% (62.25 PADC)</span>
-                  </div>
-                  <Separator className="my-3" />
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium">You'll receive</span>
-                    <span className="font-bold">12,387.75 USD</span>
-                  </div>
-                </div>
-                
-                <Button className="w-full" size="lg">
-                  <span className="material-icons mr-2">sync_alt</span>
-                  Exchange Now
-                </Button>
+                <Switch checked={autoConvert} onCheckedChange={setAutoConvert} />
+              </div>
+              <Separator />
+              <div className="space-y-3">
+                <Label className="text-base font-semibold">Preferred Stablecoin</Label>
+                <Select defaultValue="USDT">
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="USDT">USDT - Tether USD</SelectItem>
+                    <SelectItem value="USDC">USDC - USD Coin</SelectItem>
+                    <SelectItem value="DAI">DAI - Dai Stablecoin</SelectItem>
+                    <SelectItem value="BUSD">BUSD - Binance USD</SelectItem>
+                    <SelectItem value="FRAX">FRAX - Frax</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Deposit Modal */}
-      <Dialog open={showDepositModal} onOpenChange={setShowDepositModal}>
-        <DialogContent className="sm:max-w-[500px]">
+      {/* Deposit Dialog */}
+      <Dialog open={showDepositDialog} onOpenChange={setShowDepositDialog}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Deposit Funds</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-gray-800">Deposit Funds</DialogTitle>
             <DialogDescription>
-              Add funds to your wallet using your preferred payment method
+              Add funds to your wallet using various payment methods
             </DialogDescription>
           </DialogHeader>
-
-          <div className="py-4">
-            <RadioGroup 
-              defaultValue="fiat" 
-              value={depositMethod} 
-              onValueChange={(value) => setDepositMethod(value as 'fiat' | 'crypto')}
-              className="flex flex-col gap-4"
-            >
-              <div className={`flex items-start space-x-3 border rounded-lg p-4 ${depositMethod === 'fiat' ? 'border-primary bg-primary-light/10' : 'border-neutral-200'}`}>
-                <RadioGroupItem value="fiat" id="fiat" className="mt-1" />
-                <div className="flex-1">
-                  <Label htmlFor="fiat" className="text-base font-medium flex items-center">
-                    <span className="material-icons mr-2 text-neutral-700">credit_card</span>
-                    Fiat Payment
-                  </Label>
-                  <p className="text-sm text-neutral-600 mt-1">Deposit using credit/debit card, bank transfer, or mobile money</p>
-
-                  {depositMethod === 'fiat' && (
-                    <div className="mt-4 space-y-4">
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <Label htmlFor="depositAmount" className="text-sm font-medium">Amount</Label>
-                          <div className="relative mt-1">
-                            <Input 
-                              id="depositAmount" 
-                              placeholder="0.00" 
-                              className="pl-10"
-                            />
-                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                              <span className="text-neutral-500">$</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div>
-                          <Label htmlFor="paymentMethod" className="text-sm font-medium">Payment Method</Label>
-                          <Select defaultValue="card">
-                            <SelectTrigger id="paymentMethod" className="mt-1">
-                              <SelectValue placeholder="Select payment method" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="card">Credit/Debit Card</SelectItem>
-                              <SelectItem value="bank">Bank Transfer</SelectItem>
-                              <SelectItem value="mobile">Mobile Money</SelectItem>
-                              <SelectItem value="papss">PAPSS</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="bg-neutral-50 p-3 rounded-lg flex justify-between items-center text-sm">
-                        <span className="text-neutral-700">Processing Fee (2.5%)</span>
-                        <span className="font-medium">+ $0.00</span>
-                      </div>
-
-                      <div className="pt-3 flex justify-end gap-3">
-                        <DialogClose asChild>
-                          <Button variant="outline">Cancel</Button>
-                        </DialogClose>
-                        <Button>
-                          <span className="material-icons mr-2 text-[18px]">credit_card</span>
-                          Proceed to Payment
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className={`flex items-start space-x-3 border rounded-lg p-4 ${depositMethod === 'crypto' ? 'border-primary bg-primary-light/10' : 'border-neutral-200'}`}>
-                <RadioGroupItem value="crypto" id="crypto" className="mt-1" />
-                <div className="flex-1">
-                  <Label htmlFor="crypto" className="text-base font-medium flex items-center">
-                    <span className="material-icons mr-2 text-neutral-700">currency_bitcoin</span>
-                    Cryptocurrency
-                  </Label>
-                  <p className="text-sm text-neutral-600 mt-1">Deposit BTC, ETH, USDT, or other cryptocurrencies</p>
-
-                  {depositMethod === 'crypto' && (
-                    <div className="mt-4 space-y-4">
-                      <div className="grid grid-cols-1 gap-4">
-                        <div>
-                          <Label htmlFor="cryptoCurrency" className="text-sm font-medium">Select Cryptocurrency</Label>
-                          <Select 
-                            defaultValue="BTC" 
-                            value={selectedCryptoForDeposit} 
-                            onValueChange={setSelectedCryptoForDeposit}
-                          >
-                            <SelectTrigger id="cryptoCurrency" className="mt-1">
-                              <SelectValue placeholder="Select cryptocurrency" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="BTC">Bitcoin (BTC)</SelectItem>
-                              <SelectItem value="ETH">Ethereum (ETH)</SelectItem>
-                              <SelectItem value="USDT">Tether (USDT)</SelectItem>
-                              <SelectItem value="USDC">USD Coin (USDC)</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-
-                      <div className="bg-neutral-50 p-4 rounded-lg">
-                        <p className="text-sm font-medium text-neutral-700 mb-3">Deposit Address</p>
+          <Form {...depositForm}>
+            <form onSubmit={depositForm.handleSubmit(onDepositSubmit)} className="space-y-4">
+              <FormField
+                control={depositForm.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Currency</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="USDT">USDT - Tether USD</SelectItem>
+                        <SelectItem value="USDC">USDC - USD Coin</SelectItem>
+                        <SelectItem value="DAI">DAI - Dai Stablecoin</SelectItem>
+                        <SelectItem value="PADC">PADC - Pan African Digital Coin</SelectItem>
+                        <SelectItem value="EUR">EUR - Euro</SelectItem>
+                        <SelectItem value="USD">USD - US Dollar</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={depositForm.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Amount</FormLabel>
+                    <FormControl>
+                      <Input placeholder="0.00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={depositForm.control}
+                name="paymentMethod"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Payment Method</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-2"
+                      >
                         <div className="flex items-center space-x-2">
-                          <Input 
-                            readOnly
-                            value={`${selectedCryptoForDeposit === 'BTC' ? 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' : 
-                                     selectedCryptoForDeposit === 'ETH' ? '0x7121B6B846807a7D5F184C49B82695896856A00F' : 
-                                     '0x1da92f48254342e1d87fdfcc6a46288b2e233cd5'}`}
-                            className="font-mono text-sm"
-                          />
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="shrink-0"
-                            onClick={() => {
-                              navigator.clipboard.writeText(`${selectedCryptoForDeposit === 'BTC' ? 'bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh' : 
-                                selectedCryptoForDeposit === 'ETH' ? '0x7121B6B846807a7D5F184C49B82695896856A00F' : 
-                                '0x1da92f48254342e1d87fdfcc6a46288b2e233cd5'}`);
-                              toast({
-                                title: "Address Copied",
-                                description: "Wallet address copied to clipboard",
-                              });
-                            }}
-                          >
-                            <span className="material-icons">content_copy</span>
-                          </Button>
+                          <RadioGroupItem value="bank_transfer" id="bank_transfer" />
+                          <Label htmlFor="bank_transfer">Bank Transfer</Label>
                         </div>
-
-                        <div className="mt-4 p-4 bg-white border border-neutral-200 rounded-lg flex flex-col items-center">
-                          <div className="w-32 h-32 mb-2">
-                            <svg viewBox="0 0 100 100" className="w-full h-full">
-                              <rect x="0" y="0" width="100" height="100" fill="white" />
-                              <rect x="10" y="10" width="80" height="80" fill="black" />
-                              <rect x="20" y="20" width="60" height="60" fill="white" />
-                              <rect x="30" y="30" width="40" height="40" fill="black" />
-                              <rect x="40" y="40" width="20" height="20" fill="white" />
-                            </svg>
-                          </div>
-                          <p className="text-xs text-neutral-500">Scan this QR code to deposit</p>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="card" id="card" />
+                          <Label htmlFor="card">Credit/Debit Card</Label>
                         </div>
-
-                        <p className="mt-3 text-xs text-neutral-500">
-                          Send only {selectedCryptoForDeposit} to this address. Your funds will be automatically credited to your account after {selectedCryptoForDeposit === 'BTC' ? '2 confirmations' : '12 confirmations'}.
-                        </p>
-                      </div>
-
-                      <div className="pt-3 flex justify-center">
-                        <DialogClose asChild>
-                          <Button variant="outline">
-                            Done
-                          </Button>
-                        </DialogClose>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </RadioGroup>
-          </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="crypto" id="crypto" />
+                          <Label htmlFor="crypto">Cryptocurrency</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="papss" id="papss" />
+                          <Label htmlFor="papss">PAPSS Network</Label>
+                        </div>
+                      </RadioGroup>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter className="gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowDepositDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-gradient-to-r from-green-500 to-teal-600 hover:from-green-600 hover:to-teal-700 text-white">
+                  Deposit Funds
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
 
-      {/* Connect Wallet Modal */}
-      <Dialog open={showConnectWalletModal} onOpenChange={setShowConnectWalletModal}>
-        <DialogContent className="sm:max-w-[500px]">
+      {/* Send Dialog */}
+      <Dialog open={showSendDialog} onOpenChange={setShowSendDialog}>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Connect Wallet</DialogTitle>
+            <DialogTitle className="text-xl font-bold text-gray-800">Send Payment</DialogTitle>
             <DialogDescription>
-              Connect an external wallet to easily transfer funds
+              Send cryptocurrency or digital currency to another wallet
             </DialogDescription>
           </DialogHeader>
+          <Form {...sendForm}>
+            <form onSubmit={sendForm.handleSubmit(onSendSubmit)} className="space-y-4">
+              <FormField
+                control={sendForm.control}
+                name="currency"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Currency</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select currency" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {cryptoPortfolio.map((coin) => (
+                          <SelectItem key={coin.symbol} value={coin.symbol}>
+                            {coin.icon} {coin.symbol} - {coin.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={sendForm.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Amount</FormLabel>
+                    <FormControl>
+                      <Input placeholder="0.00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={sendForm.control}
+                name="recipientAddress"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Recipient Address</FormLabel>
+                    <FormControl>
+                      <Input placeholder="0x..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={sendForm.control}
+                name="memo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Memo (Optional)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Payment for..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter className="gap-2">
+                <Button type="button" variant="outline" onClick={() => setShowSendDialog(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white">
+                  Send Payment
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
 
-          <div className="py-4">
-            <div className="space-y-4">
-              {connectedWallets.length > 0 && (
-                <div className="mb-6">
-                  <h3 className="text-sm font-medium mb-3">Connected Wallets</h3>
-                  <div className="space-y-2">
-                    {connectedWallets.map((wallet) => (
-                      <div key={wallet} className="flex items-center justify-between p-3 bg-neutral-50 border border-neutral-200 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-full ${
-                            wallet === 'MetaMask' ? 'bg-amber-100' : 
-                            wallet === 'WalletConnect' ? 'bg-blue-100' :
-                            wallet === 'Phantom' ? 'bg-purple-100' : 'bg-neutral-100'
-                          } flex items-center justify-center`}>
-                            <span className="material-icons text-[20px] text-neutral-700">account_balance_wallet</span>
-                          </div>
-                          <div>
-                            <p className="font-medium">{wallet}</p>
-                            <p className="text-xs text-neutral-500">
-                              {wallet === 'MetaMask' ? '0x71...A00F' : 
-                               wallet === 'WalletConnect' ? '0xF2...c3B7' : 
-                               wallet === 'Phantom' ? 'Dz5U...7PQm' : ''}
-                            </p>
-                          </div>
-                        </div>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="h-8 text-xs"
-                          onClick={() => disconnectWallet(wallet)}
-                        >
-                          Disconnect
-                        </Button>
-                      </div>
-                    ))}
+      {/* WalletConnect Dialog */}
+      <Dialog open={showWalletConnectDialog} onOpenChange={setShowWalletConnectDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-800">Connect Wallet</DialogTitle>
+            <DialogDescription>
+              Connect your external wallet using WalletConnect or browser extension
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            {walletConnections.filter(w => !w.isConnected).map((wallet) => (
+              <Button
+                key={wallet.id}
+                variant="outline"
+                className="w-full justify-start text-left p-4 h-auto border-2 hover:border-blue-300"
+                onClick={() => connectWallet(wallet.id)}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{wallet.icon}</span>
+                  <div>
+                    <p className="font-semibold">{wallet.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {wallet.id === 'walletconnect' && 'Scan QR code with your mobile wallet'}
+                      {wallet.id === 'metamask' && 'Connect using MetaMask browser extension'}
+                      {wallet.id === 'coinbase' && 'Connect using Coinbase Wallet'}
+                      {wallet.id === 'trust' && 'Connect using Trust Wallet'}
+                    </p>
                   </div>
                 </div>
-              )}
-
-              <h3 className="text-sm font-medium mb-3">Available Wallets</h3>
-              <div className="grid grid-cols-1 gap-3">
-                {!connectedWallets.includes('MetaMask') && (
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center justify-between h-auto py-3 px-4"
-                    disabled={isWalletConnecting}
-                    onClick={() => handleConnectWallet('MetaMask')}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center">
-                        <span className="material-icons text-amber-500">extension</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="font-medium">MetaMask</p>
-                        <p className="text-xs text-neutral-500">Connect to your MetaMask wallet</p>
-                      </div>
-                    </div>
-                    {isWalletConnecting ? (
-                      <div className="h-5 w-5 border-2 border-neutral-300 border-t-primary rounded-full animate-spin"></div>
-                    ) : (
-                      <span className="material-icons text-neutral-400">chevron_right</span>
-                    )}
-                  </Button>
-                )}
-                
-                {!connectedWallets.includes('WalletConnect') && (
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center justify-between h-auto py-3 px-4"
-                    disabled={isWalletConnecting}
-                    onClick={() => handleConnectWallet('WalletConnect')}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                        <span className="material-icons text-blue-500">link</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="font-medium">WalletConnect</p>
-                        <p className="text-xs text-neutral-500">Connect via WalletConnect</p>
-                      </div>
-                    </div>
-                    {isWalletConnecting ? (
-                      <div className="h-5 w-5 border-2 border-neutral-300 border-t-primary rounded-full animate-spin"></div>
-                    ) : (
-                      <span className="material-icons text-neutral-400">chevron_right</span>
-                    )}
-                  </Button>
-                )}
-                
-                {!connectedWallets.includes('Phantom') && (
-                  <Button 
-                    variant="outline" 
-                    className="flex items-center justify-between h-auto py-3 px-4"
-                    disabled={isWalletConnecting}
-                    onClick={() => handleConnectWallet('Phantom')}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center">
-                        <span className="material-icons text-purple-500">auto_awesome</span>
-                      </div>
-                      <div className="text-left">
-                        <p className="font-medium">Phantom</p>
-                        <p className="text-xs text-neutral-500">Connect to your Phantom wallet</p>
-                      </div>
-                    </div>
-                    {isWalletConnecting ? (
-                      <div className="h-5 w-5 border-2 border-neutral-300 border-t-primary rounded-full animate-spin"></div>
-                    ) : (
-                      <span className="material-icons text-neutral-400">chevron_right</span>
-                    )}
-                  </Button>
-                )}
-              </div>
-
-              <div className="bg-neutral-50 p-4 mt-4 rounded-lg text-sm text-neutral-600">
-                <p className="flex items-start">
-                  <span className="material-icons text-neutral-500 mr-2 text-[18px] mt-0.5">info</span>
-                  <span>By connecting your wallet, you agree to our Terms of Service and our Privacy Policy.</span>
-                </p>
-              </div>
-            </div>
+              </Button>
+            ))}
           </div>
         </DialogContent>
       </Dialog>
-    </section>
+    </div>
   );
 }

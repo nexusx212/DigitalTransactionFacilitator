@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Tabs, 
@@ -11,1306 +11,594 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from "@/components/ui/card";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ChatTranslator } from '@/components/chat-translator';
-import { AdBanner } from '@/components/ad-banner';
-import { PartnersSection } from '@/components/partners-section';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+
+interface TradeOrder {
+  id: string;
+  orderNumber: string;
+  product: string;
+  buyer: string;
+  seller: string;
+  quantity: number;
+  unitPrice: number;
+  totalValue: number;
+  status: 'pending' | 'confirmed' | 'shipped' | 'delivered' | 'completed';
+  currency: string;
+  orderDate: string;
+  expectedDelivery: string;
+  country: string;
+  paymentStatus: 'pending' | 'paid' | 'partial' | 'overdue';
+}
+
+interface TradeContract {
+  id: string;
+  contractNumber: string;
+  parties: string[];
+  product: string;
+  terms: string;
+  value: number;
+  currency: string;
+  status: 'draft' | 'active' | 'completed' | 'disputed';
+  createdDate: string;
+  expiryDate: string;
+  smartContractAddress?: string;
+}
+
+interface ShipmentTracking {
+  id: string;
+  trackingNumber: string;
+  orderId: string;
+  currentLocation: string;
+  status: 'preparing' | 'shipped' | 'in-transit' | 'customs' | 'delivered';
+  estimatedDelivery: string;
+  carrier: string;
+  updates: {
+    timestamp: string;
+    location: string;
+    status: string;
+    description: string;
+  }[];
+}
 
 export default function TradeManagement() {
-  const [activeTab, setActiveTab] = useState("chat");
+  const [activeTab, setActiveTab] = useState("orders");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeContactId, setActiveContactId] = useState<number | null>(null);
-  const [newMessage, setNewMessage] = useState("");
-  const [activeTranslation, setActiveTranslation] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState("all");
-  const [requestFilter, setRequestFilter] = useState("all");
-  const [isTyping, setIsTyping] = useState(false);
-  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(null);
-  const [newContactModalOpen, setNewContactModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Define chat message interface
-  interface ChatMessage {
-    id: string;
-    content: string;
-    senderId: string;
-    timestamp: string;
-    isRead: boolean;
-  }
-  
-  // Define chat session interface
-  interface ChatSession {
-    id: string;
-    contact: TradeContact;
-    messages: ChatMessage[];
-    unreadCount: number;
-  }
-
-  // Chat data
-  const [chatSessions, setChatSessions] = useState<ChatSession[]>([
+  // Mock data for trade orders
+  const [tradeOrders] = useState<TradeOrder[]>([
     {
-      id: "chat-1",
-      contact: {
-        id: 1,
-        name: "John Doe",
-        company: "Global Imports Ltd",
-        country: "USA",
-        avatar: "",
-        status: "online",
-        tradeRole: "importer"
-      },
-      messages: [
-        { id: "m1", content: "Hello, I'm interested in your cotton exports. Do you have availability for next month?", senderId: "contact-1", timestamp: new Date(2023, 4, 15, 10, 30).toISOString(), isRead: true },
-        { id: "m2", content: "Hi John! Yes, we have cotton available for export next month. What quantity are you looking for?", senderId: "user", timestamp: new Date(2023, 4, 15, 10, 35).toISOString(), isRead: true },
-        { id: "m3", content: "We need about 500 tons. What's your pricing model and delivery timeframe?", senderId: "contact-1", timestamp: new Date(2023, 4, 15, 10, 40).toISOString(), isRead: true },
-      ],
-      unreadCount: 0
+      id: "ORD-001",
+      orderNumber: "TRD-2024-001",
+      product: "Premium Cocoa Beans",
+      buyer: "European Chocolate Co.",
+      seller: "Ghana Cocoa Exports Ltd",
+      quantity: 5000,
+      unitPrice: 3.2,
+      totalValue: 16000,
+      status: "confirmed",
+      currency: "USD",
+      orderDate: "2024-01-15",
+      expectedDelivery: "2024-02-20",
+      country: "Ghana",
+      paymentStatus: "paid"
     },
     {
-      id: "chat-2",
-      contact: {
-        id: 2,
-        name: "Maria Garcia",
-        company: "European Distributors SA",
-        country: "Spain",
-        avatar: "",
-        status: "away",
-        tradeRole: "importer"
-      },
-      messages: [
-        { id: "m4", content: "Buenos días, ¿tienen disponibilidad de productos agrícolas orgánicos?", senderId: "contact-2", timestamp: new Date(2023, 4, 16, 9, 10).toISOString(), isRead: true },
-        { id: "m5", content: "Good morning Maria! Yes, we have organic agricultural products available. What specifically are you looking for?", senderId: "user", timestamp: new Date(2023, 4, 16, 9, 15).toISOString(), isRead: true },
-        { id: "m6", content: "Estamos interesados en café orgánico, cacao y azúcar. ¿Qué volúmenes pueden suministrar?", senderId: "contact-2", timestamp: new Date(2023, 4, 16, 9, 20).toISOString(), isRead: false },
-      ],
-      unreadCount: 1
+      id: "ORD-002",
+      orderNumber: "TRD-2024-002",
+      product: "Organic Coffee Beans",
+      buyer: "North American Imports",
+      seller: "Ethiopian Coffee Cooperative",
+      quantity: 2000,
+      unitPrice: 5.8,
+      totalValue: 11600,
+      status: "shipped",
+      currency: "USD",
+      orderDate: "2024-01-18",
+      expectedDelivery: "2024-02-25",
+      country: "Ethiopia",
+      paymentStatus: "paid"
     },
     {
-      id: "chat-3",
-      contact: {
-        id: 3,
-        name: "Akio Tanaka",
-        company: "Tokyo Traders Inc.",
-        country: "Japan",
-        avatar: "",
-        status: "offline",
-        tradeRole: "importer"
-      },
-      messages: [
-        { id: "m7", content: "こんにちは、ナイジェリアのシアバターについて詳細情報をいただけますか？", senderId: "contact-3", timestamp: new Date(2023, 4, 14, 15, 5).toISOString(), isRead: true },
-        { id: "m8", content: "Hello Akio! I'd be happy to provide details about our Nigerian shea butter. What aspects are you most interested in?", senderId: "user", timestamp: new Date(2023, 4, 14, 15, 10).toISOString(), isRead: true },
-        { id: "m9", content: "価格と品質証明書について知りたいです。また、最小注文数量はありますか？", senderId: "contact-3", timestamp: new Date(2023, 4, 14, 15, 15).toISOString(), isRead: true },
-        { id: "m10", content: "We can provide all quality certificates and our pricing is competitive. Minimum order is 200kg. Would you like me to send our catalog?", senderId: "user", timestamp: new Date(2023, 4, 14, 15, 20).toISOString(), isRead: true },
-      ],
-      unreadCount: 0
-    }
-  ]);
-
-  const [tradeContacts, setTradeContacts] = useState([
-    {
-      id: 1,
-      name: "John Doe",
-      company: "Global Imports Ltd",
-      country: "USA",
-      avatar: "",
-      status: "online",
-      tradeRole: "importer",
-      lastActivity: new Date(2023, 5, 10).toISOString(),
-      products: ["Cotton", "Cocoa"],
-      isFavorite: false
-    },
-    {
-      id: 2,
-      name: "Maria Garcia",
-      company: "European Distributors SA",
-      country: "Spain",
-      avatar: "",
-      status: "away",
-      tradeRole: "importer",
-      lastActivity: new Date(2023, 5, 9).toISOString(),
-      products: ["Organic Coffee", "Shea Butter"],
-      isFavorite: true
-    },
-    {
-      id: 3,
-      name: "Akio Tanaka",
-      company: "Tokyo Traders Inc.",
-      country: "Japan",
-      avatar: "",
-      status: "offline",
-      tradeRole: "importer",
-      lastActivity: new Date(2023, 5, 5).toISOString(),
-      products: ["Textiles", "Shea Butter"],
-      isFavorite: false
-    },
-    {
-      id: 4,
-      name: "Chen Wei",
-      company: "Shanghai Exports Co.",
-      country: "China",
-      avatar: "",
-      status: "online",
-      tradeRole: "exporter",
-      lastActivity: new Date(2023, 5, 12).toISOString(),
-      products: ["Electronics", "Solar Panels"],
-      isFavorite: false
-    },
-    {
-      id: 5,
-      name: "Olabisi Adenuga",
-      company: "Lagos Commodities Ltd",
+      id: "ORD-003",
+      orderNumber: "TRD-2024-003",
+      product: "Cashew Nuts",
+      buyer: "Asian Markets Inc.",
+      seller: "Nigerian Cashew Processors",
+      quantity: 3000,
+      unitPrice: 4.5,
+      totalValue: 13500,
+      status: "pending",
+      currency: "USD",
+      orderDate: "2024-01-20",
+      expectedDelivery: "2024-03-05",
       country: "Nigeria",
-      avatar: "",
-      status: "online",
-      tradeRole: "exporter",
-      lastActivity: new Date(2023, 5, 11).toISOString(),
-      products: ["Cashew Nuts", "Cocoa"],
-      isFavorite: true
-    },
-    {
-      id: 6,
-      name: "Fatima Al-Farsi",
-      company: "Gulf Trade Partners",
-      country: "UAE",
-      avatar: "",
-      status: "away",
-      tradeRole: "importer",
-      lastActivity: new Date(2023, 5, 8).toISOString(),
-      products: ["Textiles", "Agricultural Products"],
-      isFavorite: false
+      paymentStatus: "pending"
     }
   ]);
 
-  // Define trade request interface
-  interface TradeRequest {
-    id: string;
-    name: string;
-    company: string;
-    avatar: string;
-    country: string;
-    productName?: string;
-    type: "incoming" | "outgoing";
-    status: "pending" | "accepted" | "declined";
-    date: string;
-    message: string;
-  }
-  
-  const [tradeRequests, setTradeRequests] = useState<TradeRequest[]>([
+  // Mock data for contracts
+  const [tradeContracts] = useState<TradeContract[]>([
     {
-      id: "req-1",
-      name: "Sarah Johnson",
-      company: "Canadian Imports Inc.",
-      avatar: "",
-      country: "Canada",
-      type: "incoming",
-      status: "pending",
-      date: new Date(2023, 4, 16).toISOString(),
-      message: "Hello, we are interested in sourcing organic cocoa beans from your suppliers. Could you provide information on your available quantities, pricing, and certification?"
+      id: "CTR-001",
+      contractNumber: "TC-2024-001",
+      parties: ["Global Spice Traders", "Mediterranean Foods Ltd"],
+      product: "Black Pepper (Premium Grade)",
+      terms: "FOB Port, 30-day payment terms",
+      value: 75000,
+      currency: "USD",
+      status: "active",
+      createdDate: "2024-01-10",
+      expiryDate: "2024-12-31",
+      smartContractAddress: "0x742d35Cc6639C0532fba96b9c8..."
     },
     {
-      id: "req-2",
-      name: "Mohamed Al-Farsi",
-      company: "Middle East Trade LLC",
-      avatar: "",
-      country: "Saudi Arabia",
-      type: "outgoing",
-      status: "accepted",
-      date: new Date(2023, 4, 15).toISOString(),
-      message: "I'd like to discuss a potential partnership for importing premium Nigerian textiles to Saudi Arabia. Please let me know your availability for a meeting."
-    },
-    {
-      id: "req-3",
-      name: "Rajiv Patel",
-      company: "Indian Spice Traders",
-      avatar: "",
-      country: "India",
-      type: "incoming",
-      status: "pending",
-      date: new Date(2023, 4, 14).toISOString(),
-      message: "We are looking for high-quality African spices, particularly from East Africa. Can you connect us with reliable suppliers?"
-    },
-    {
-      id: "req-4",
-      name: "Elena Vasquez",
-      company: "South American Distributors",
-      avatar: "",
-      country: "Brazil",
-      type: "outgoing",
-      status: "declined",
-      date: new Date(2023, 4, 13).toISOString(),
-      message: "Request for partnership in distributing African coffee beans in South American markets."
-    },
-    {
-      id: "req-5",
-      name: "Liu Wei",
-      company: "Asian Market Solutions",
-      avatar: "",
-      country: "China",
-      productName: "Premium Cashew Nuts",
-      type: "incoming",
-      status: "pending",
-      date: new Date(2023, 4, 12).toISOString(),
-      message: "Interested in establishing a regular supply of premium cashew nuts. Looking for 10 tons per month with organic certification."
+      id: "CTR-002", 
+      contractNumber: "TC-2024-002",
+      parties: ["African Textile Exports", "European Fashion Group"],
+      product: "Organic Cotton Fabric",
+      terms: "CIF Delivery, 45-day payment terms",
+      value: 120000,
+      currency: "EUR",
+      status: "active",
+      createdDate: "2024-01-12",
+      expiryDate: "2024-06-30"
     }
   ]);
 
-  // Define contact interface
-  interface TradeContact {
-    id: number;
-    name: string;
-    company: string;
-    country: string;
-    avatar: string;
-    status: string;
-    tradeRole: string;
-    isFavorite?: boolean;
-    lastActivity?: string;
-    products?: string[];
-  }
-  
-  // Apply filters to contacts
-  const applyContactFilters = (contacts: TradeContact[]): TradeContact[] => {
-    let filtered = contacts;
-    
-    // Apply search filter
-    filtered = filtered.filter(contact =>
-      contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      contact.country.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-    // Apply role/status filters
-    if (activeFilter === "online") {
-      filtered = filtered.filter(contact => contact.status === "online");
-    } else if (activeFilter === "importers") {
-      filtered = filtered.filter(contact => contact.tradeRole === "importer");
-    } else if (activeFilter === "exporters") {
-      filtered = filtered.filter(contact => contact.tradeRole === "exporter");
-    } else if (activeFilter === "frequent") {
-      filtered = filtered.filter(contact => contact.isFavorite);
-    } else if (activeFilter === "recents") {
-      // Sort by last activity and take the top 10
-      filtered = [...filtered].sort((a, b) => {
-        if (!a.lastActivity || !b.lastActivity) return 0;
-        return new Date(b.lastActivity).getTime() - new Date(a.lastActivity).getTime();
-      }).slice(0, 10);
-    }
-    
-    return filtered;
-  };
-
-  // Filter chat sessions based on search query
-  const filteredChatSessions = chatSessions.filter(session =>
-    session.contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    session.contact.company.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Filter contacts with applied filters
-  const filteredContacts = applyContactFilters(tradeContacts);
-
-  // Get active chat session
-  const activeChatSession = activeContactId ? 
-    chatSessions.find(session => session.contact.id === activeContactId) : null;
-  
-  // Apply filters to requests
-  const applyRequestFilters = (requests: TradeRequest[]): TradeRequest[] => {
-    // First apply search filter
-    let filtered = requests.filter(request =>
-      request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.message.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    
-    // Apply request type and status filters
-    if (requestFilter === "incoming") {
-      filtered = filtered.filter(request => request.type === "incoming");
-    } else if (requestFilter === "outgoing") {
-      filtered = filtered.filter(request => request.type === "outgoing");
-    } else if (requestFilter === "pending") {
-      filtered = filtered.filter(request => request.status === "pending");
-    } else if (requestFilter === "accepted") {
-      filtered = filtered.filter(request => request.status === "accepted");
-    } else if (requestFilter === "declined") {
-      filtered = filtered.filter(request => request.status === "declined");
-    }
-    
-    // Sort by date (newest first)
-    filtered = [...filtered].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    );
-    
-    return filtered;
-  };
-  
-  // We'll keep this for backward compatibility
-  const filteredRequests = tradeRequests.filter(request =>
-    request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    request.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    request.message.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Send a new message
-  const handleSendMessage = () => {
-    if (!newMessage.trim() || !activeContactId) return;
-
-    // Stop any typing indicator
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-      setTypingTimeout(null);
-    }
-    setIsTyping(false);
-
-    const updatedSessions = chatSessions.map(session => {
-      if (session.contact.id === activeContactId) {
-        return {
-          ...session,
-          messages: [
-            ...session.messages,
-            {
-              id: `m-${Date.now()}`,
-              content: newMessage,
-              senderId: "user",
-              timestamp: new Date().toISOString(),
-              isRead: false
-            }
-          ]
-        };
-      }
-      return session;
-    });
-
-    setChatSessions(updatedSessions);
-    setNewMessage("");
-    
-    // Simulate a response after a few seconds (for demo purposes)
-    setTimeout(() => {
-      simulateResponse(activeContactId);
-    }, 3000);
-  };
-  
-  // Simulate typing indicator
-  const handleMessageTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewMessage(e.target.value);
-    
-    if (!isTyping && e.target.value.length > 0) {
-      setIsTyping(true);
-    }
-    
-    // Clear existing timeout
-    if (typingTimeout) {
-      clearTimeout(typingTimeout);
-    }
-    
-    // Set new timeout to clear typing indicator
-    const newTimeout = setTimeout(() => {
-      setIsTyping(false);
-    }, 2000);
-    
-    setTypingTimeout(newTimeout);
-  };
-  
-  // Simulate a response from the contact
-  const simulateResponse = (contactId: number) => {
-    // First show typing indicator
-    setIsTyping(true);
-    
-    // Then after a delay, add a message
-    setTimeout(() => {
-      setIsTyping(false);
-      
-      const contact = tradeContacts.find(contact => contact.id === contactId);
-      if (!contact) return;
-      
-      const responseMessages = [
-        "I understand. Let me check our inventory and get back to you with more details.",
-        "That sounds interesting! Can you provide more information about your requirements?",
-        "Thank you for sharing that. I'll discuss with my team and follow up soon.",
-        "Excellent! When would be a good time to schedule a call to discuss this further?"
-      ];
-      
-      const randomResponse = responseMessages[Math.floor(Math.random() * responseMessages.length)];
-      
-      const updatedSessions = chatSessions.map(session => {
-        if (session.contact.id === contactId) {
-          return {
-            ...session,
-            messages: [
-              ...session.messages,
-              {
-                id: `m-${Date.now()}`,
-                content: randomResponse,
-                senderId: `contact-${contactId}`,
-                timestamp: new Date().toISOString(),
-                isRead: true
-              }
-            ],
-            unreadCount: activeContactId === contactId ? 0 : (session.unreadCount + 1)
-          };
+  // Mock data for shipment tracking
+  const [shipmentTracking] = useState<ShipmentTracking[]>([
+    {
+      id: "SHP-001",
+      trackingNumber: "MAEU-789456123",
+      orderId: "ORD-002",
+      currentLocation: "Suez Canal, Egypt",
+      status: "in-transit",
+      estimatedDelivery: "2024-02-25",
+      carrier: "Maersk Line",
+      updates: [
+        {
+          timestamp: "2024-01-25T08:00:00Z",
+          location: "Addis Ababa Port, Ethiopia",
+          status: "shipped",
+          description: "Container loaded and departed from origin port"
+        },
+        {
+          timestamp: "2024-01-28T14:30:00Z",
+          location: "Djibouti Port, Djibouti",
+          status: "in-transit",
+          description: "Container in transit through Djibouti"
+        },
+        {
+          timestamp: "2024-02-02T09:15:00Z",
+          location: "Suez Canal, Egypt",
+          status: "in-transit",
+          description: "Container passing through Suez Canal"
         }
-        return session;
-      });
-      
-      setChatSessions(updatedSessions);
-    }, 2000);
-  };
-
-  // Auto scroll to bottom of messages
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+      ]
     }
-  }, [activeChatSession?.messages]);
+  ]);
 
-  // Mark messages as read when changing active contact
-  useEffect(() => {
-    if (activeContactId) {
-      const updatedSessions = chatSessions.map(session => {
-        if (session.contact.id === activeContactId) {
-          const updatedMessages = session.messages.map(msg => ({
-            ...msg,
-            isRead: true
-          }));
-          
-          return {
-            ...session,
-            messages: updatedMessages,
-            unreadCount: 0
-          };
-        }
-        return session;
-      });
-      
-      setChatSessions(updatedSessions);
-    }
-  }, [activeContactId]);
-
-  // Handle trade request action (accept/decline)
-  const handleTradeRequestAction = (requestId: string, action: 'accept' | 'decline') => {
-    const updatedRequests = tradeRequests.map(request => {
-      if (request.id === requestId) {
-        return {
-          ...request,
-          status: action === 'accept' ? 'accepted' as const : 'declined' as const
-        };
-      }
-      return request;
-    });
-    
-    setTradeRequests(updatedRequests as TradeRequest[]);
-  };
-
-  // Get status indicator color
-  const getStatusIndicator = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case "online":
-        return "bg-green-500";
-      case "away":
-        return "bg-amber-500";
-      default:
-        return "bg-neutral-300";
+      case 'pending': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'confirmed': return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'shipped': return 'bg-purple-100 text-purple-800 border-purple-200';
+      case 'delivered': return 'bg-green-100 text-green-800 border-green-200';
+      case 'completed': return 'bg-emerald-100 text-emerald-800 border-emerald-200';
+      case 'active': return 'bg-green-100 text-green-800 border-green-200';
+      case 'draft': return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'disputed': return 'bg-red-100 text-red-800 border-red-200';
+      default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
-  // Get request status color
-  const getRequestStatusColor = (status: string) => {
+  const getPaymentStatusColor = (status: string) => {
     switch (status) {
-      case "accepted":
-        return "bg-green-100 text-green-700 border-green-200";
-      case "declined":
-        return "bg-red-100 text-red-700 border-red-200";
-      case "pending":
-        return "bg-amber-100 text-amber-700 border-amber-200";
-      default:
-        return "bg-destructive/10 text-destructive border border-destructive/20";
+      case 'paid': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'partial': return 'bg-orange-100 text-orange-800';
+      case 'overdue': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const filteredOrders = tradeOrders.filter(order => {
+    const matchesSearch = order.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         order.buyer.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         order.seller.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = statusFilter === "all" || order.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredContracts = tradeContracts.filter(contract => {
+    const matchesSearch = contract.product.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         contract.parties.some(party => party.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesStatus = statusFilter === "all" || contract.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <section className="mb-16 fade-in">
-      <AdBanner type="horizontal" position="top" className="mb-6" />
-      
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-heading font-bold text-neutral-800 mb-1">Trade Management</h2>
-          <p className="text-neutral-600">Connect, chat, and manage your trade partnerships</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 p-4 md:p-6">
+      {/* Enhanced Header */}
+      <div className="mb-8">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-blue-100 to-purple-100 text-blue-800 font-semibold mb-4">
+            <span className="material-icons text-sm">business_center</span>
+            Trade Management Hub
+          </div>
+          <h1 className="text-3xl md:text-4xl font-heading font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">
+            Manage Your Trade Operations
+          </h1>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Track orders, manage contracts, and monitor shipments all in one place
+          </p>
         </div>
-        
-        <div className="flex mt-4 md:mt-0 gap-3">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="flex items-center gap-2">
-                <span className="material-icons text-sm">add_circle</span>
-                Create New
-                <span className="material-icons text-sm">expand_more</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>Create New</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                <span className="material-icons text-sm text-primary">chat</span>
-                <span>Start Trade Chat</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                <span className="material-icons text-sm text-primary">person_add</span>
-                <span>Add Trade Contact</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                <span className="material-icons text-sm text-primary">description</span>
-                <span>Send Trade Request</span>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                <span className="material-icons text-sm text-primary">payments</span>
-                <span>Initialize Escrow</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <span className="material-icons">more_vert</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>Options</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                <span className="material-icons text-sm">settings</span>
-                <span>Trade Settings</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                <span className="material-icons text-sm">cloud_download</span>
-                <span>Export Contacts</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                <span className="material-icons text-sm">content_copy</span>
-                <span>Import Contacts</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                <span className="material-icons text-sm">help_outline</span>
-                <span>Help & Guidelines</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+        {/* Search and Filter Controls */}
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-blue-200">
+          <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex-1">
+              <div className="relative">
+                <span className="material-icons absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">search</span>
+                <Input
+                  placeholder="Search orders, contracts, or companies..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 border-2 border-blue-200 rounded-xl h-12"
+                />
+              </div>
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-48 border-2 border-blue-200 rounded-xl h-12">
+                <SelectValue placeholder="Filter by status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="confirmed">Confirmed</SelectItem>
+                <SelectItem value="shipped">Shipped</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
-      
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid grid-cols-3 w-full max-w-lg">
-          <TabsTrigger value="chat" className="flex items-center gap-2">
-            <span className="material-icons text-sm">chat</span>
-            Trade Chat
-            {chatSessions.reduce((count, session) => count + session.unreadCount, 0) > 0 && (
-              <Badge variant="destructive" className="ml-1 h-5 w-5 flex items-center justify-center p-0">
-                {chatSessions.reduce((count, session) => count + session.unreadCount, 0)}
-              </Badge>
-            )}
+
+      {/* Main Content Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full grid-cols-3 bg-white/80 backdrop-blur-sm border-2 border-blue-200 rounded-2xl p-2 h-14">
+          <TabsTrigger value="orders" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">shopping_cart</span>
+            Trade Orders
           </TabsTrigger>
-          <TabsTrigger value="connections" className="flex items-center gap-2">
-            <span className="material-icons text-sm">people</span>
-            Connections
+          <TabsTrigger value="contracts" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">description</span>
+            Contracts
           </TabsTrigger>
-          <TabsTrigger value="requests" className="flex items-center gap-2">
-            <span className="material-icons text-sm">person_add</span>
-            Requests
-            {tradeRequests.filter(r => r.status === "pending").length > 0 && (
-              <Badge variant="destructive" className="ml-1 h-5 w-5 flex items-center justify-center p-0">
-                {tradeRequests.filter(r => r.status === "pending").length}
-              </Badge>
-            )}
+          <TabsTrigger value="shipments" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-purple-600 data-[state=active]:text-white">
+            <span className="material-icons mr-2">local_shipping</span>
+            Shipments
           </TabsTrigger>
         </TabsList>
-        
-        {/* Trade Chat Tab */}
-        <TabsContent value="chat" className="space-y-4">
-          <div className="grid md:grid-cols-3 gap-6 h-[600px]">
-            {/* Chat Contacts List */}
-            <Card className="md:col-span-1">
-              <CardHeader className="p-4">
-                <CardTitle className="text-lg">Conversations</CardTitle>
-                <div className="relative mt-2">
-                  <Input 
-                    placeholder="Search contacts..." 
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pr-10"
-                  />
-                  <span className="material-icons absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400">
-                    search
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="p-0 overflow-auto" style={{ maxHeight: "500px" }}>
-                <div className="divide-y">
-                  {chatSessions.map(session => (
-                    <div 
-                      key={session.id}
-                      onClick={() => setActiveContactId(session.contact.id)}
-                      className={`p-3 cursor-pointer hover:bg-neutral-50 transition-colors ${
-                        activeContactId === session.contact.id ? "bg-primary-50" : ""
-                      }`}
-                    >
-                      <div className="flex items-start space-x-3">
-                        <div className="relative">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={session.contact.avatar} alt={session.contact.name} />
-                            <AvatarFallback>{session.contact.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <span 
-                            className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white ${getStatusIndicator(session.contact.status)}`} 
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex justify-between items-center">
-                            <h3 className="font-medium text-sm truncate">{session.contact.name}</h3>
-                            <span className="text-xs text-neutral-500">
-                              {session.messages.length > 0 
-                                ? new Date(session.messages[session.messages.length - 1].timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-                                : ""}
-                            </span>
-                          </div>
-                          <p className="text-xs text-neutral-500 truncate">
-                            {session.messages.length > 0 
-                              ? session.messages[session.messages.length - 1].content
-                              : "No messages yet"}
-                          </p>
-                          <div className="flex justify-between items-center mt-1">
-                            <span className="text-xs text-neutral-400">{session.contact.company}</span>
-                            {session.unreadCount > 0 && (
-                              <Badge variant="destructive" className="h-5 w-5 flex items-center justify-center p-0">
-                                {session.unreadCount}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {chatSessions.length === 0 && (
-                    <div className="p-6 text-center">
-                      <span className="material-icons text-4xl text-neutral-300 mb-2">chat</span>
-                      <p className="text-neutral-500">No conversations yet</p>
-                      <p className="text-sm text-neutral-400 mt-1">Connect with trade partners to start chatting</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-            
-            {/* Chat Messages */}
-            <Card className="md:col-span-2">
-              {activeChatSession ? (
-                <>
-                  <CardHeader className="p-4 border-b">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <Avatar className="h-10 w-10">
-                            <AvatarImage src={activeChatSession.contact.avatar} alt={activeChatSession.contact.name} />
-                            <AvatarFallback>{activeChatSession.contact.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                          </Avatar>
-                          <span 
-                            className={`absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full border-2 border-white ${getStatusIndicator(activeChatSession.contact.status)}`} 
-                          />
-                        </div>
-                        <div>
-                          <h3 className="font-medium">{activeChatSession.contact.name}</h3>
-                          <p className="text-xs text-neutral-500">{activeChatSession.contact.company} • {activeChatSession.contact.country}</p>
-                        </div>
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="icon">
-                          <span className="material-icons">phone</span>
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <span className="material-icons">videocam</span>
-                        </Button>
-                        <Button variant="ghost" size="icon">
-                          <span className="material-icons">more_vert</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-0 flex flex-col h-[464px]">
-                    <div className="flex-1 overflow-auto p-4">
-                      <div className="space-y-4">
-                        {activeChatSession.messages.map((message) => (
-                          <motion.div
-                            key={message.id}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className={`flex flex-col ${message.senderId === "user" ? "items-end" : "items-start"}`}
-                          >
-                            <div className={`max-w-[80%] relative group ${message.senderId === "user" 
-                              ? "bg-primary-500 text-white rounded-2xl rounded-tr-sm" 
-                              : "bg-neutral-100 text-neutral-800 rounded-2xl rounded-tl-sm"
-                            } p-3`}>
-                              <p className="text-sm">{message.content}</p>
-                              <div className={`text-xs mt-1 flex justify-end ${message.senderId === "user" ? "text-primary-100" : "text-neutral-500"}`}>
-                                {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                {message.senderId === "user" && message.isRead && (
-                                  <span className="material-icons text-xs ml-1">done_all</span>
-                                )}
-                              </div>
-                              
-                              {/* Translation button - only show for messages from others */}
-                              {message.senderId !== "user" && (
-                                <button 
-                                  onClick={() => setActiveTranslation(activeTranslation === message.id ? null : message.id)}
-                                  className={`absolute -top-3 -right-3 bg-white shadow-md text-primary rounded-full h-6 w-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity ${
-                                    activeTranslation === message.id ? "opacity-100 text-primary" : "text-neutral-400 hover:text-primary"
-                                  }`}
-                                >
-                                  <span className="material-icons text-xs">translate</span>
-                                </button>
-                              )}
-                            </div>
-                            
-                            {/* Show translator if this message is being translated */}
-                            {activeTranslation === message.id && (
-                              <div className="mt-2 mb-3 max-w-[90%]">
-                                <ChatTranslator 
-                                  originalMessage={message.content}
-                                  onClose={() => setActiveTranslation(null)}
-                                />
-                              </div>
-                            )}
-                          </motion.div>
-                        ))}
-                        
-                        {/* Typing indicator */}
-                        {isTyping && activeContactId && (
-                          <motion.div 
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-start"
-                          >
-                            <div className="max-w-[80%] bg-neutral-100 text-neutral-800 rounded-2xl rounded-tl-sm p-3">
-                              <div className="flex space-x-1 items-center">
-                                <div className="h-2 w-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></div>
-                                <div className="h-2 w-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></div>
-                                <div className="h-2 w-2 bg-neutral-400 rounded-full animate-bounce" style={{ animationDelay: "600ms" }}></div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                        
-                        <div ref={messagesEndRef} />
-                      </div>
-                    </div>
-                    <div className="p-3 border-t">
-                      <div className="flex space-x-2">
-                        <Button variant="ghost" size="icon">
-                          <span className="material-icons">attach_file</span>
-                        </Button>
-                        <Input 
-                          placeholder="Type a message..." 
-                          value={newMessage}
-                          onChange={handleMessageTyping}
-                          onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
-                          className="flex-1"
-                        />
-                        <Button variant="default" onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                          <span className="material-icons">send</span>
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </>
-              ) : (
-                <div className="flex items-center justify-center h-full p-6 text-center">
-                  <div>
-                    <span className="material-icons text-6xl text-neutral-300 mb-4">chat_bubble_outline</span>
-                    <h3 className="font-medium text-lg text-neutral-700 mb-2">Select a conversation</h3>
-                    <p className="text-neutral-500 max-w-sm">
-                      Choose a contact from the left panel to start chatting or continue an existing conversation.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </Card>
-          </div>
-        </TabsContent>
-        
-        {/* Trade Connections Tab */}
-        <TabsContent value="connections" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <div className="relative w-full max-w-md">
-              <Input 
-                placeholder="Search connections..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
-              />
-              <span className="material-icons absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400">
-                search
-              </span>
-            </div>
-            <Button className="flex items-center gap-2 ml-4">
-              <span className="material-icons">person_add</span>
-              Add New Contact
-            </Button>
-          </div>
-          
-          <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {/* Contact Filters */}
-              <Card className="col-span-full">
-                <CardContent className="p-4 flex flex-wrap gap-3 justify-center md:justify-start">
-                  <Button 
-                    variant={activeFilter === "all" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => setActiveFilter("all")}
-                    className="rounded-full"
-                  >
-                    All Contacts
-                  </Button>
-                  <Button 
-                    variant={activeFilter === "online" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => setActiveFilter("online")}
-                    className="rounded-full"
-                  >
-                    <span className="h-2 w-2 bg-green-500 rounded-full mr-2"></span>
-                    Online
-                  </Button>
-                  <Button 
-                    variant={activeFilter === "frequent" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => setActiveFilter("frequent")}
-                    className="rounded-full"
-                  >
-                    <span className="material-icons text-sm mr-1">star</span>
-                    Frequent
-                  </Button>
-                  <Button 
-                    variant={activeFilter === "importers" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => setActiveFilter("importers")}
-                    className="rounded-full"
-                  >
-                    <span className="material-icons text-sm mr-1">shopping_cart</span>
-                    Importers
-                  </Button>
-                  <Button 
-                    variant={activeFilter === "exporters" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => setActiveFilter("exporters")}
-                    className="rounded-full"
-                  >
-                    <span className="material-icons text-sm mr-1">local_shipping</span>
-                    Exporters
-                  </Button>
-                  <Button 
-                    variant={activeFilter === "recents" ? "default" : "outline"} 
-                    size="sm"
-                    onClick={() => setActiveFilter("recents")}
-                    className="rounded-full"
-                  >
-                    <span className="material-icons text-sm mr-1">history</span>
-                    Recent
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredContacts.map(contact => (
-                <motion.div
-                  key={contact.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-4">
-                          <div className="relative">
-                            <Avatar className="h-12 w-12">
-                              <AvatarImage src={contact.avatar} alt={contact.name} />
-                              <AvatarFallback>{contact.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <span 
-                              className={`absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-white ${getStatusIndicator(contact.status)}`} 
-                            />
-                          </div>
-                          <div>
-                            <div className="flex items-center space-x-1">
-                              <h3 className="font-medium">{contact.name}</h3>
-                              {contact.isFavorite && (
-                                <span className="material-icons text-amber-400 text-sm">star</span>
-                              )}
-                            </div>
-                            <p className="text-sm text-neutral-500">{contact.company}</p>
-                            <div className="flex items-center mt-1">
-                              <span className="text-xs flex items-center text-neutral-500">
-                                <span className="material-icons text-xs mr-1">public</span>
-                                {contact.country}
-                              </span>
-                              <span className="mx-2 text-neutral-300">•</span>
-                              <span className="text-xs text-neutral-500">
-                                {contact.status === "online" 
-                                  ? "Online now" 
-                                  : contact.status === "away"
-                                    ? "Away"
-                                    : "Offline"
-                                }
-                              </span>
-                            </div>
-                            {contact.tradeRole && (
-                              <Badge className="mt-2" variant="outline">
-                                {contact.tradeRole === "importer" ? "Importer" : "Exporter"}
-                              </Badge>
-                            )}
-                            {contact.products && contact.products.length > 0 && (
-                              <div className="mt-3 flex flex-wrap gap-1">
-                                {contact.products.map((product, index) => (
-                                  <Badge key={index} variant="secondary" className="text-xs">
-                                    {product}
-                                  </Badge>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <span className="material-icons">more_vert</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              className="flex items-center gap-2 cursor-pointer"
-                              onClick={() => {
-                                const updatedContacts = tradeContacts.map(c => {
-                                  if (c.id === contact.id) {
-                                    return { ...c, isFavorite: !c.isFavorite };
-                                  }
-                                  return c;
-                                });
-                                setTradeContacts(updatedContacts);
-                              }}
-                            >
-                              <span className="material-icons text-sm">
-                                {contact.isFavorite ? "star" : "star_outline"}
-                              </span>
-                              <span>{contact.isFavorite ? "Remove from Favorites" : "Add to Favorites"}</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                              <span className="material-icons text-sm">inventory</span>
-                              <span>View Products</span>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
-                              <span className="material-icons text-sm">person_remove</span>
-                              <span>Remove Contact</span>
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </div>
-                      
-                      <div className="grid grid-cols-2 gap-2 mt-6">
-                        <Button 
-                          variant="outline" 
-                          className="flex items-center gap-1"
-                          onClick={() => {
-                            // Find if there's already a chat session with this contact
-                            const existingSession = chatSessions.find(
-                              session => session.contact.id === contact.id
-                            );
-                            
-                            if (!existingSession) {
-                              // Create a new chat session
-                              setChatSessions([
-                                ...chatSessions,
-                                {
-                                  id: `chat-${Date.now()}`,
-                                  contact,
-                                  messages: [],
-                                  unreadCount: 0
-                                }
-                              ]);
-                            }
-                            
-                            // Activate the chat tab and select this contact
-                            setActiveTab("chat");
-                            setActiveContactId(contact.id);
-                          }}
-                        >
-                          <span className="material-icons text-sm">chat</span>
-                          Message
-                        </Button>
-                        <Button 
-                          variant="outline"
-                          className="flex items-center gap-1"
-                        >
-                          <span className="material-icons text-sm">description</span>
-                          View Profile
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              ))}
-              
-              {filteredContacts.length === 0 && (
-                <div className="col-span-full p-10 text-center border rounded-lg bg-neutral-50">
-                  <span className="material-icons text-5xl text-neutral-300 mb-3">people</span>
-                  <h3 className="font-medium text-lg mb-2">No contacts found</h3>
-                  <p className="text-neutral-500 mb-4">
-                    {searchQuery 
-                      ? `No results found for "${searchQuery}"`
-                      : "You don't have any trade contacts yet"}
-                  </p>
-                  <Button className="flex items-center gap-2 mx-auto">
-                    <span className="material-icons">person_add</span>
-                    Add New Contact
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </TabsContent>
-        
-        {/* Trade Requests Tab */}
-        <TabsContent value="requests" className="space-y-4">
-          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <div className="relative w-full max-w-md">
-              <Input 
-                placeholder="Search requests..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pr-10"
-              />
-              <span className="material-icons absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400">
-                search
-              </span>
-            </div>
-            <div className="flex gap-3">
-              <Button className="flex items-center gap-2">
-                <span className="material-icons">add</span>
-                Create Request
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <span className="material-icons text-sm">filter_list</span>
-                    Filter
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => setRequestFilter("all")}
-                  >
-                    <span className="material-icons text-sm">all_inbox</span>
-                    <span>All Requests</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => setRequestFilter("incoming")}
-                  >
-                    <span className="material-icons text-sm">inbox</span>
-                    <span>Incoming Requests</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => setRequestFilter("outgoing")}
-                  >
-                    <span className="material-icons text-sm">outbox</span>
-                    <span>Outgoing Requests</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => setRequestFilter("pending")}
-                  >
-                    <span className="material-icons text-sm">pending</span>
-                    <span>Pending</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => setRequestFilter("accepted")}
-                  >
-                    <span className="material-icons text-sm">check_circle</span>
-                    <span>Accepted</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    className="flex items-center gap-2 cursor-pointer"
-                    onClick={() => setRequestFilter("declined")}
-                  >
-                    <span className="material-icons text-sm">cancel</span>
-                    <span>Declined</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            {/* Active filter indicator */}
-            {requestFilter !== "all" && (
-              <div className="flex items-center gap-2 text-sm text-neutral-600">
-                <span>Filtered by: </span>
-                <Badge variant="outline" className="capitalize font-normal">
-                  {requestFilter}
-                </Badge>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  className="h-6 px-2 text-xs"
-                  onClick={() => setRequestFilter("all")}
-                >
-                  Clear filter
-                </Button>
-              </div>
-            )}
-            
-            {applyRequestFilters(tradeRequests).map(request => (
+
+        {/* Trade Orders Tab */}
+        <TabsContent value="orders" className="space-y-6">
+          <div className="grid gap-6">
+            {filteredOrders.map((order) => (
               <motion.div
-                key={request.id}
-                initial={{ opacity: 0, y: 10 }}
+                key={order.id}
+                initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <Card>
-                  <CardContent className="p-5">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-start gap-4">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={request.avatar} alt={request.name} />
-                          <AvatarFallback>{request.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <Badge variant={request.type === "incoming" ? "secondary" : "outline"} className="font-normal px-2 py-0 h-5">
-                              {request.type === "incoming" ? "Incoming" : "Outgoing"}
-                            </Badge>
-                            <Badge className={`font-normal px-2 py-0 h-5 ${getRequestStatusColor(request.status)}`}>
-                              {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                            </Badge>
+                <Card className="border-2 border-blue-200 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-xl font-bold text-gray-800 mb-2">
+                          {order.product}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600">Order #{order.orderNumber}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className={`px-3 py-1 font-semibold border ${getStatusColor(order.status)}`}>
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </Badge>
+                        <Badge className={`px-3 py-1 font-semibold ${getPaymentStatusColor(order.paymentStatus)}`}>
+                          Payment: {order.paymentStatus}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <span className="material-icons text-blue-600">person</span>
+                          <div>
+                            <p className="text-sm text-gray-500">Buyer</p>
+                            <p className="font-semibold text-gray-800">{order.buyer}</p>
                           </div>
-                          <h3 className="font-medium">{request.name}</h3>
-                          <p className="text-sm text-neutral-500">{request.company}</p>
-                          {request.productName && (
-                            <p className="text-sm mt-1">
-                              <span className="font-medium">Product:</span> {request.productName}
-                            </p>
-                          )}
-                          <div className="text-sm text-neutral-700 mt-2 bg-neutral-50 p-3 rounded-md relative group">
-                            <p>{request.message}</p>
-                            {request.type === "incoming" && (
-                              <button 
-                                onClick={() => setActiveTranslation(activeTranslation === request.id ? null : request.id)}
-                                className="absolute top-2 right-2 bg-white shadow-sm text-primary rounded-full h-6 w-6 flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-50"
-                              >
-                                <span className="material-icons text-xs">translate</span>
-                              </button>
-                            )}
-                            
-                            {activeTranslation === request.id && (
-                              <div className="mt-3 pt-3 border-t border-neutral-200">
-                                <ChatTranslator 
-                                  originalMessage={request.message}
-                                  onClose={() => setActiveTranslation(null)}
-                                />
-                              </div>
-                            )}
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="material-icons text-green-600">business</span>
+                          <div>
+                            <p className="text-sm text-gray-500">Seller</p>
+                            <p className="font-semibold text-gray-800">{order.seller}</p>
                           </div>
-                          <p className="text-xs text-neutral-500 mt-2">
-                            {new Date(request.date).toLocaleDateString()} • {new Date(request.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="material-icons text-purple-600">location_on</span>
+                          <div>
+                            <p className="text-sm text-gray-500">Origin Country</p>
+                            <p className="font-semibold text-gray-800">{order.country}</p>
+                          </div>
                         </div>
                       </div>
-                      
-                      {request.type === "incoming" && request.status === "pending" && (
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="outline" 
-                            className="flex items-center gap-1 border-destructive/30 text-destructive hover:bg-destructive/10"
-                            onClick={() => handleTradeRequestAction(request.id, "decline")}
-                          >
-                            <span className="material-icons text-sm">close</span>
-                            Decline
-                          </Button>
-                          <Button 
-                            variant="default" 
-                            className="flex items-center gap-1"
-                            onClick={() => handleTradeRequestAction(request.id, "accept")}
-                          >
-                            <span className="material-icons text-sm">check</span>
-                            Accept
-                          </Button>
+                      <div className="space-y-3">
+                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <p className="text-sm text-gray-500">Quantity</p>
+                              <p className="font-bold text-blue-800">{order.quantity.toLocaleString()} kg</p>
+                            </div>
+                            <div>
+                              <p className="text-sm text-gray-500">Unit Price</p>
+                              <p className="font-bold text-blue-800">${order.unitPrice}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-sm text-gray-500">Total Value</p>
+                              <p className="text-2xl font-bold text-blue-800">
+                                ${order.totalValue.toLocaleString()} {order.currency}
+                              </p>
+                            </div>
+                          </div>
                         </div>
+                        <div className="flex items-center gap-3">
+                          <span className="material-icons text-orange-600">schedule</span>
+                          <div>
+                            <p className="text-sm text-gray-500">Expected Delivery</p>
+                            <p className="font-semibold text-gray-800">
+                              {new Date(order.expectedDelivery).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                      <Button size="sm" className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white rounded-xl">
+                        <span className="material-icons mr-2 text-sm">visibility</span>
+                        View Details
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-blue-300 text-blue-700 hover:bg-blue-50 rounded-xl">
+                        <span className="material-icons mr-2 text-sm">edit</span>
+                        Edit Order
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-50 rounded-xl">
+                        <span className="material-icons mr-2 text-sm">local_shipping</span>
+                        Track Shipment
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </TabsContent>
+
+        {/* Contracts Tab */}
+        <TabsContent value="contracts" className="space-y-6">
+          <div className="grid gap-6">
+            {filteredContracts.map((contract) => (
+              <motion.div
+                key={contract.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="border-2 border-teal-200 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-xl font-bold text-gray-800 mb-2">
+                          {contract.product}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600">Contract #{contract.contractNumber}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className={`px-3 py-1 font-semibold border ${getStatusColor(contract.status)}`}>
+                          {contract.status.charAt(0).toUpperCase() + contract.status.slice(1)}
+                        </Badge>
+                        {contract.smartContractAddress && (
+                          <Badge className="px-3 py-1 font-semibold bg-purple-100 text-purple-800 border-purple-200">
+                            Smart Contract
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-sm text-gray-500 mb-2">Contract Parties</p>
+                          <div className="space-y-2">
+                            {contract.parties.map((party, index) => (
+                              <div key={index} className="flex items-center gap-2">
+                                <Avatar className="w-8 h-8">
+                                  <AvatarFallback className="bg-teal-100 text-teal-800 text-xs">
+                                    {party.split(' ').map(w => w[0]).join('')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="font-semibold text-gray-800">{party}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">Terms & Conditions</p>
+                          <p className="font-semibold text-gray-800">{contract.terms}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div className="bg-teal-50 rounded-xl p-4 border border-teal-200">
+                          <div className="space-y-2">
+                            <div>
+                              <p className="text-sm text-gray-500">Contract Value</p>
+                              <p className="text-2xl font-bold text-teal-800">
+                                ${contract.value.toLocaleString()} {contract.currency}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-500">Created</p>
+                            <p className="font-semibold text-gray-800">
+                              {new Date(contract.createdDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Expires</p>
+                            <p className="font-semibold text-gray-800">
+                              {new Date(contract.expiryDate).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        {contract.smartContractAddress && (
+                          <div>
+                            <p className="text-sm text-gray-500">Smart Contract Address</p>
+                            <p className="font-mono text-xs text-purple-700 bg-purple-50 p-2 rounded">
+                              {contract.smartContractAddress}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                      <Button size="sm" className="bg-gradient-to-r from-teal-500 to-green-600 hover:from-teal-600 hover:to-green-700 text-white rounded-xl">
+                        <span className="material-icons mr-2 text-sm">description</span>
+                        View Contract
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-teal-300 text-teal-700 hover:bg-teal-50 rounded-xl">
+                        <span className="material-icons mr-2 text-sm">edit</span>
+                        Modify Terms
+                      </Button>
+                      {contract.smartContractAddress && (
+                        <Button variant="outline" size="sm" className="border-purple-300 text-purple-700 hover:bg-purple-50 rounded-xl">
+                          <span className="material-icons mr-2 text-sm">link</span>
+                          View on Blockchain
+                        </Button>
                       )}
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
             ))}
-            
-            {applyRequestFilters(tradeRequests).length === 0 && (
-              <div className="p-10 text-center border rounded-lg bg-neutral-50">
-                <span className="material-icons text-5xl text-neutral-300 mb-3">inbox</span>
-                <h3 className="font-medium text-lg mb-2">No requests found</h3>
-                <p className="text-neutral-500 mb-4">
-                  {searchQuery 
-                    ? `No results found for "${searchQuery}"`
-                    : requestFilter !== "all"
-                      ? `No ${requestFilter} requests found`
-                      : "You don't have any trade requests at the moment"}
-                </p>
-                <Button className="flex items-center gap-2 mx-auto">
-                  <span className="material-icons">add</span>
-                  Create New Request
-                </Button>
-              </div>
-            )}
+          </div>
+        </TabsContent>
+
+        {/* Shipments Tab */}
+        <TabsContent value="shipments" className="space-y-6">
+          <div className="grid gap-6">
+            {shipmentTracking.map((shipment) => (
+              <motion.div
+                key={shipment.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Card className="border-2 border-orange-200 shadow-xl bg-white/90 backdrop-blur-sm hover:shadow-2xl transition-all duration-300">
+                  <CardHeader className="pb-4">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div>
+                        <CardTitle className="text-xl font-bold text-gray-800 mb-2">
+                          Tracking: {shipment.trackingNumber}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600">Order ID: {shipment.orderId}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className={`px-3 py-1 font-semibold border ${getStatusColor(shipment.status)}`}>
+                          {shipment.status.charAt(0).toUpperCase() + shipment.status.slice(1)}
+                        </Badge>
+                        <Badge className="px-3 py-1 font-semibold bg-orange-100 text-orange-800 border-orange-200">
+                          {shipment.carrier}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="bg-orange-50 rounded-xl p-4 border border-orange-200">
+                        <div className="flex items-center gap-3 mb-3">
+                          <span className="material-icons text-orange-600">location_on</span>
+                          <div>
+                            <p className="text-sm text-gray-500">Current Location</p>
+                            <p className="font-bold text-orange-800">{shipment.currentLocation}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="material-icons text-green-600">schedule</span>
+                          <div>
+                            <p className="text-sm text-gray-500">Estimated Delivery</p>
+                            <p className="font-bold text-green-800">
+                              {new Date(shipment.estimatedDelivery).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <h4 className="font-semibold text-gray-800 mb-3">Shipment History</h4>
+                        <div className="space-y-3 max-h-40 overflow-y-auto">
+                          {shipment.updates.map((update, index) => (
+                            <div key={index} className="flex gap-3 p-3 bg-gray-50 rounded-lg">
+                              <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                              <div className="flex-1">
+                                <p className="text-sm font-semibold text-gray-800">{update.location}</p>
+                                <p className="text-xs text-gray-600">{update.description}</p>
+                                <p className="text-xs text-gray-500">
+                                  {new Date(update.timestamp).toLocaleString()}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
+                      <Button size="sm" className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white rounded-xl">
+                        <span className="material-icons mr-2 text-sm">track_changes</span>
+                        Full Tracking
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-orange-300 text-orange-700 hover:bg-orange-50 rounded-xl">
+                        <span className="material-icons mr-2 text-sm">notifications</span>
+                        Set Alerts
+                      </Button>
+                      <Button variant="outline" size="sm" className="border-blue-300 text-blue-700 hover:bg-blue-50 rounded-xl">
+                        <span className="material-icons mr-2 text-sm">contact_support</span>
+                        Contact Carrier
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
           </div>
         </TabsContent>
       </Tabs>
-      
-      {/* Partner section */}
-      <div className="mt-10">
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-primary-50 border-b border-primary-100 pb-3">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <span className="material-icons text-primary">handshake</span>
-              Official Trade Partners
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-4">
-            <PartnersSection compact={true} />
-          </CardContent>
-        </Card>
-      </div>
-      
-      {/* Ad banner at bottom */}
-      <div className="mt-8">
-        <AdBanner type="horizontal" position="bottom" />
-      </div>
-    </section>
+    </div>
   );
 }
