@@ -653,5 +653,77 @@ Be helpful, professional, and concise. Provide specific guidance about DTFS feat
     }
   });
 
+  // AI Assistant endpoints
+  app.get("/api/ai/messages", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const messages = await storage.getAiMessagesByUserId((req as any).user.id);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching AI messages:", error);
+      res.status(500).json({ error: "Failed to fetch AI messages" });
+    }
+  });
+
+  app.post("/api/ai/messages", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const { text, language = 'en' } = req.body;
+      const userId = (req as any).user.id;
+
+      // Store user message
+      const userMessage = await storage.createAiMessage({
+        userId,
+        sender: 'user',
+        text,
+        timestamp: new Date(),
+        language
+      });
+
+      // Generate AI response using OpenAI
+      const systemPrompt = `You are Ava, an AI assistant for DTFS (Digital Trade Finance System). You help users with:
+      - Trade finance options (factoring, export finance, supply chain finance, import finance, non-interest finance, startup trade finance)
+      - Marketplace navigation and product listings
+      - Training resources and courses
+      - Digital wallet and payment guidance
+      - P2P trading and dispute resolution
+      - PAPSS payment system information
+      
+      Keep responses helpful, concise, and professional. Focus on trade finance and platform features.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: text }
+        ],
+        max_tokens: 500,
+        temperature: 0.7
+      });
+
+      const aiResponseText = response.choices[0].message.content || "I'm sorry, I couldn't generate a response. Please try again.";
+
+      // Store AI response
+      const aiMessage = await storage.createAiMessage({
+        userId,
+        sender: 'ai',
+        text: aiResponseText,
+        timestamp: new Date(),
+        language
+      });
+
+      res.json({ userMessage, aiMessage });
+    } catch (error) {
+      console.error("Error processing AI message:", error);
+      res.status(500).json({ error: "Failed to process AI message" });
+    }
+  });
+
   return httpServer;
 }

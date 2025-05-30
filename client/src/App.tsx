@@ -16,7 +16,7 @@ import { lazy, Suspense, useEffect, useState, useContext } from "react";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
-import AIVoiceAssistant from "@/components/ai-voice-assistant";
+import { AiAssistant } from "@/components/ai-assistant";
 import { ProtectedRoute } from "@/lib/protected-route";
 
 // Use lazy loading for potential route splitting in the future
@@ -89,7 +89,7 @@ function AppShell({ children, isAuthPage = false }: { children: React.ReactNode,
         </main>
       </div>
       <MobileNav />
-      <AIVoiceAssistant />
+      <AiAssistant />
     </div>
   );
 }

@@ -447,7 +447,7 @@ export default function Wallet() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-2 h-14">
+        <TabsList className="grid w-full grid-cols-5 bg-white/80 backdrop-blur-sm border-2 border-gray-200 rounded-2xl p-2 h-14">
           <TabsTrigger value="overview" className="text-sm font-semibold rounded-xl data-[state=active]:bg-gradient-to-r data-[state=active]:from-green-500 data-[state=active]:to-teal-600 data-[state=active]:text-white">
             <span className="material-icons mr-2">dashboard</span>
             Overview
