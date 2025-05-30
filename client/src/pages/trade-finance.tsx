@@ -891,13 +891,19 @@ export default function TradeFinance() {
             </Card>
           </motion.div>
 
-          {/* Active Finance Card */}
-          <Card>
+          {/* Enhanced Active Finance Card */}
+          <Card className="border-2 border-teal-200 shadow-2xl overflow-hidden bg-gradient-to-br from-teal-50 to-green-50">
+            <div className="h-3 bg-gradient-to-r from-teal-500 via-green-500 to-emerald-500 w-full"></div>
             <CardContent className="p-6 lg:p-8">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-heading font-semibold">Active Finance Contracts</h3>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gradient-to-br from-teal-500 to-green-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                    <span className="material-icons text-lg">account_balance</span>
+                  </div>
+                  <h3 className="text-2xl font-heading font-bold text-gray-800">Active Finance Contracts</h3>
+                </div>
                 <Select defaultValue="all">
-                  <SelectTrigger className="w-[160px] h-8 text-xs">
+                  <SelectTrigger className="w-[180px] h-10 border-2 border-teal-200 rounded-xl bg-white/80 backdrop-blur-sm">
                     <SelectValue placeholder="Filter by status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -911,10 +917,12 @@ export default function TradeFinance() {
               
               <div className="space-y-4">
                 {activeContracts.length === 0 ? (
-                  <div className="p-8 text-center border border-dashed border-neutral-200 rounded-lg bg-neutral-50">
-                    <span className="material-icons text-neutral-400 text-4xl mb-3">description</span>
-                    <h4 className="text-neutral-800 font-medium mb-1">No active contracts</h4>
-                    <p className="text-neutral-600 text-sm">Select a finance option and submit a request to get started.</p>
+                  <div className="p-8 text-center border-2 border-dashed border-teal-300 rounded-2xl bg-white/60 backdrop-blur-sm">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-teal-100 to-green-100 rounded-2xl flex items-center justify-center">
+                      <span className="material-icons text-teal-600 text-3xl">description</span>
+                    </div>
+                    <h4 className="text-gray-800 font-bold text-lg mb-2">No Active Contracts</h4>
+                    <p className="text-gray-600 font-medium">Select a finance option and submit a request to get started with your first contract.</p>
                   </div>
                 ) : (
                   activeContracts.map((contract) => (
