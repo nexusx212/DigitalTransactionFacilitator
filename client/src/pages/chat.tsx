@@ -69,7 +69,7 @@ export default function ChatPage() {
   const [showNewChatModal, setShowNewChatModal] = useState(false);
 
   // Fetch real chat data from API
-  const { data: chatRooms = [], isLoading: chatsLoading, error: chatsError } = useQuery({
+  const { data: chatRooms = [], isLoading: chatsLoading, error: chatsError } = useQuery<ChatRoom[]>({
     queryKey: ["/api/chats"],
     refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
   });
@@ -100,6 +100,29 @@ export default function ChatPage() {
     if (hours < 24) return `${hours}h ago`;
     return `${days}d ago`;
   };
+
+  if (chatsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading conversations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (chatsError) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
+        <div className="text-center">
+          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-600 mb-2">Unable to load conversations</h3>
+          <p className="text-gray-500">Please check your connection and try again.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
