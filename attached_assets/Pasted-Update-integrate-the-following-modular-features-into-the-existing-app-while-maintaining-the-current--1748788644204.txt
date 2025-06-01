@@ -1,0 +1,190 @@
+Update/integrate the following modular features into the existing app while maintaining the current design, tech stack, and core UI/UX principles.
+
+
+Frontend:  (PWA-ready)
+
+Backend: Firebase (Firestore, Auth, Functions, Storage, Hosting)
+
+Design: Maintain current PWA theme, navigation, accessibility, and responsiveness
+
+Installability: Ensure offline-first, installable across Android, iOS, macOS, and Windows
+
+ Feature Modules to Integrate
+1.  Multi-Language, Voice-Guided Interface
+Auto-detect language using IP2Location or GeoIP
+
+STT (speech-to-text) + TTS (text-to-speech) in:
+
+English, French, Arabic, Hausa, Yoruba, Swahili, Zulu
+
+Manual language/voice override
+
+Visual assist (large icons, narrations)
+
+2. Role-Based Onboarding + Dashboards
+Roles:
+
+Exporter, Buyer, Logistics Provider, Financier, Agent
+
+Registration flow:
+
+Email → Phone OTP → Role Selection → KYC Setup
+
+Load relevant dashboard after role selection
+
+Store metadata in Firestore (role, KYC status, region, etc.)
+
+3. Exporter Dashboard
+Product listing (title, photo, audio description)
+
+AI-suggested prices via open-source AI (OpenRouter or OSS)
+
+Trade offer creation
+
+Request logistics/financing
+
+Verified badge after KYC
+
+4.Buyer Dashboard
+Browse verified exporters + filters (product, region, price)
+
+In-app chat
+
+Initiate trade
+
+View escrow + stablecoin wallet
+
+Multi-currency FX calculator
+
+5.Logistics Provider Dashboard
+Shipment assignment and acceptance
+
+Live status updates (Firebase Functions + Firestore)
+
+Messaging with Exporter/Buyer
+
+Auto-update exporter via voice + notification
+
+6. Trade Document Wizard
+Auto-generate: invoice, pro forma, packing list
+
+Translate to selected language
+
+Upload signed docs
+
+TTS/STT support for visual-voice guidance
+
+7. KYC / KYB System
+Upload: ID, Business License, Proof of Address
+
+Store securely in Firebase Storage
+
+Status tracking in user dashboard
+
+Admin approval panel with flagging
+
+8. Payment Integration
+A. PAPSS (mock or open API)
+Cross-border FX conversions (e.g., Naira → Rand)
+
+Buyer checkout: live rate display + PAPSS payment
+
+Withdraw to mobile money / local bank
+
+B. Stablecoin Payments
+Support: USDT (TRC20), cUSD, PADC
+
+Wallets for Buyer & Exporter
+
+1% cashback for stablecoin usage
+
+Milestone-based escrow + release
+
+C. Offline Payment
+USSD check balance
+
+QR scan to pay
+
+PIN-based approval for mobile money
+
+9. AI Agentic Capabilities
+Matchmaking: Recommend exporters/buyers
+
+Support Chat: Dispute resolution & summary generation
+
+Analytics:
+
+Suggested pricing
+
+Market insights: “Top 3 regions”
+
+Heatmap visualizations
+
+10.Multilingual Real-Time Chat
+Buyer ↔ Exporter ↔ Logistics ↔ Admin
+
+Text & voice
+
+Optional translation
+
+Flag + report system
+
+11.Offline Agent Portal
+Register new rural MSMEs
+
+Uploads: Spoken bio, photo ID, product photo, GPS
+
+Syncs later when online
+
+Agent earnings + referral dashboard
+
+12. Admin Dashboard(Internal Admin Console)
+User management: approve, verify, ban
+
+CRM: messages, tickets, verifications
+
+CMS: docs, FAQs, notifications
+
+Trade overview + heatmaps
+
+KYC approval queue
+
+AI insight panel
+
+Security & Compliance
+Firebase Auth (RBAC)
+
+Firestore security rules (per role)
+
+Secure chat & escrow logic
+
+Audit logs for admin actions
+
+PWA Requirements
+Offline-first design
+
+Sync data in background when online
+
+Install prompts across platforms
+
+Progressive image and voice asset loading
+
+ Instructions for Development
+Modularize components by role and feature
+
+Use feature flags for staged rollout (Firebase Remote Config)
+
+Prioritize voice & language modules for inclusivity
+
+Mock external APIs during early development (PAPSS, STT/TTS)
+
+Use OSS AI agents where possible (OpenRouter, LangChain, Transformers.js)
+
+ Testing & QA
+Language detection → fallback to English if unsupported
+
+Voice input/output: check clarity in noisy settings
+
+Multi-device sync: test offline/online handoff
+
+Trade flow simulation (mock orders, chat, escrow)
