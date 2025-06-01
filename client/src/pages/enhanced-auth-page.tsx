@@ -60,7 +60,7 @@ export default function EnhancedAuthPage() {
   // Form states
   const [authMode, setAuthMode] = useState<'login' | 'register'>('login');
   const [step, setStep] = useState(1);
-  const [userRole, setUserRole] = useState<'individual' | 'business'>('individual');
+  const [userRole, setUserRole] = useState<'exporter' | 'buyer' | 'logistics_provider' | 'financier' | 'agent'>('buyer');
   const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [showPassword, setShowPassword] = useState(false);
   
@@ -138,12 +138,28 @@ export default function EnhancedAuthPage() {
     
     // Process voice registration commands
     if (lowerTranscript.includes('register') || lowerTranscript.includes('sign up')) {
-      if (lowerTranscript.includes('business') || lowerTranscript.includes('company')) {
-        setUserRole('business');
+      if (lowerTranscript.includes('export') || lowerTranscript.includes('sell')) {
+        setUserRole('exporter');
+        setAuthMode('register');
+        setStep(2);
+      } else if (lowerTranscript.includes('buy') || lowerTranscript.includes('purchase')) {
+        setUserRole('buyer');
+        setAuthMode('register');
+        setStep(2);
+      } else if (lowerTranscript.includes('logistics') || lowerTranscript.includes('ship')) {
+        setUserRole('logistics_provider');
+        setAuthMode('register');
+        setStep(2);
+      } else if (lowerTranscript.includes('finance') || lowerTranscript.includes('invest')) {
+        setUserRole('financier');
+        setAuthMode('register');
+        setStep(2);
+      } else if (lowerTranscript.includes('agent') || lowerTranscript.includes('refer')) {
+        setUserRole('agent');
         setAuthMode('register');
         setStep(2);
       } else {
-        setUserRole('individual');
+        setUserRole('buyer');
         setAuthMode('register');
         setStep(2);
       }
@@ -323,26 +339,59 @@ export default function EnhancedAuthPage() {
         <CardDescription>Choose your account type</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <Card 
-            className={`cursor-pointer transition-all ${userRole === 'individual' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'}`}
-            onClick={() => setUserRole('individual')}
+            className={`cursor-pointer transition-all ${userRole === 'exporter' ? 'ring-2 ring-green-500 bg-green-50' : 'hover:bg-gray-50'}`}
+            onClick={() => setUserRole('exporter')}
           >
-            <CardContent className="p-6 text-center">
-              <Users className="h-12 w-12 mx-auto mb-4 text-blue-600" />
-              <h3 className="font-semibold text-lg">Individual</h3>
-              <p className="text-sm text-gray-600 mt-2">Personal trading account with KYC verification</p>
+            <CardContent className="p-4 text-center">
+              <Building2 className="h-10 w-10 mx-auto mb-3 text-green-600" />
+              <h3 className="font-semibold text-base">Exporter</h3>
+              <p className="text-xs text-gray-600 mt-1">Sell products across African markets</p>
             </CardContent>
           </Card>
           
           <Card 
-            className={`cursor-pointer transition-all ${userRole === 'business' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'}`}
-            onClick={() => setUserRole('business')}
+            className={`cursor-pointer transition-all ${userRole === 'buyer' ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-50'}`}
+            onClick={() => setUserRole('buyer')}
           >
-            <CardContent className="p-6 text-center">
-              <Building2 className="h-12 w-12 mx-auto mb-4 text-purple-600" />
-              <h3 className="font-semibold text-lg">Business</h3>
-              <p className="text-sm text-gray-600 mt-2">Company account with KYB verification</p>
+            <CardContent className="p-4 text-center">
+              <Users className="h-10 w-10 mx-auto mb-3 text-blue-600" />
+              <h3 className="font-semibold text-base">Buyer</h3>
+              <p className="text-xs text-gray-600 mt-1">Source products from verified exporters</p>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`cursor-pointer transition-all ${userRole === 'logistics_provider' ? 'ring-2 ring-orange-500 bg-orange-50' : 'hover:bg-gray-50'}`}
+            onClick={() => setUserRole('logistics_provider')}
+          >
+            <CardContent className="p-4 text-center">
+              <Wallet className="h-10 w-10 mx-auto mb-3 text-orange-600" />
+              <h3 className="font-semibold text-base">Logistics Provider</h3>
+              <p className="text-xs text-gray-600 mt-1">Provide shipping and logistics services</p>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`cursor-pointer transition-all ${userRole === 'financier' ? 'ring-2 ring-purple-500 bg-purple-50' : 'hover:bg-gray-50'}`}
+            onClick={() => setUserRole('financier')}
+          >
+            <CardContent className="p-4 text-center">
+              <Shield className="h-10 w-10 mx-auto mb-3 text-purple-600" />
+              <h3 className="font-semibold text-base">Financier</h3>
+              <p className="text-xs text-gray-600 mt-1">Provide trade finance and investment</p>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className={`cursor-pointer transition-all ${userRole === 'agent' ? 'ring-2 ring-teal-500 bg-teal-50' : 'hover:bg-gray-50'}`}
+            onClick={() => setUserRole('agent')}
+          >
+            <CardContent className="p-4 text-center">
+              <Globe className="h-10 w-10 mx-auto mb-3 text-teal-600" />
+              <h3 className="font-semibold text-base">Agent</h3>
+              <p className="text-xs text-gray-600 mt-1">Connect rural MSMEs to the platform</p>
             </CardContent>
           </Card>
         </div>
@@ -840,7 +889,7 @@ export default function EnhancedAuthPage() {
                 </motion.div>
               )}
               
-              {authMode === 'register' && step === 3 && userRole === 'individual' && (
+              {authMode === 'register' && step === 3 && userRole === 'buyer' && (
                 <motion.div
                   key="kyc"
                   initial={{ opacity: 0, x: -20 }}
@@ -852,7 +901,7 @@ export default function EnhancedAuthPage() {
                 </motion.div>
               )}
               
-              {authMode === 'register' && step === 3 && userRole === 'business' && (
+              {authMode === 'register' && step === 3 && (userRole === 'exporter' || userRole === 'logistics_provider' || userRole === 'financier' || userRole === 'agent') && (
                 <motion.div
                   key="kyb"
                   initial={{ opacity: 0, x: -20 }}

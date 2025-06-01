@@ -11,7 +11,7 @@ export const users = pgTable("users", {
   email: text("email").notNull(),
   photoUrl: text("photo_url"),
   walletAddress: text("wallet_address"),
-  role: text("role").notNull().default("buyer"), // exporter, buyer, logistics_provider, financier, agent // individual, business
+  role: text("role", { enum: ["exporter", "buyer", "logistics_provider", "financier", "agent"] }).notNull().default("buyer"), // individual, business
   language: text("language").notNull().default("en"), // en, ha, yo, fr, sw
   country: text("country"),
   phoneNumber: text("phone_number"),

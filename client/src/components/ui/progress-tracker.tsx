@@ -15,7 +15,7 @@ interface Step {
 interface ProgressTrackerProps {
   currentStep: number;
   totalSteps: number;
-  userRole: 'individual' | 'business';
+  userRole: 'exporter' | 'buyer' | 'logistics_provider' | 'financier' | 'agent';
   onStepComplete?: (step: number) => void;
   className?: string;
 }
@@ -105,25 +105,15 @@ export function ProgressTracker({
       },
     ];
 
-    if (userRole === 'individual') {
-      baseSteps.push({
-        id: "kyc",
-        title: "KYC Verification",
-        description: "Identity verification",
-        icon: <Shield className="h-5 w-5" />,
-        completed: currentStep > 3,
-        active: currentStep === 3,
-      });
-    } else {
-      baseSteps.push({
-        id: "kyb",
-        title: "KYB Verification",
-        description: "Business verification",
-        icon: <Building2 className="h-5 w-5" />,
-        completed: currentStep > 3,
-        active: currentStep === 3,
-      });
-    }
+    // All roles require verification, but type varies by role
+    baseSteps.push({
+      id: "verification",
+      title: "Verification",
+      description: userRole === 'buyer' ? "Identity verification" : "Business verification",
+      icon: <Shield className="h-5 w-5" />,
+      completed: currentStep > 3,
+      active: currentStep === 3,
+    });
 
     return baseSteps;
   };
