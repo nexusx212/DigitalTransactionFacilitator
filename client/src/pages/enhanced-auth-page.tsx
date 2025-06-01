@@ -27,10 +27,12 @@ interface Language {
 
 const languages: Language[] = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'ar', name: 'العربية', flag: '🇸🇦' },
   { code: 'ha', name: 'Hausa', flag: '🇳🇬' },
   { code: 'yo', name: 'Yoruba', flag: '🇳🇬' },
-  { code: 'fr', name: 'Français', flag: '🇫🇷' },
   { code: 'sw', name: 'Kiswahili', flag: '🇰🇪' },
+  { code: 'zu', name: 'IsiZulu', flag: '🇿🇦' },
 ];
 
 const countries = [
