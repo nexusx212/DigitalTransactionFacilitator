@@ -207,6 +207,14 @@ export function Sidebar() {
                   isCollapsed={isCollapsed}
                 />
                 <SidebarLink 
+                  href="/chat" 
+                  icon="chat" 
+                  label="Messages" 
+                  isActive={location === "/chat"}
+                  badge="3"
+                  isCollapsed={isCollapsed}
+                />
+                <SidebarLink 
                   href="/badges" 
                   icon="workspace_premium" 
                   label="Badges" 

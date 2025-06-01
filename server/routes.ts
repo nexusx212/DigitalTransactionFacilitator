@@ -622,6 +622,124 @@ Be helpful, professional, and concise. Provide specific guidance about DTFS feat
     }
   });
 
+  // Chat operations
+  app.get("/api/chats", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const chats = await storage.getChatsByUserId(user.id);
+      
+      // Enrich chats with participant info and last message
+      const enrichedChats = await Promise.all(chats.map(async (chat) => {
+        const participants = await storage.getChatParticipantsByChatId(chat.id);
+        const messages = await storage.getChatMessagesByChatId(chat.id, 1);
+        const lastMessage = messages.length > 0 ? messages[0] : null;
+        
+        // Get participant user details
+        const participantUsers = await Promise.all(
+          participants.map(async (p) => {
+            const participantUser = await storage.getUser(p.userId);
+            return {
+              id: participantUser?.id.toString() || '',
+              name: participantUser?.name || 'Unknown User',
+              role: participantUser?.role || 'buyer',
+              isOnline: p.isOnline || false,
+              lastSeen: p.lastSeenAt,
+              language: participantUser?.language || 'en'
+            };
+          })
+        );
+
+        // Calculate unread count
+        const allMessages = await storage.getChatMessagesByChatId(chat.id);
+        const unreadMessages = allMessages.filter(m => m.senderId !== user.id && !m.isRead);
+
+        return {
+          id: chat.id.toString(),
+          name: chat.name,
+          type: chat.type,
+          participants: participantUsers,
+          lastMessage: lastMessage ? {
+            content: lastMessage.content,
+            sender: lastMessage.senderName || 'Unknown',
+            timestamp: lastMessage.createdAt,
+            isRead: lastMessage.isRead || false
+          } : null,
+          unreadCount: unreadMessages.length,
+          tradeId: chat.tradeId?.toString(),
+          isActive: chat.isActive
+        };
+      }));
+      
+      res.json(enrichedChats);
+    } catch (error) {
+      console.error("Get chats error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/chats", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const chat = await storage.createChat({
+        ...req.body,
+        createdBy: user.id
+      });
+      
+      // Add creator as participant
+      await storage.createChatParticipant({
+        chatId: chat.id,
+        userId: user.id,
+        role: 'admin',
+        isOnline: true,
+        joinedAt: new Date()
+      });
+      
+      res.status(201).json(chat);
+    } catch (error: any) {
+      console.error("Create chat error:", error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Chat messages
+  app.get("/api/chats/:chatId/messages", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const { chatId } = req.params;
+      const { limit = 50, before } = req.query;
+      
+      const messages = await storage.getChatMessagesByChatId(
+        parseInt(chatId), 
+        parseInt(limit as string), 
+        before ? parseInt(before as string) : undefined
+      );
+      res.json(messages);
+    } catch (error: any) {
+      console.error("Get chat messages error:", error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
+  app.post("/api/chats/:chatId/messages", authenticateUser, async (req: Request, res: Response) => {
+    try {
+      const user = (req as any).user;
+      const { chatId } = req.params;
+      
+      const message = await storage.createChatMessage({
+        chatId: parseInt(chatId),
+        senderId: user.id,
+        senderName: user.name,
+        content: req.body.content,
+        messageType: req.body.messageType || 'text',
+        language: req.body.language || 'en'
+      });
+      
+      res.status(201).json(message);
+    } catch (error: any) {
+      console.error("Create chat message error:", error);
+      res.status(400).json({ error: error.message });
+    }
+  });
+
   app.post("/api/payments/papss/webhook", async (req, res) => {
     try {
       // PAPSS webhook handler for payment status updates

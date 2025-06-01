@@ -68,107 +68,11 @@ export default function ChatPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showNewChatModal, setShowNewChatModal] = useState(false);
 
-  // Mock chat rooms for demonstration
-  const [chatRooms] = useState<ChatRoom[]>([
-    {
-      id: '1',
-      name: 'Coffee Trade Discussion',
-      type: 'trade',
-      participants: [
-        {
-          id: '1',
-          name: 'Ahmed Hassan',
-          role: 'exporter',
-          isOnline: true,
-          language: 'en'
-        },
-        {
-          id: '2',
-          name: 'Maria Santos',
-          role: 'buyer',
-          isOnline: true,
-          language: 'en'
-        },
-        {
-          id: '3',
-          name: 'David Logistics',
-          role: 'logistics_provider',
-          isOnline: false,
-          lastSeen: new Date(Date.now() - 600000),
-          language: 'en'
-        }
-      ],
-      lastMessage: {
-        content: 'I can handle the shipping for this transaction',
-        sender: 'David Logistics',
-        timestamp: new Date(Date.now() - 120000),
-        isRead: false
-      },
-      unreadCount: 2,
-      tradeId: 'trade-001',
-      isActive: true
-    },
-    {
-      id: '2',
-      name: 'Textile Export Inquiry',
-      type: 'trade',
-      participants: [
-        {
-          id: '4',
-          name: 'Fatima Al-Rashid',
-          role: 'exporter',
-          isOnline: true,
-          language: 'ar'
-        },
-        {
-          id: '5',
-          name: 'John Buyer',
-          role: 'buyer',
-          isOnline: false,
-          lastSeen: new Date(Date.now() - 1800000),
-          language: 'en'
-        }
-      ],
-      lastMessage: {
-        content: 'What are your minimum order quantities?',
-        sender: 'John Buyer',
-        timestamp: new Date(Date.now() - 3600000),
-        isRead: true
-      },
-      unreadCount: 0,
-      tradeId: 'trade-002',
-      isActive: true
-    },
-    {
-      id: '3',
-      name: 'Finance Support',
-      type: 'group',
-      participants: [
-        {
-          id: '6',
-          name: 'Sarah Finance',
-          role: 'financier',
-          isOnline: true,
-          language: 'en'
-        },
-        {
-          id: '7',
-          name: 'Admin Support',
-          role: 'admin',
-          isOnline: true,
-          language: 'en'
-        }
-      ],
-      lastMessage: {
-        content: 'Your trade finance application has been approved',
-        sender: 'Sarah Finance',
-        timestamp: new Date(Date.now() - 7200000),
-        isRead: true
-      },
-      unreadCount: 0,
-      isActive: true
-    }
-  ]);
+  // Fetch real chat data from API
+  const { data: chatRooms = [], isLoading: chatsLoading, error: chatsError } = useQuery({
+    queryKey: ["/api/chats"],
+    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+  });
 
   const filteredChats = chatRooms.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

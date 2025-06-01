@@ -74,6 +74,13 @@ export function MobileNav() {
         label="Wallet" 
         isActive={location === "/wallet"} 
       />
+      <NavItem 
+        href="/chat" 
+        icon="chat" 
+        label="Chat" 
+        isActive={location === "/chat"} 
+        badge="3"
+      />
     </nav>
   );
 }
