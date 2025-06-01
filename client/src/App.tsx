@@ -122,7 +122,7 @@ function App() {
       <ProtectedRoute path="/marketplace" component={LazyMarketplace} />
       <ProtectedRoute path="/training" component={LazyTraining} />
       <ProtectedRoute path="/wallet" component={LazyWallet} />
-      <ProtectedRoute path="/chat/:id" component={LazyChat} />
+      <ProtectedRoute path="/chat" component={LazyChat} />
       <ProtectedRoute path="/profile" component={LazyProfilePage} />
       <ProtectedRoute path="/settings" component={LazySettingsPage} />
       <ProtectedRoute path="/help-support" component={LazyHelpSupportPage} />
