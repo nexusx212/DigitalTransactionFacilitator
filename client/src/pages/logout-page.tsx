@@ -1,36 +1,38 @@
 import { useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { useAuth } from '@/context/auth-context';
 import { Loader2 } from "lucide-react";
 
 export default function LogoutPage() {
-  const { logoutMutation } = useAuth();
+  const { signOut } = useAuth();
   
   // Trigger logout as soon as this page loads
   useEffect(() => {
-    console.log("Logout page mounted, triggering logout mutation");
+    console.log("Logout page mounted, triggering Firebase signOut");
     
-    // Clear cookies immediately
-    document.cookie.split(";").forEach(function(c) {
-      document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/");
-    });
+    const performLogout = async () => {
+      try {
+        await signOut();
+        // Clear local storage
+        localStorage.clear();
+        sessionStorage.clear();
+        
+        // Hard redirect to enhanced auth page with a slight delay
+        setTimeout(() => {
+          const timestamp = Date.now();
+          window.location.href = `/auth-enhanced?t=${timestamp}`;
+        }, 1000);
+      } catch (error) {
+        console.error("Logout error:", error);
+        // Even on error, redirect to auth page
+        setTimeout(() => {
+          const timestamp = Date.now();
+          window.location.href = `/auth-enhanced?t=${timestamp}`;
+        }, 1000);
+      }
+    };
     
-    // Clear local storage
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Hard redirect to enhanced auth page with a slight delay
-    const timer = setTimeout(() => {
-      const timestamp = Date.now();
-      window.location.href = `/auth-enhanced?t=${timestamp}`;
-    }, 1000);
-    
-    // Also trigger the mutation for server-side cleanup - but only once
-    if (!logoutMutation.isPending) {
-      logoutMutation.mutate();
-    }
-    
-    return () => clearTimeout(timer);
-  }, []); // Remove logoutMutation from dependencies to prevent infinite loop
+    performLogout();
+  }, [signOut]);
   
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-50">
