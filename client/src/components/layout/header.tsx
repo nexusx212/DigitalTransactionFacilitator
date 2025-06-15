@@ -12,13 +12,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 
 export function Header() {
   const { selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode } = useContext(AppContext);
-  const { user, logoutMutation } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const { toast } = useToast();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const isMobile = useIsMobile();

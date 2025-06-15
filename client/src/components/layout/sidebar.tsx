@@ -4,7 +4,7 @@ import { getInitials } from "@/lib/utils";
 import { useContext, useState, useEffect } from "react";
 import { AppContext } from "@/context/app-context";
 import { Badge } from "@/components/ui/badge";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/context/auth-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 type SidebarLinkProps = {
@@ -89,8 +89,7 @@ const SidebarLink = ({ href, icon, label, isActive, badge, isNew, isCollapsed }:
 
 export function Sidebar() {
   const [location] = useLocation();
-  const { user } = useAuth();
-  const { logoutMutation } = useAuth();
+  const { user, signOut, loading } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
   
   // Initialize sidebar state from localStorage on mount
