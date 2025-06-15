@@ -53,16 +53,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // API Routes
   
-  // Users
+  // Firebase-based user management
   app.post("/api/auth/register", async (req, res) => {
     try {
       const data = insertUserSchema.parse(req.body);
       const user = await storage.createUser(data);
       
-      // Remove password from response
-      const { password, ...userWithoutPassword } = user;
-      
-      res.status(201).json(userWithoutPassword);
+      res.status(201).json(user);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ error: error.errors });
@@ -72,26 +69,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/auth/login", async (req, res) => {
+  // Get user by Firebase UID
+  app.get("/api/user/:firebaseUid", async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const { firebaseUid } = req.params;
+      const users = await storage.getAllUsers();
+      const user = users.find(u => u.firebaseUid === firebaseUid);
       
-      if (!username || !password) {
-        return res.status(400).json({ message: "Username and password are required" });
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
       }
       
-      const user = await storage.getUserByUsername(username);
-      
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: "Invalid credentials" });
-      }
-      
-      // Remove password from response
-      const { password: _, ...userWithoutPassword } = user;
-      
-      res.status(200).json(userWithoutPassword);
+      res.json(user);
     } catch (error) {
-      console.error("Login error:", error);
+      console.error("Get user error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });

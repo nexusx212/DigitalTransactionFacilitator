@@ -43,7 +43,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user data from our backend when Firebase user is available
   const { data: userData, isLoading: userLoading } = useQuery({
     queryKey: ["/api/user", firebaseUser?.uid],
+    queryFn: async () => {
+      if (!firebaseUser?.uid) return null;
+      const response = await fetch(`/api/user/${firebaseUser.uid}`);
+      if (!response.ok) {
+        if (response.status === 404) return null; // User doesn't exist yet
+        throw new Error('Failed to fetch user data');
+      }
+      return response.json();
+    },
     enabled: !!firebaseUser,
+    retry: false,
   });
 
   const createUserMutation = useMutation({
@@ -83,8 +93,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } else {
         // Create user in our backend if doesn't exist
         createUserMutation.mutate({
+          firebaseUid: firebaseUser.uid,
           username: firebaseUser.email?.split("@")[0] || firebaseUser.uid,
-          password: "firebase_auth", // Placeholder since we use Firebase auth
           name: firebaseUser.displayName || firebaseUser.email || "User",
           email: firebaseUser.email || "",
           photoUrl: firebaseUser.photoURL || null,
