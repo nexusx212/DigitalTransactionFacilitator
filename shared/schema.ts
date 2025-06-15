@@ -5,25 +5,25 @@ import { z } from "zod";
 // Users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
+  firebaseUid: text("firebase_uid").notNull().unique(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
   photoUrl: text("photo_url"),
   walletAddress: text("wallet_address"),
-  role: text("role", { enum: ["exporter", "buyer", "logistics_provider", "financier", "agent"] }).notNull().default("buyer"), // individual, business
-  language: text("language").notNull().default("en"), // en, ha, yo, fr, sw
+  role: text("role", { enum: ["exporter", "buyer", "logistics_provider", "financier", "agent"] }).notNull().default("buyer"),
+  language: text("language").notNull().default("en"),
   country: text("country"),
   phoneNumber: text("phone_number"),
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
-  kycStatus: text("kyc_status").default("pending"), // pending, verified, rejected
-  kybStatus: text("kyb_status").default("pending"), // pending, verified, rejected
+  kycStatus: text("kyc_status").default("pending"),
+  kybStatus: text("kyb_status").default("pending"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
+  firebaseUid: true,
   username: true,
-  password: true,
   name: true,
   email: true,
   photoUrl: true,

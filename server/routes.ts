@@ -17,16 +17,26 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Middleware to check if user exists in auth routes (simplified for demo)
+// Middleware for Firebase authentication
 const authenticateUser = async (req: Request, res: Response, next: Function) => {
-  // In a real app, we would use sessions or JWT tokens
-  // For simplicity, we'll use a mock user ID for now
-  const userId = 1; // First user in our MemStorage
+  // For Firebase authentication, we would verify the Firebase ID token here
+  // For now, we'll use a simplified approach since Firebase handles client-side auth
+  // In production, you would verify the Firebase ID token from the Authorization header
   
   try {
-    const user = await storage.getUser(userId);
+    // Extract Firebase UID from headers (set by client)
+    const firebaseUid = req.headers['x-firebase-uid'] as string;
+    
+    if (!firebaseUid) {
+      return res.status(401).json({ message: "Unauthorized - Firebase UID required" });
+    }
+    
+    // Find user by Firebase UID
+    const users = await storage.getAllUsers();
+    const user = users.find(u => u.firebaseUid === firebaseUid);
+    
     if (!user) {
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.status(401).json({ message: "User not found" });
     }
     
     // Attach user to request object
