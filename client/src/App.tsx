@@ -11,7 +11,7 @@ import Chat from "@/pages/chat";
 import AuthPage from "@/pages/auth-page";
 import EnhancedAuthPage from "@/pages/enhanced-auth-page";
 import { AppProvider } from "@/context/app-context";
-import { AuthProvider } from "@/hooks/use-auth";
+import { AuthProvider } from "@/context/auth-context";
 import { I18nProvider } from "@/hooks/use-i18n";
 import { lazy, Suspense, useEffect, useState, useContext } from "react";
 import { Sidebar } from "@/components/layout/sidebar";

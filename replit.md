@@ -130,6 +130,10 @@ DTFS (Digital Trade Finance System) is a comprehensive full-stack web applicatio
 ```
 Changelog:
 - June 15, 2025. Initial setup
+- June 15, 2025. Added PostgreSQL database with Drizzle ORM
+- June 15, 2025. Implemented Firebase authentication with Google OAuth
+- June 15, 2025. Created role-based dashboards for all user types
+- June 15, 2025. Added OTP verification support for registration
 ```
 
 ## User Preferences
