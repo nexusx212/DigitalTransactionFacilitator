@@ -14,15 +14,15 @@ import {
 } from "lucide-react";
 
 export function ExporterDashboard() {
-  const { data: products } = useQuery({
+  const { data: products = [] } = useQuery({
     queryKey: ["/api/products/my"],
   });
 
-  const { data: orders } = useQuery({
+  const { data: orders = [] } = useQuery({
     queryKey: ["/api/orders/export"],
   });
 
-  const { data: analytics } = useQuery({
+  const { data: analytics = {} } = useQuery({
     queryKey: ["/api/analytics/export"],
   });
 

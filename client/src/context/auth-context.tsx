@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (firebaseUser && !userLoading) {
       if (userData) {
-        setUser(userData);
+        setUser(userData as AuthUser);
       } else {
         // Create user in our backend if doesn't exist
         createUserMutation.mutate({
@@ -87,7 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           password: "firebase_auth", // Placeholder since we use Firebase auth
           name: firebaseUser.displayName || firebaseUser.email || "User",
           email: firebaseUser.email || "",
-          photoUrl: firebaseUser.photoURL,
+          photoUrl: firebaseUser.photoURL || null,
           role: "buyer", // Default role
           language: "en",
         });
@@ -121,7 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const value = {
     user,
-    firebaseUser,
+    firebaseUser: firebaseUser || null,
     loading: loading || userLoading || createUserMutation.isPending,
     error: error || createUserMutation.error || updateRoleMutation.error,
     signIn,
