@@ -313,7 +313,13 @@ export function Sidebar() {
                   <p className="font-medium">{user?.name || 'Guest User'}</p>
                   <p className="text-xs opacity-80">{user?.email || 'Not signed in'}</p>
                   <button 
-                    onClick={() => logoutMutation.mutate()}
+                    onClick={async () => {
+                      try {
+                        await signOut();
+                      } catch (error) {
+                        console.error("Sign out error:", error);
+                      }
+                    }}
                     className="mt-1 w-full flex items-center justify-center gap-2 bg-error/20 text-error px-3 py-1.5 rounded-md text-sm"
                   >
                     <span className="material-icons text-[16px]">logout</span>
@@ -341,7 +347,13 @@ export function Sidebar() {
               </div>
               {user ? (
                 <button 
-                  onClick={() => logoutMutation.mutate()}
+                  onClick={async () => {
+                    try {
+                      await signOut();
+                    } catch (error) {
+                      console.error("Sign out error:", error);
+                    }
+                  }}
                   className="ml-auto w-8 h-8 flex items-center justify-center rounded-full hover:bg-neutral-200 text-neutral-500 hover:text-neutral-700 transition-all duration-normal"
                   title="Log out"
                 >

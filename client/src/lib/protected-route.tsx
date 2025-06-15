@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Redirect, Route, useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 
 type ProtectedRouteProps = {
@@ -17,23 +17,23 @@ export function ProtectedRoute({
   permissions = [], 
   adminOnly = false
 }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth();
+  const { user, loading } = useAuth();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
   // Check if the path has changed and user isn't authenticated after loading
   useEffect(() => {
     // Only redirect if we've finished loading and there's no user
-    if (!isLoading && !user) {
+    if (!loading && !user) {
       toast({
         title: "Authentication Required",
         description: "Please log in to access this page",
         variant: "destructive",
       });
     }
-  }, [path, user, isLoading, toast]);
+  }, [path, user, loading, toast]);
 
-  if (isLoading) {
+  if (loading) {
     return (
       <Route path={path}>
         <div className="flex flex-col items-center justify-center min-h-screen">

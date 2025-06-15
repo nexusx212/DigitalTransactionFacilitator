@@ -221,22 +221,30 @@ export function Header() {
             <DropdownMenuSeparator />
             <DropdownMenuItem 
               className="text-error"
-              onClick={() => {
-                // First display a transitional message
+              onClick={async () => {
                 toast({
                   title: "Signing out...",
                   description: "Please wait while we log you out",
                 });
                 
-                // Redirect to the dedicated logout page instead of directly
-                // triggering the logout mutation
-                setTimeout(() => {
-                  window.location.href = "/logout";
-                }, 300);
+                try {
+                  await signOut();
+                  toast({
+                    title: "Signed out successfully",
+                    description: "You have been logged out",
+                  });
+                } catch (error) {
+                  console.error("Sign out error:", error);
+                  toast({
+                    title: "Sign out error",
+                    description: "There was an error signing out",
+                    variant: "destructive",
+                  });
+                }
               }}
-              disabled={logoutMutation.isPending}
+              disabled={loading}
             >
-              {logoutMutation.isPending ? (
+              {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Signing Out...
