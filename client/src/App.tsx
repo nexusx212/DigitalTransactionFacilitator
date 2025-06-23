@@ -8,6 +8,7 @@ import Marketplace from "@/pages/marketplace";
 import Training from "@/pages/training";
 import Wallet from "@/pages/wallet";
 import Chat from "@/pages/chat";
+import Documents from "@/pages/documents";
 import AuthPage from "@/pages/auth-page";
 import EnhancedAuthPage from "@/pages/enhanced-auth-page";
 import { AppProvider } from "@/context/app-context";
@@ -27,6 +28,7 @@ const LazyMarketplace = lazy(() => import("@/pages/marketplace"));
 const LazyTraining = lazy(() => import("@/pages/training"));
 const LazyWallet = lazy(() => import("@/pages/wallet"));
 const LazyChat = lazy(() => import("@/pages/chat"));
+const LazyDocuments = lazy(() => import("@/pages/documents"));
 const LazyAuthPage = lazy(() => import("@/pages/auth-page"));
 const LazyBadgesDemo = lazy(() => import("@/pages/badges-demo"));
 // New pages
@@ -123,6 +125,7 @@ function App() {
       <ProtectedRoute path="/training" component={LazyTraining} />
       <ProtectedRoute path="/wallet" component={LazyWallet} />
       <ProtectedRoute path="/chat" component={LazyChat} />
+      <ProtectedRoute path="/documents" component={LazyDocuments} />
       <ProtectedRoute path="/profile" component={LazyProfilePage} />
       <ProtectedRoute path="/settings" component={LazySettingsPage} />
       <ProtectedRoute path="/help-support" component={LazyHelpSupportPage} />

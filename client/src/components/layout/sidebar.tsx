@@ -169,11 +169,19 @@ export function Sidebar() {
                   isCollapsed={isCollapsed}
                 />
                 <SidebarLink 
-                  href="/trade-management" 
-                  icon="handshake" 
-                  label="Trade Management" 
-                  isActive={location === "/trade-management"} 
+                  href="/chat" 
+                  icon="chat" 
+                  label="Chat" 
+                  isActive={location === "/chat"} 
                   badge="3"
+                  isCollapsed={isCollapsed}
+                />
+                <SidebarLink 
+                  href="/documents" 
+                  icon="description" 
+                  label="Document Wizard" 
+                  isActive={location === "/documents"} 
+                  isNew={true}
                   isCollapsed={isCollapsed}
                 />
                 <SidebarLink 
@@ -205,14 +213,7 @@ export function Sidebar() {
                   isActive={location === "/wallet"}
                   isCollapsed={isCollapsed}
                 />
-                <SidebarLink 
-                  href="/chat" 
-                  icon="chat" 
-                  label="Messages" 
-                  isActive={location === "/chat"}
-                  badge="3"
-                  isCollapsed={isCollapsed}
-                />
+
                 <SidebarLink 
                   href="/badges" 
                   icon="workspace_premium" 

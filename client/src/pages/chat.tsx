@@ -1,328 +1,402 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { RealTimeChat } from "@/components/real-time-chat";
-import { useAuth } from "@/hooks/use-auth";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { 
-  MessageSquare, 
-  Users, 
-  Search, 
-  Plus,
-  Building2,
-  Truck,
-  CreditCard,
-  Globe,
-  Shield
-} from "lucide-react";
-import { cn } from "@/lib/utils";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/context/auth-context";
 
-interface ChatRoom {
+interface ChatUser {
   id: string;
   name: string;
-  type: 'direct' | 'group' | 'trade';
-  participants: Array<{
-    id: string;
-    name: string;
-    role: 'exporter' | 'buyer' | 'logistics_provider' | 'financier' | 'agent' | 'admin';
-    avatar?: string;
-    isOnline: boolean;
-    lastSeen?: Date;
-    language: string;
-  }>;
-  lastMessage?: {
-    content: string;
-    sender: string;
-    timestamp: Date;
-    isRead: boolean;
-  };
-  unreadCount: number;
-  tradeId?: string;
-  isActive: boolean;
+  avatar?: string;
+  isOnline: boolean;
+  lastSeen?: string;
+  role: string;
 }
 
-const roleIcons = {
-  exporter: Building2,
-  buyer: Users,
-  logistics_provider: Truck,
-  financier: CreditCard,
-  agent: Globe,
-  admin: Shield
-};
+interface ChatMessage {
+  id: string;
+  senderId: string;
+  content: string;
+  timestamp: string;
+  type: 'text' | 'file' | 'image';
+  fileUrl?: string;
+  fileName?: string;
+}
 
-const roleColors = {
-  exporter: 'text-green-600',
-  buyer: 'text-blue-600',
-  logistics_provider: 'text-orange-600',
-  financier: 'text-purple-600',
-  agent: 'text-teal-600',
-  admin: 'text-red-600'
-};
+interface Chat {
+  id: string;
+  name: string;
+  participants: ChatUser[];
+  lastMessage?: ChatMessage;
+  unreadCount: number;
+  type: 'direct' | 'group' | 'trade';
+  tradeId?: string;
+}
 
-export default function ChatPage() {
+export default function Chat() {
   const { user } = useAuth();
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showNewChatModal, setShowNewChatModal] = useState(false);
+  const [newMessage, setNewMessage] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch real chat data from API
-  const { data: chatRooms = [], isLoading: chatsLoading, error: chatsError } = useQuery<ChatRoom[]>({
-    queryKey: ["/api/chats"],
-    refetchInterval: 30000, // Refresh every 30 seconds for real-time updates
+  // Mock data for chats
+  const [chats] = useState<Chat[]>([
+    {
+      id: "chat-1",
+      name: "Ghana Cocoa Exports Ltd",
+      participants: [
+        { id: "user-1", name: "Kwame Asante", avatar: "", isOnline: true, role: "Exporter" },
+        { id: "user-2", name: "Sarah Johnson", avatar: "", isOnline: false, lastSeen: "2 hours ago", role: "Buyer" }
+      ],
+      lastMessage: {
+        id: "msg-1",
+        senderId: "user-1",
+        content: "The shipment is ready for inspection. When can we schedule?",
+        timestamp: "2024-01-20T14:30:00Z",
+        type: "text"
+      },
+      unreadCount: 2,
+      type: "trade",
+      tradeId: "TRD-2024-001"
+    },
+    {
+      id: "chat-2", 
+      name: "Ethiopian Coffee Cooperative",
+      participants: [
+        { id: "user-3", name: "Meron Tadesse", avatar: "", isOnline: true, role: "Supplier" },
+        { id: "user-4", name: "Alex Chen", avatar: "", isOnline: true, role: "Logistics" }
+      ],
+      lastMessage: {
+        id: "msg-2",
+        senderId: "user-3", 
+        content: "Payment has been confirmed. Preparing for shipment.",
+        timestamp: "2024-01-20T12:15:00Z",
+        type: "text"
+      },
+      unreadCount: 0,
+      type: "trade",
+      tradeId: "TRD-2024-002"
+    },
+    {
+      id: "chat-3",
+      name: "Finance Team",
+      participants: [
+        { id: "user-5", name: "Dr. Amara Okafor", avatar: "", isOnline: false, lastSeen: "1 hour ago", role: "Finance Manager" },
+        { id: "user-6", name: "James Wright", avatar: "", isOnline: true, role: "Credit Analyst" }
+      ],
+      lastMessage: {
+        id: "msg-3",
+        senderId: "user-5",
+        content: "Trade finance application approved for $50K",
+        timestamp: "2024-01-20T10:45:00Z", 
+        type: "text"
+      },
+      unreadCount: 1,
+      type: "group"
+    }
+  ]);
+
+  // Mock messages for selected chat
+  const [messages] = useState<Record<string, ChatMessage[]>>({
+    "chat-1": [
+      {
+        id: "msg-1-1",
+        senderId: "user-1",
+        content: "Hello! I'm reaching out regarding the cocoa beans order TRD-2024-001.",
+        timestamp: "2024-01-20T09:00:00Z",
+        type: "text"
+      },
+      {
+        id: "msg-1-2", 
+        senderId: "demo-user-1",
+        content: "Hi Kwame! Yes, I've been expecting your message. How's the preparation going?",
+        timestamp: "2024-01-20T09:15:00Z",
+        type: "text"
+      },
+      {
+        id: "msg-1-3",
+        senderId: "user-1",
+        content: "Everything is on track. The beans have been processed and packaged. Quality certificates are ready.",
+        timestamp: "2024-01-20T10:30:00Z",
+        type: "text"
+      },
+      {
+        id: "msg-1-4",
+        senderId: "user-1", 
+        content: "quality-certificate.pdf",
+        timestamp: "2024-01-20T10:31:00Z",
+        type: "file",
+        fileUrl: "#",
+        fileName: "quality-certificate.pdf"
+      },
+      {
+        id: "msg-1-5",
+        senderId: "demo-user-1",
+        content: "Perfect! I'll review the certificate. When can we schedule the pre-shipment inspection?",
+        timestamp: "2024-01-20T11:00:00Z",
+        type: "text"
+      },
+      {
+        id: "msg-1-6",
+        senderId: "user-1",
+        content: "The shipment is ready for inspection. When can we schedule?",
+        timestamp: "2024-01-20T14:30:00Z",
+        type: "text"
+      }
+    ]
   });
 
-  const filteredChats = chatRooms.filter(chat =>
+  const filteredChats = chats.filter(chat =>
     chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     chat.participants.some(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const selectedChatData = chatRooms.find(chat => chat.id === selectedChat);
+  const selectedChatData = chats.find(chat => chat.id === selectedChat);
+  const chatMessages = selectedChat ? messages[selectedChat] || [] : [];
 
-  const getParticipantSummary = (participants: ChatRoom['participants']) => {
-    const roles = participants.map(p => p.role);
-    const uniqueRoles = [...Array.from(new Set(roles))];
-    return uniqueRoles.map(role => role.replace('_', ' ')).join(', ');
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const formatLastSeen = (lastSeen?: Date) => {
-    if (!lastSeen) return 'Never';
-    const now = new Date();
-    const diff = now.getTime() - lastSeen.getTime();
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
+  useEffect(() => {
+    scrollToBottom();
+  }, [chatMessages]);
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
+  const handleSendMessage = () => {
+    if (newMessage.trim() && selectedChat) {
+      // In a real app, this would send the message to the backend
+      console.log("Sending message:", newMessage);
+      setNewMessage("");
+    }
   };
 
-  if (chatsLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading conversations...</p>
-        </div>
-      </div>
-    );
-  }
+  const formatTime = (timestamp: string) => {
+    return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
 
-  if (chatsError) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-gray-600 mb-2">Unable to load conversations</h3>
-          <p className="text-gray-500">Please check your connection and try again.</p>
-        </div>
-      </div>
-    );
-  }
+  const formatDate = (timestamp: string) => {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    if (date.toDateString() === today.toDateString()) {
+      return "Today";
+    } else if (date.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    } else {
+      return date.toLocaleDateString();
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-      <div className="container mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[calc(100vh-8rem)]">
-          {/* Chat List Sidebar */}
-          <div className="lg:col-span-1">
-            <Card className="h-full flex flex-col">
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <MessageSquare className="h-5 w-5" />
-                    Messages
-                  </CardTitle>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowNewChatModal(true)}
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
+    <div className="h-screen bg-gradient-to-br from-blue-50 via-purple-50 to-teal-50 flex">
+      {/* Chat List Sidebar */}
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+        <div className="p-4 border-b border-gray-200">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Messages</h1>
+          <Input
+            placeholder="Search conversations..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full"
+          />
+        </div>
+        
+        <ScrollArea className="flex-1">
+          <div className="p-2">
+            {filteredChats.map((chat) => (
+              <motion.div
+                key={chat.id}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedChat(chat.id)}
+                className={`p-3 rounded-lg cursor-pointer mb-2 transition-all duration-200 ${
+                  selectedChat === chat.id 
+                    ? "bg-blue-100 border-2 border-blue-300" 
+                    : "hover:bg-gray-50 border-2 border-transparent"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="relative">
+                    <Avatar className="w-12 h-12">
+                      <AvatarImage src={chat.participants[0]?.avatar} />
+                      <AvatarFallback className="bg-blue-100 text-blue-600">
+                        {chat.participants[0]?.name.split(' ').map(n => n[0]).join('')}
+                      </AvatarFallback>
+                    </Avatar>
+                    {chat.participants[0]?.isOnline && (
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                    )}
+                  </div>
+                  
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-800 truncate">{chat.name}</h3>
+                      {chat.unreadCount > 0 && (
+                        <Badge className="bg-blue-600 text-white ml-2">
+                          {chat.unreadCount}
+                        </Badge>
+                      )}
+                    </div>
+                    
+                    {chat.type === 'trade' && chat.tradeId && (
+                      <Badge variant="outline" className="text-xs mt-1 mb-1">
+                        {chat.tradeId}
+                      </Badge>
+                    )}
+                    
+                    <p className="text-sm text-gray-600 truncate">
+                      {chat.lastMessage?.content || "No messages yet"}
+                    </p>
+                    
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-xs text-gray-500">
+                        {chat.lastMessage && formatTime(chat.lastMessage.timestamp)}
+                      </span>
+                      <div className="flex gap-1">
+                        {chat.participants.slice(0, 3).map((participant, idx) => (
+                          <div key={idx} className="text-xs text-gray-500">
+                            {participant.role}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {selectedChatData ? (
+          <>
+            {/* Chat Header */}
+            <div className="bg-white border-b border-gray-200 p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <Avatar className="w-10 h-10">
+                    <AvatarImage src={selectedChatData.participants[0]?.avatar} />
+                    <AvatarFallback className="bg-blue-100 text-blue-600">
+                      {selectedChatData.participants[0]?.name.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h2 className="font-semibold text-gray-800">{selectedChatData.name}</h2>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <div className={`w-2 h-2 rounded-full ${
+                        selectedChatData.participants[0]?.isOnline ? 'bg-green-500' : 'bg-gray-400'
+                      }`}></div>
+                      {selectedChatData.participants[0]?.isOnline ? 'Online' : selectedChatData.participants[0]?.lastSeen}
+                    </div>
+                  </div>
                 </div>
                 
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search conversations..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </CardHeader>
-              
-              <CardContent className="flex-1 overflow-y-auto p-0">
-                <div className="space-y-1">
-                  {filteredChats.map((chat) => (
-                    <motion.div
-                      key={chat.id}
-                      whileHover={{ scale: 1.02 }}
-                      className={cn(
-                        "p-4 cursor-pointer border-b transition-colors",
-                        selectedChat === chat.id 
-                          ? "bg-blue-50 border-l-4 border-l-blue-500" 
-                          : "hover:bg-gray-50"
-                      )}
-                      onClick={() => setSelectedChat(chat.id)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <h3 className="font-semibold text-sm truncate">{chat.name}</h3>
-                            {chat.unreadCount > 0 && (
-                              <Badge variant="destructive" className="text-xs">
-                                {chat.unreadCount}
-                              </Badge>
-                            )}
-                          </div>
-                          
-                          <div className="flex items-center gap-1 mb-2">
-                            {chat.participants.slice(0, 3).map((participant) => {
-                              const Icon = roleIcons[participant.role];
-                              return (
-                                <div key={participant.id} className="flex items-center gap-1">
-                                  <Icon className={cn("h-3 w-3", roleColors[participant.role])} />
-                                  <span className="text-xs text-gray-500">
-                                    {participant.name.split(' ')[0]}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                            {chat.participants.length > 3 && (
-                              <span className="text-xs text-gray-500">+{chat.participants.length - 3}</span>
-                            )}
-                          </div>
-                          
-                          {chat.lastMessage && (
-                            <p className="text-xs text-gray-600 truncate">
-                              <span className="font-medium">{chat.lastMessage.sender}:</span>{' '}
-                              {chat.lastMessage.content}
-                            </p>
-                          )}
-                        </div>
-                        
-                        <div className="flex flex-col items-end gap-1">
-                          {chat.lastMessage && (
-                            <span className="text-xs text-gray-400">
-                              {chat.lastMessage.timestamp.toLocaleTimeString([], { 
-                                hour: '2-digit', 
-                                minute: '2-digit' 
-                              })}
-                            </span>
-                          )}
-                          <div className="flex items-center gap-1">
-                            <div className={cn(
-                              "w-2 h-2 rounded-full",
-                              chat.participants.some(p => p.isOnline) ? "bg-green-400" : "bg-gray-300"
-                            )} />
-                            <Badge variant="outline" className="text-xs">
-                              {chat.type}
-                            </Badge>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Chat Interface */}
-          <div className="lg:col-span-2">
-            {selectedChatData ? (
-              <RealTimeChat
-                chatId={selectedChatData.id}
-                participants={selectedChatData.participants}
-                className="h-full"
-              />
-            ) : (
-              <Card className="h-full flex items-center justify-center">
-                <CardContent className="text-center">
-                  <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                    Select a conversation
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    Choose a chat from the sidebar to start messaging
-                  </p>
-                  <Button
-                    onClick={() => setShowNewChatModal(true)}
-                    className="bg-blue-500 hover:bg-blue-600"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Start New Conversation
+                <div className="flex items-center gap-2">
+                  {selectedChatData.type === 'trade' && selectedChatData.tradeId && (
+                    <Badge variant="outline">Trade: {selectedChatData.tradeId}</Badge>
+                  )}
+                  <Button variant="outline" size="sm">
+                    <span className="material-icons text-[16px] mr-1">videocam</span>
+                    Video Call
                   </Button>
-                </CardContent>
-              </Card>
-            )}
+                </div>
+              </div>
+            </div>
+
+            {/* Messages */}
+            <ScrollArea className="flex-1 p-4 bg-gray-50">
+              <div className="space-y-4">
+                {chatMessages.map((message, idx) => {
+                  const isOwnMessage = message.senderId === user?.firebaseUid;
+                  const showDate = idx === 0 || formatDate(message.timestamp) !== formatDate(chatMessages[idx - 1].timestamp);
+                  
+                  return (
+                    <div key={message.id}>
+                      {showDate && (
+                        <div className="text-center py-2">
+                          <span className="text-xs text-gray-500 bg-white px-3 py-1 rounded-full">
+                            {formatDate(message.timestamp)}
+                          </span>
+                        </div>
+                      )}
+                      
+                      <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                      >
+                        <div className={`max-w-[70%] ${isOwnMessage ? 'order-2' : 'order-1'}`}>
+                          <div className={`p-3 rounded-lg ${
+                            isOwnMessage 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-white text-gray-800 border border-gray-200'
+                          }`}>
+                            {message.type === 'file' && (
+                              <div className="flex items-center gap-2 p-2 bg-gray-100 rounded mb-2">
+                                <span className="material-icons text-gray-600">description</span>
+                                <span className="text-sm">{message.fileName}</span>
+                              </div>
+                            )}
+                            <p className="text-sm">{message.content}</p>
+                          </div>
+                          <div className={`text-xs text-gray-500 mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}>
+                            {formatTime(message.timestamp)}
+                          </div>
+                        </div>
+                      </motion.div>
+                    </div>
+                  );
+                })}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+
+            {/* Message Input */}
+            <div className="bg-white border-t border-gray-200 p-4">
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm">
+                  <span className="material-icons text-[16px]">attach_file</span>
+                </Button>
+                <Input
+                  placeholder="Type your message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  className="flex-1"
+                />
+                <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
+                  <span className="material-icons text-[16px]">send</span>
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          /* No Chat Selected */
+          <div className="flex-1 flex items-center justify-center bg-gray-50">
+            <div className="text-center">
+              <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="material-icons text-gray-400 text-[48px]">chat</span>
+              </div>
+              <h3 className="text-xl font-semibold text-gray-600 mb-2">Select a conversation</h3>
+              <p className="text-gray-500">Choose a conversation from the sidebar to start messaging</p>
+            </div>
           </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <MessageSquare className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="text-sm font-medium">Active Chats</p>
-                  <p className="text-2xl font-bold text-blue-600">{chatRooms.filter(c => c.isActive).length}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-green-600" />
-                <div>
-                  <p className="text-sm font-medium">Online Users</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {chatRooms.reduce((acc, chat) => 
-                      acc + chat.participants.filter(p => p.isOnline).length, 0
-                    )}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-orange-600" />
-                <div>
-                  <p className="text-sm font-medium">Trade Chats</p>
-                  <p className="text-2xl font-bold text-orange-600">
-                    {chatRooms.filter(c => c.type === 'trade').length}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2">
-                <Badge className="h-4 w-4 text-red-600" />
-                <div>
-                  <p className="text-sm font-medium">Unread</p>
-                  <p className="text-2xl font-bold text-red-600">
-                    {chatRooms.reduce((acc, chat) => acc + chat.unreadCount, 0)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        )}
       </div>
     </div>
   );
