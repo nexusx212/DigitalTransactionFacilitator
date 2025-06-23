@@ -2,6 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import { AddProductDialog } from "@/components/add-product-dialog";
+import { useState } from "react";
 import { 
   Package, 
   TrendingUp, 
@@ -14,6 +16,8 @@ import {
 } from "lucide-react";
 
 export function ExporterDashboard() {
+  const [isAddProductOpen, setIsAddProductOpen] = useState(false);
+  
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products/my"],
   });
@@ -33,7 +37,7 @@ export function ExporterDashboard() {
           <h1 className="text-3xl font-bold">Exporter Dashboard</h1>
           <p className="text-muted-foreground">Manage your export business and trade opportunities</p>
         </div>
-        <Button>
+        <Button onClick={() => setIsAddProductOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
@@ -182,6 +186,12 @@ export function ExporterDashboard() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add Product Dialog */}
+      <AddProductDialog 
+        open={isAddProductOpen} 
+        onOpenChange={setIsAddProductOpen} 
+      />
     </div>
   );
 }

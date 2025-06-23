@@ -201,6 +201,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/products/my", authenticateUser, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const products = await storage.getProductsByUserId(user.id);
+      res.status(200).json(products);
+    } catch (error) {
+      console.error("Get user products error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.post("/api/products", authenticateUser, async (req, res) => {
+    try {
+      const user = (req as any).user;
+      const productData = {
+        ...req.body,
+        userId: user.id
+      };
+      
+      const product = await storage.createProduct(productData);
+      res.status(201).json(product);
+    } catch (error) {
+      console.error("Create product error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   app.get("/api/products/:id", async (req, res) => {
     try {
       const productId = parseInt(req.params.id);
@@ -218,6 +245,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(200).json(product);
     } catch (error) {
       console.error("Get product error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Product Categories
+  app.get("/api/product-categories", async (req, res) => {
+    try {
+      const categories = await storage.getAllProductCategories();
+      res.status(200).json(categories);
+    } catch (error) {
+      console.error("Get product categories error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
