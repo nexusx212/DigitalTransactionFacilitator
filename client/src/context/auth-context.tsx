@@ -35,15 +35,50 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function useFirebaseAuth() {
+  if (auth) {
+    return useAuthState(auth);
+  }
+  return [null, false, null] as const;
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [firebaseUser, loading, error] = useAuthState(auth);
+  const [firebaseUser, loading, error] = useFirebaseAuth();
   const [user, setUser] = useState<AuthUser | null>(null);
   const queryClient = useQueryClient();
 
+  // If Firebase is not configured, provide a demo user for development
+  const isFirebaseConfigured = !!auth;
+
+  // Demo user for when Firebase is not configured
+  const demoUser: AuthUser = {
+    id: 1,
+    firebaseUid: "demo-user-uid",
+    username: "demo_user", 
+    name: "Demo User",
+    email: "demo@example.com",
+    role: "exporter" as UserRole,
+    language: "en",
+    country: "US",
+    phoneNumber: "+1234567890",
+    twoFactorEnabled: false,
+    kycStatus: "pending",
+    kybStatus: "pending",
+    createdAt: new Date()
+  };
+
+  // For demo mode, set user immediately
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+      setUser(demoUser);
+    }
+  }, [isFirebaseConfigured]);
+
   // Fetch user data from our backend when Firebase user is available
   const { data: userData, isLoading: userLoading } = useQuery({
-    queryKey: ["/api/user", firebaseUser?.uid],
+    queryKey: ["/api/user", firebaseUser?.uid || "demo"],
     queryFn: async () => {
+      if (!isFirebaseConfigured) return demoUser;
       if (!firebaseUser?.uid) return null;
       const response = await fetch(`/api/user/${firebaseUser.uid}`);
       if (!response.ok) {

@@ -12,10 +12,17 @@ import { z } from "zod";
 import { ZodError } from "zod-validation-error";
 import OpenAI from "openai";
 
-// Initialize OpenAI
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+// Initialize OpenAI (optional)
+let openai: OpenAI | null = null;
+try {
+  if (process.env.OPENAI_API_KEY) {
+    openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+  }
+} catch (error) {
+  console.warn("OpenAI initialization failed, AI features will be disabled:", error);
+}
 
 // Middleware for Firebase authentication
 const authenticateUser = async (req: Request, res: Response, next: Function) => {
@@ -463,9 +470,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       await storage.createAiMessage(data);
       
-      // Generate AI response using OpenAI
-      try {
-        const systemPrompt = `You are Ava, an AI assistant for DTFS (Digital Trade and Financial Services), a comprehensive trade finance platform. You help users with:
+      // Generate AI response (if OpenAI is available)
+      if (openai) {
+        try {
+          const systemPrompt = `You are Ava, an AI assistant for DTFS (Digital Trade and Financial Services), a comprehensive trade finance platform. You help users with:
 
 1. Trade Finance: Invoice factoring, export finance, supply chain finance, import finance, non-interest finance, startup trade finance
 2. Marketplace: Product listings, buyer-seller connections, product categories
@@ -476,35 +484,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
 Be helpful, professional, and concise. Provide specific guidance about DTFS features. If asked about technical issues, guide users to appropriate sections of the platform.`;
 
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: text }
-          ],
-          max_tokens: 500,
-          temperature: 0.7
-        });
+          const completion = await openai!.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: text }
+            ],
+            max_tokens: 500,
+            temperature: 0.7
+          });
 
-        const responseText = completion.choices[0].message.content || "I apologize, but I'm having trouble generating a response right now. Please try again.";
-        
-        const aiResponse = insertAiMessageSchema.parse({
-          userId: user.id,
-          sender: "ai",
-          text: responseText,
-          timestamp: new Date(),
-          language
-        });
-        
-        await storage.createAiMessage(aiResponse);
-      } catch (openaiError) {
-        console.error("OpenAI API error:", openaiError);
-        
-        // Fallback response if OpenAI fails
+          const responseText = completion.choices[0].message.content || "I apologize, but I'm having trouble generating a response right now. Please try again.";
+          
+          const aiResponse = insertAiMessageSchema.parse({
+            userId: user.id,
+            sender: "ai",
+            text: responseText,
+            timestamp: new Date(),
+            language
+          });
+          
+          await storage.createAiMessage(aiResponse);
+        } catch (openaiError) {
+          console.error("OpenAI API error:", openaiError);
+          
+          // Fallback response if OpenAI fails
+          const fallbackResponse = insertAiMessageSchema.parse({
+            userId: user.id,
+            sender: "ai",
+            text: "I'm currently experiencing some technical difficulties. Please try again in a moment, or contact support if the issue persists.",
+            timestamp: new Date(),
+            language
+          });
+          
+          await storage.createAiMessage(fallbackResponse);
+        }
+      } else {
+        // OpenAI not configured - provide fallback response
         const fallbackResponse = insertAiMessageSchema.parse({
           userId: user.id,
           sender: "ai",
-          text: "I'm currently experiencing some technical difficulties. Please try again in a moment, or contact support if the issue persists.",
+          text: "AI assistant is currently not configured. Please contact support to enable AI features.",
           timestamp: new Date(),
           language
         });
@@ -799,37 +819,62 @@ Be helpful, professional, and concise. Provide specific guidance about DTFS feat
         language
       });
 
-      // Generate AI response using OpenAI
-      const systemPrompt = `You are Ava, an AI assistant for DTFS (Digital Trade Finance System). You help users with:
-      - Trade finance options (factoring, export finance, supply chain finance, import finance, non-interest finance, startup trade finance)
-      - Marketplace navigation and product listings
-      - Training resources and courses
-      - Digital wallet and payment guidance
-      - P2P trading and dispute resolution
-      - PAPSS payment system information
-      
-      Keep responses helpful, concise, and professional. Focus on trade finance and platform features.`;
+      // Generate AI response (if OpenAI is available)
+      let aiMessage;
+      if (openai) {
+        try {
+          const systemPrompt = `You are Ava, an AI assistant for DTFS (Digital Trade Finance System). You help users with:
+          - Trade finance options (factoring, export finance, supply chain finance, import finance, non-interest finance, startup trade finance)
+          - Marketplace navigation and product listings
+          - Training resources and courses
+          - Digital wallet and payment guidance
+          - P2P trading and dispute resolution
+          - PAPSS payment system information
+          
+          Keep responses helpful, concise, and professional. Focus on trade finance and platform features.`;
 
-      const response = await openai.chat.completions.create({
-        model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: text }
-        ],
-        max_tokens: 500,
-        temperature: 0.7
-      });
+          const response = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: text }
+            ],
+            max_tokens: 500,
+            temperature: 0.7
+          });
 
-      const aiResponseText = response.choices[0].message.content || "I'm sorry, I couldn't generate a response. Please try again.";
+          const aiResponseText = response.choices[0].message.content || "I'm sorry, I couldn't generate a response. Please try again.";
 
-      // Store AI response
-      const aiMessage = await storage.createAiMessage({
-        userId,
-        sender: 'ai',
-        text: aiResponseText,
-        timestamp: new Date(),
-        language
-      });
+          // Store AI response
+          aiMessage = await storage.createAiMessage({
+            userId,
+            sender: 'ai',
+            text: aiResponseText,
+            timestamp: new Date(),
+            language
+          });
+        } catch (openaiError) {
+          console.error("OpenAI API error:", openaiError);
+          
+          // Store fallback response
+          aiMessage = await storage.createAiMessage({
+            userId,
+            sender: 'ai',
+            text: "I'm currently experiencing some technical difficulties. Please try again in a moment, or contact support if the issue persists.",
+            timestamp: new Date(),
+            language
+          });
+        }
+      } else {
+        // OpenAI not configured - provide fallback response
+        aiMessage = await storage.createAiMessage({
+          userId,
+          sender: 'ai',
+          text: "AI assistant is currently not configured. Please contact support to enable AI features.",
+          timestamp: new Date(),
+          language
+        });
+      }
 
       res.json({ userMessage, aiMessage });
     } catch (error) {
