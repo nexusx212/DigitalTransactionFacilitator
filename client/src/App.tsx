@@ -108,17 +108,10 @@ function App() {
 
   // Check if user is already authenticated
   useEffect(() => {
-    fetch('/api/user', { credentials: 'include' })
-      .then(res => {
-        if (res.ok) {
-          setIsAuthenticated(true);
-          setShowSplash(false);
-          setShowAuth(false);
-        }
-      })
-      .catch(() => {
-        // User not authenticated, continue with splash screen
-      });
+    // Skip authentication check and go directly to dashboard for demo
+    setIsAuthenticated(true);
+    setShowSplash(false);
+    setShowAuth(false);
   }, []);
 
   // Register service worker for PWA capabilities

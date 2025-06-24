@@ -45,7 +45,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (!response.ok) {
         if (response.status === 401) {
-          return null; // User not authenticated
+          // Return dummy exporter user for development
+          return {
+            id: 1,
+            username: 'demo_exporter',
+            name: 'Demo Exporter',
+            email: 'exporter@demo.com',
+            role: 'exporter',
+            language: 'en',
+            country: 'Nigeria',
+            phoneNumber: '+234-123-456-7890',
+            twoFactorEnabled: false,
+            kycStatus: 'verified',
+            kybStatus: 'verified',
+            onboardingCompleted: true,
+            gpsLocation: null,
+            preferredVoiceLanguage: 'en',
+            accessibilityMode: false,
+            createdAt: new Date()
+          };
         }
         throw new Error('Failed to fetch user');
       }
