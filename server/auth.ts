@@ -94,16 +94,9 @@ export function setupAuth(app: Express) {
         }
       }
 
-      // Validate role
-      const validRoles = ["exporter", "buyer", "logistics_provider", "agent"];
-      if (!validRoles.includes(req.body.role)) {
-        return res.status(400).json({ message: "Invalid role specified" });
-      }
-
       const user = await storage.createUser({
         ...req.body,
         password: await hashPassword(req.body.password),
-        onboardingCompleted: true, // Mark as completed since they went through splash screen
       });
 
       req.login(user, (err) => {

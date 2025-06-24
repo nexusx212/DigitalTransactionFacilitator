@@ -24,15 +24,30 @@ try {
   console.warn("OpenAI initialization failed, AI features will be disabled:", error);
 }
 
-// Middleware for session-based authentication
+// Middleware for Firebase authentication
 const authenticateUser = async (req: Request, res: Response, next: Function) => {
+  // For Firebase authentication, we would verify the Firebase ID token here
+  // For now, we'll use a simplified approach since Firebase handles client-side auth
+  // In production, you would verify the Firebase ID token from the Authorization header
+  
   try {
-    // Check if user is authenticated via session
-    if (!req.isAuthenticated || !req.isAuthenticated()) {
-      return res.status(401).json({ message: "Unauthorized - Please log in" });
+    // Extract Firebase UID from headers (set by client)
+    const firebaseUid = req.headers['x-firebase-uid'] as string;
+    
+    if (!firebaseUid) {
+      return res.status(401).json({ message: "Unauthorized - Firebase UID required" });
     }
     
-    // User is already attached to request by passport
+    // Find user by Firebase UID
+    const users = await storage.getAllUsers();
+    const user = users.find(u => u.firebaseUid === firebaseUid);
+    
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+    
+    // Attach user to request object
+    (req as any).user = user;
     next();
   } catch (error) {
     console.error("Auth error:", error);
@@ -45,19 +60,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // API Routes
   
-  // Session-based user profile endpoint
-  app.get("/api/user", authenticateUser, async (req, res) => {
+  // Firebase-based user management
+  app.post("/api/auth/register", async (req, res) => {
     try {
-      const user = req.user;
+      const data = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(data);
+      
+      res.status(201).json(user);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      console.error("Register error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get user by Firebase UID
+  app.get("/api/user/:firebaseUid", async (req, res) => {
+    try {
+      const { firebaseUid } = req.params;
+      const users = await storage.getAllUsers();
+      const user = users.find(u => u.firebaseUid === firebaseUid);
+      
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      // Don't send password back to client
-      const { password, ...userWithoutPassword } = user as any;
-      res.json(userWithoutPassword);
+      res.json(user);
     } catch (error) {
-      console.error("Get user profile error:", error);
+      console.error("Get user error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
@@ -886,81 +918,6 @@ Be helpful, professional, and concise. Provide specific guidance about DTFS feat
     } catch (error) {
       console.error("Error processing AI message:", error);
       res.status(500).json({ error: "Failed to process AI message" });
-    }
-  });
-
-  // Products for authenticated users
-  app.get("/api/products/my", authenticateUser, async (req, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const products = await storage.getProductsByUserId(userId);
-      res.json(products);
-    } catch (error) {
-      console.error("Get products error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Orders for exporters
-  app.get("/api/orders/export", authenticateUser, async (req, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const userRole = (req.user as any).role;
-      
-      // Return role-specific data
-      const sampleOrders = userRole === 'exporter' ? [
-        {
-          id: 1,
-          productName: "Premium Coffee Beans",
-          quantity: "500 kg",
-          buyer: "European Coffee Co.",
-          status: "In Transit",
-          value: "$12,500",
-          date: "2024-01-15"
-        },
-        {
-          id: 2,
-          productName: "Organic Cocoa",
-          quantity: "1000 kg", 
-          buyer: "Chocolate Masters Ltd",
-          status: "Processing",
-          value: "$8,750",
-          date: "2024-01-10"
-        }
-      ] : [];
-      
-      res.json(sampleOrders);
-    } catch (error) {
-      console.error("Get export orders error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Analytics for exporters
-  app.get("/api/analytics/export", authenticateUser, async (req, res) => {
-    try {
-      const userId = (req.user as any).id;
-      const userRole = (req.user as any).role;
-      
-      // Role-specific analytics data
-      const analytics = userRole === 'exporter' ? {
-        totalRevenue: "$45,750",
-        totalOrders: 12,
-        activeProducts: 8,
-        topMarkets: ["Europe", "North America", "Asia"],
-        monthlyGrowth: "15%"
-      } : {
-        totalRevenue: "$0",
-        totalOrders: 0,
-        activeProducts: 0,
-        topMarkets: [],
-        monthlyGrowth: "0%"
-      };
-      
-      res.json(analytics);
-    } catch (error) {
-      console.error("Get export analytics error:", error);
-      res.status(500).json({ message: "Internal server error" });
     }
   });
 
