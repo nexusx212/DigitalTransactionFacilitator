@@ -104,23 +104,25 @@ export default function DocumentWizard() {
       ]
     },
     {
-      id: "billOfLading",
-      name: "Bill of Lading",
-      description: "Generate bill of lading for cargo shipments",
+      id: "packingList",
+      name: "Packing List",
+      description: "Generate detailed packing list for shipment documentation",
       category: "Shipping",
-      estimatedTime: "8 minutes",
-      popularity: 82,
+      estimatedTime: "6 minutes",
+      popularity: 85,
       fields: [
-        { id: "blNumber", label: "B/L Number", type: "text", required: true, placeholder: "BL-2024-001" },
-        { id: "vesselName", label: "Vessel Name", type: "text", required: true, placeholder: "MV Cargo Ship" },
-        { id: "voyageNumber", label: "Voyage Number", type: "text", required: true, placeholder: "V001" },
-        { id: "portOfLoading", label: "Port of Loading", type: "text", required: true, placeholder: "Lagos, Nigeria" },
-        { id: "portOfDischarge", label: "Port of Discharge", type: "text", required: true, placeholder: "Hamburg, Germany" },
-        { id: "shipper", label: "Shipper", type: "textarea", required: true, placeholder: "Shipper name and address" },
-        { id: "consignee", label: "Consignee", type: "textarea", required: true, placeholder: "Consignee name and address" },
-        { id: "cargoDescription", label: "Cargo Description", type: "textarea", required: true, placeholder: "Description of cargo" },
-        { id: "containerNumbers", label: "Container Numbers", type: "textarea", required: true, placeholder: "List of container numbers" },
-        { id: "freightTerms", label: "Freight Terms", type: "select", required: true, options: ["Prepaid", "Collect", "Prepaid & Collect"] }
+        { id: "packingListNumber", label: "Packing List Number", type: "text", required: true, placeholder: "PL-2024-001" },
+        { id: "shipmentDate", label: "Shipment Date", type: "date", required: true },
+        { id: "exporterName", label: "Exporter Name", type: "text", required: true, placeholder: "Your company name" },
+        { id: "exporterAddress", label: "Exporter Address", type: "textarea", required: true, placeholder: "Complete exporter address" },
+        { id: "consigneeName", label: "Consignee Name", type: "text", required: true, placeholder: "Buyer company name" },
+        { id: "consigneeAddress", label: "Consignee Address", type: "textarea", required: true, placeholder: "Complete consignee address" },
+        { id: "totalPackages", label: "Total Number of Packages", type: "number", required: true, placeholder: "100" },
+        { id: "packageType", label: "Package Type", type: "select", required: true, options: ["Cartons", "Crates", "Pallets", "Bags", "Drums", "Cases"] },
+        { id: "grossWeight", label: "Total Gross Weight (kg)", type: "number", required: true, placeholder: "1500.00" },
+        { id: "netWeight", label: "Total Net Weight (kg)", type: "number", required: true, placeholder: "1200.00" },
+        { id: "dimensions", label: "Package Dimensions (L×W×H cm)", type: "text", required: true, placeholder: "120×80×100" },
+        { id: "goodsDescription", label: "Description of Goods", type: "textarea", required: true, placeholder: "Detailed description of packed goods" }
       ]
     },
     {
@@ -180,14 +182,14 @@ export default function DocumentWizard() {
     },
     {
       id: "doc-2",
-      templateId: "letterOfCredit",
-      templateName: "Letter of Credit Application",
+      templateId: "packingList",
+      templateName: "Packing List",
       createdAt: "2024-01-19T14:15:00Z",
       status: "sent",
       data: {
-        applicantName: "Demo User Company",
-        beneficiaryName: "Ethiopian Coffee Cooperative",
-        creditAmount: "25000"
+        exporterName: "Demo User Company",
+        consigneeName: "European Trading Ltd",
+        totalPackages: "50"
       }
     }
   ]);
