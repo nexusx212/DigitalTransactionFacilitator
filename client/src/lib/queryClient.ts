@@ -79,8 +79,8 @@ export async function apiRequest(
   
   if (useCache) {
     requestCache.set(cacheKey, fetchPromise);
-    // Remove from cache after 5 minutes
-    setTimeout(() => requestCache.delete(cacheKey), 5 * 60 * 1000);
+    // Remove from cache after 2 minutes for faster updates
+    setTimeout(() => requestCache.delete(cacheKey), 2 * 60 * 1000);
   }
   
   return fetchPromise;
@@ -110,15 +110,15 @@ export const queryClient = new QueryClient({
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
       refetchInterval: false,
-      refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes instead of Infinity for better balance
-      gcTime: 10 * 60 * 1000, // 10 minutes garbage collection time
-      retry: 1, // Retry once for better reliability
-      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000) // Exponential backoff
+      refetchOnWindowFocus: true, // Enable refetch on focus for fresh data
+      staleTime: 2 * 60 * 1000, // 2 minutes for faster refresh
+      gcTime: 5 * 60 * 1000, // 5 minutes garbage collection time  
+      retry: 2, // Retry twice for better reliability
+      retryDelay: attemptIndex => Math.min(500 * 2 ** attemptIndex, 5000) // Faster exponential backoff
     },
     mutations: {
-      retry: 1, // Retry mutations once
-      retryDelay: 1000, // 1 second delay
+      retry: 2, // Retry mutations twice for better reliability
+      retryDelay: 500, // Faster retry delay
     },
   },
 });

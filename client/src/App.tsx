@@ -15,6 +15,8 @@ import { AppProvider } from "@/context/app-context";
 import { AuthProvider } from "@/context/auth-context";
 import { I18nProvider } from "@/hooks/use-i18n";
 import { lazy, Suspense, useEffect, useState, useContext } from "react";
+import { preloadCriticalResources, preloadCriticalData } from "@/lib/preload";
+import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { MobileNav } from "@/components/layout/mobile-nav";
@@ -39,14 +41,12 @@ const LazyUpgradePage = lazy(() => import("@/pages/upgrade"));
 const LazyFinanceComparison = lazy(() => import("@/pages/finance-comparison"));
 const LazyLogoutPage = lazy(() => import("@/pages/logout-page"));
 
-// Loading indicator component
+// Optimized loading indicator component
 function LoadingIndicator() {
   return (
     <div className="flex items-center justify-center h-[calc(100vh-68px)] w-full">
-      <div className="flex flex-col items-center space-y-4">
-        <div className="gradient-primary w-16 h-16 rounded-full flex items-center justify-center text-white shadow-lg animate-pulse">
-          <span className="font-heading font-bold text-2xl">D</span>
-        </div>
+      <div className="flex flex-col items-center space-y-2">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
         <div className="space-y-1 text-center">
           <h3 className="text-lg font-medium text-neutral-800">Loading</h3>
           <p className="text-sm text-neutral-500">Please wait while we prepare your dashboard...</p>
@@ -63,10 +63,14 @@ function AppShell({ children, isAuthPage = false }: { children: React.ReactNode,
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate initial loading
+    // Preload critical resources and data
+    preloadCriticalResources();
+    preloadCriticalData();
+    
+    // Reduced loading time for faster page loads
     const timer = setTimeout(() => {
       setIsLoading(false);
-    }, 1000);
+    }, 200);
     
     return () => clearTimeout(timer);
   }, []);
