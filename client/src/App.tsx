@@ -108,11 +108,12 @@ function App() {
 
   // Check if user is already authenticated
   useEffect(() => {
-    fetch('/api/user')
+    fetch('/api/user', { credentials: 'include' })
       .then(res => {
         if (res.ok) {
           setIsAuthenticated(true);
           setShowSplash(false);
+          setShowAuth(false);
         }
       })
       .catch(() => {

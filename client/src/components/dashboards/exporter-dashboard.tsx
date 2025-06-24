@@ -22,16 +22,31 @@ export function ExporterDashboard() {
   
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products/my"],
+    queryFn: async () => {
+      const response = await fetch('/api/products/my', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch products');
+      return response.json();
+    },
     enabled: !!user && user.role === 'exporter',
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ["/api/orders/export"],
+    queryFn: async () => {
+      const response = await fetch('/api/orders/export', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch orders');
+      return response.json();
+    },
     enabled: !!user && user.role === 'exporter',
   });
 
   const { data: analytics = {} } = useQuery({
     queryKey: ["/api/analytics/export"],
+    queryFn: async () => {
+      const response = await fetch('/api/analytics/export', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch analytics');
+      return response.json();
+    },
     enabled: !!user && user.role === 'exporter',
   });
 

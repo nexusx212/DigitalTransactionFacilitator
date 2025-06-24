@@ -40,7 +40,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading: loading, error, refetch } = useQuery({
     queryKey: ['/api/user'],
     queryFn: async () => {
-      const response = await fetch('/api/user');
+      const response = await fetch('/api/user', {
+        credentials: 'include',
+      });
       if (!response.ok) {
         if (response.status === 401) {
           return null; // User not authenticated

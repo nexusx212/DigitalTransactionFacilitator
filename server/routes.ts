@@ -46,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // API Routes
   
   // Session-based user profile endpoint
-  app.get("/api/user/profile", authenticateUser, async (req, res) => {
+  app.get("/api/user", authenticateUser, async (req, res) => {
     try {
       const user = req.user;
       if (!user) {
@@ -886,6 +886,81 @@ Be helpful, professional, and concise. Provide specific guidance about DTFS feat
     } catch (error) {
       console.error("Error processing AI message:", error);
       res.status(500).json({ error: "Failed to process AI message" });
+    }
+  });
+
+  // Products for authenticated users
+  app.get("/api/products/my", authenticateUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const products = await storage.getProductsByUserId(userId);
+      res.json(products);
+    } catch (error) {
+      console.error("Get products error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Orders for exporters
+  app.get("/api/orders/export", authenticateUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const userRole = (req.user as any).role;
+      
+      // Return role-specific data
+      const sampleOrders = userRole === 'exporter' ? [
+        {
+          id: 1,
+          productName: "Premium Coffee Beans",
+          quantity: "500 kg",
+          buyer: "European Coffee Co.",
+          status: "In Transit",
+          value: "$12,500",
+          date: "2024-01-15"
+        },
+        {
+          id: 2,
+          productName: "Organic Cocoa",
+          quantity: "1000 kg", 
+          buyer: "Chocolate Masters Ltd",
+          status: "Processing",
+          value: "$8,750",
+          date: "2024-01-10"
+        }
+      ] : [];
+      
+      res.json(sampleOrders);
+    } catch (error) {
+      console.error("Get export orders error:", error);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Analytics for exporters
+  app.get("/api/analytics/export", authenticateUser, async (req, res) => {
+    try {
+      const userId = (req.user as any).id;
+      const userRole = (req.user as any).role;
+      
+      // Role-specific analytics data
+      const analytics = userRole === 'exporter' ? {
+        totalRevenue: "$45,750",
+        totalOrders: 12,
+        activeProducts: 8,
+        topMarkets: ["Europe", "North America", "Asia"],
+        monthlyGrowth: "15%"
+      } : {
+        totalRevenue: "$0",
+        totalOrders: 0,
+        activeProducts: 0,
+        topMarkets: [],
+        monthlyGrowth: "0%"
+      };
+      
+      res.json(analytics);
+    } catch (error) {
+      console.error("Get export analytics error:", error);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 
