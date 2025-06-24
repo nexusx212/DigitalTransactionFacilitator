@@ -5,25 +5,29 @@ import { z } from "zod";
 // Users
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  firebaseUid: text("firebase_uid").notNull().unique(),
   username: text("username").notNull().unique(),
+  password: text("password").notNull(),
   name: text("name").notNull(),
   email: text("email").notNull(),
   photoUrl: text("photo_url"),
   walletAddress: text("wallet_address"),
-  role: text("role", { enum: ["exporter", "buyer", "logistics_provider", "financier", "agent"] }).notNull().default("buyer"),
+  role: text("role", { enum: ["exporter", "buyer", "logistics_provider", "agent"] }).notNull(),
   language: text("language").notNull().default("en"),
   country: text("country"),
   phoneNumber: text("phone_number"),
   twoFactorEnabled: boolean("two_factor_enabled").default(false),
   kycStatus: text("kyc_status").default("pending"),
   kybStatus: text("kyb_status").default("pending"),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  gpsLocation: jsonb("gps_location"), // {lat, lng, country, region}
+  preferredVoiceLanguage: text("preferred_voice_language").default("en"),
+  accessibilityMode: boolean("accessibility_mode").default(false), // for low-literacy users
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
-  firebaseUid: true,
   username: true,
+  password: true,
   name: true,
   email: true,
   photoUrl: true,
@@ -32,6 +36,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   language: true,
   country: true,
   phoneNumber: true,
+  gpsLocation: true,
+  preferredVoiceLanguage: true,
+  accessibilityMode: true,
 });
 
 // KYC Profiles

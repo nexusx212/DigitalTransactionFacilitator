@@ -29,7 +29,8 @@ const LazyTraining = lazy(() => import("@/pages/training"));
 const LazyWallet = lazy(() => import("@/pages/wallet"));
 const LazyChat = lazy(() => import("@/pages/chat"));
 const LazyDocuments = lazy(() => import("@/pages/documents"));
-const LazyAuthPage = lazy(() => import("@/pages/auth-page"));
+const LazySplashScreen = lazy(() => import("@/components/splash-screen").then(m => ({ default: m.SplashScreen })));
+const LazyRoleBasedAuth = lazy(() => import("@/components/auth/role-based-auth").then(m => ({ default: m.RoleBasedAuth })));
 const LazyBadgesDemo = lazy(() => import("@/pages/badges-demo"));
 // New pages
 const LazyProfilePage = lazy(() => import("@/pages/profile"));
@@ -99,7 +100,25 @@ function AppShell({ children, isAuthPage = false }: { children: React.ReactNode,
 
 function App() {
   const [location] = useLocation();
-  const isAuthPage = location === '/auth' || location === '/auth-enhanced';
+  const [showSplash, setShowSplash] = useState(true);
+  const [showAuth, setShowAuth] = useState(false);
+  const [onboardingData, setOnboardingData] = useState<any>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const isAuthPage = location === '/auth' || location === '/auth-enhanced' || showSplash || showAuth;
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    fetch('/api/user')
+      .then(res => {
+        if (res.ok) {
+          setIsAuthenticated(true);
+          setShowSplash(false);
+        }
+      })
+      .catch(() => {
+        // User not authenticated, continue with splash screen
+      });
+  }, []);
 
   // Register service worker for PWA capabilities
   useEffect(() => {
@@ -115,6 +134,33 @@ function App() {
       });
     }
   }, []);
+
+  const handleSplashComplete = (data: any) => {
+    setOnboardingData(data);
+    setShowSplash(false);
+    setShowAuth(true);
+  };
+
+  const handleAuthComplete = () => {
+    setIsAuthenticated(true);
+    setShowAuth(false);
+  };
+
+  if (showSplash) {
+    return (
+      <Suspense fallback={<LoadingIndicator />}>
+        <LazySplashScreen onComplete={handleSplashComplete} />
+      </Suspense>
+    );
+  }
+
+  if (showAuth) {
+    return (
+      <Suspense fallback={<LoadingIndicator />}>
+        <LazyRoleBasedAuth onAuth={handleAuthComplete} onboardingData={onboardingData} />
+      </Suspense>
+    );
+  }
 
   // Router component inside App to access location
   const Router = () => (
@@ -132,7 +178,7 @@ function App() {
       <ProtectedRoute path="/upgrade" component={LazyUpgradePage} />
       <ProtectedRoute path="/badges" component={LazyBadgesDemo} />
       <ProtectedRoute path="/finance-comparison" component={LazyFinanceComparison} />
-      <Route path="/auth" component={LazyAuthPage} />
+      <Route path="/auth" component={AuthPage} />
       <Route path="/auth-enhanced" component={EnhancedAuthPage} />
       <Route path="/logout" component={LazyLogoutPage} />
       <Route component={NotFound} />

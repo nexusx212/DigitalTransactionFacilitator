@@ -24,30 +24,15 @@ try {
   console.warn("OpenAI initialization failed, AI features will be disabled:", error);
 }
 
-// Middleware for Firebase authentication
+// Middleware for session-based authentication
 const authenticateUser = async (req: Request, res: Response, next: Function) => {
-  // For Firebase authentication, we would verify the Firebase ID token here
-  // For now, we'll use a simplified approach since Firebase handles client-side auth
-  // In production, you would verify the Firebase ID token from the Authorization header
-  
   try {
-    // Extract Firebase UID from headers (set by client)
-    const firebaseUid = req.headers['x-firebase-uid'] as string;
-    
-    if (!firebaseUid) {
-      return res.status(401).json({ message: "Unauthorized - Firebase UID required" });
+    // Check if user is authenticated via session
+    if (!req.isAuthenticated || !req.isAuthenticated()) {
+      return res.status(401).json({ message: "Unauthorized - Please log in" });
     }
     
-    // Find user by Firebase UID
-    const users = await storage.getAllUsers();
-    const user = users.find(u => u.firebaseUid === firebaseUid);
-    
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-    
-    // Attach user to request object
-    (req as any).user = user;
+    // User is already attached to request by passport
     next();
   } catch (error) {
     console.error("Auth error:", error);
@@ -60,36 +45,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // API Routes
   
-  // Firebase-based user management
-  app.post("/api/auth/register", async (req, res) => {
+  // Session-based user profile endpoint
+  app.get("/api/user/profile", authenticateUser, async (req, res) => {
     try {
-      const data = insertUserSchema.parse(req.body);
-      const user = await storage.createUser(data);
-      
-      res.status(201).json(user);
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.errors });
-      }
-      console.error("Register error:", error);
-      res.status(500).json({ message: "Internal server error" });
-    }
-  });
-
-  // Get user by Firebase UID
-  app.get("/api/user/:firebaseUid", async (req, res) => {
-    try {
-      const { firebaseUid } = req.params;
-      const users = await storage.getAllUsers();
-      const user = users.find(u => u.firebaseUid === firebaseUid);
-      
+      const user = req.user;
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
       
-      res.json(user);
+      // Don't send password back to client
+      const { password, ...userWithoutPassword } = user as any;
+      res.json(userWithoutPassword);
     } catch (error) {
-      console.error("Get user error:", error);
+      console.error("Get user profile error:", error);
       res.status(500).json({ message: "Internal server error" });
     }
   });
