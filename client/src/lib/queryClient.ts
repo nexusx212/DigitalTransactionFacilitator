@@ -53,7 +53,10 @@ export async function apiRequest(
   
   const fetchPromise = fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers: {
+      ...getAuthHeaders(),
+      ...(data ? { "Content-Type": "application/json" } : {})
+    },
     body: data ? JSON.stringify(data) : undefined,
     credentials: "include",
     // Add performance hints
@@ -91,6 +94,7 @@ export const getQueryFn: <T>(options: {
   async ({ queryKey }) => {
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers: getAuthHeaders(),
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

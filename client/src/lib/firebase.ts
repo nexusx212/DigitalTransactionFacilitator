@@ -35,9 +35,9 @@ let currentUser: DummyUser | null = null;
 
 // Mock authentication functions
 export const signInWithGoogle = async () => {
-  // Return a random demo user
-  const randomUser = dummyUsers[Math.floor(Math.random() * dummyUsers.length)];
-  currentUser = randomUser;
+  const user = dummyUsers[0];
+  currentUser = user;
+  localStorage.setItem('currentDummyUser', JSON.stringify(user));
   
   // Simulate async operation
   await new Promise(resolve => setTimeout(resolve, 500));
@@ -50,7 +50,9 @@ export const signInWithGoogle = async () => {
 };
 
 export const signInWithDummy = async (userIndex: number = 0) => {
-  currentUser = dummyUsers[userIndex] || dummyUsers[0];
+  const user = dummyUsers[userIndex] || dummyUsers[0];
+  currentUser = user;
+  localStorage.setItem('currentDummyUser', JSON.stringify(user));
   
   // Simulate async operation
   await new Promise(resolve => setTimeout(resolve, 300));
@@ -64,12 +66,25 @@ export const signInWithDummy = async (userIndex: number = 0) => {
 
 export const logOut = async () => {
   currentUser = null;
+  localStorage.removeItem('currentDummyUser');
   
   // Simulate async operation
   await new Promise(resolve => setTimeout(resolve, 200));
 };
 
-export const getCurrentUser = () => currentUser;
+export const getCurrentUser = () => {
+  if (!currentUser) {
+    const stored = localStorage.getItem('currentDummyUser');
+    if (stored) {
+      currentUser = JSON.parse(stored);
+    } else {
+      // Auto-set first user as default
+      currentUser = dummyUsers[0];
+      localStorage.setItem('currentDummyUser', JSON.stringify(currentUser));
+    }
+  }
+  return currentUser;
+};
 
 // Export for compatibility
 export type User = DummyUser;

@@ -125,10 +125,23 @@ DTFS (Digital Trade Finance System) is a comprehensive full-stack web applicatio
 - **Build Command**: `npm run build`
 - **Start Command**: `npm run start`
 
+## Recent Changes
+
+✓ Successfully migrated project from Replit Agent to Replit environment
+✓ Fixed authentication system - integrated Firebase dummy auth with backend API
+✓ Added PostgreSQL database column for Firebase UID support
+✓ Created demo users in database for testing authentication flow
+✓ Updated API client to send proper authentication headers
+✓ Resolved all authentication errors - API endpoints now responding correctly
+
 ## Changelog
 
 ```
 Changelog:
+- January 23, 2025. Migrated from Replit Agent to Replit environment
+- January 23, 2025. Fixed authentication system integration
+- January 23, 2025. Added database schema updates for Firebase UID
+- January 23, 2025. Created demo users for authentication testing
 - June 15, 2025. Initial setup
 - June 15, 2025. Added PostgreSQL database with Drizzle ORM
 - June 15, 2025. Implemented Firebase authentication with Google OAuth
