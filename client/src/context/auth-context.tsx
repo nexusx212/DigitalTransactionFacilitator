@@ -1,12 +1,10 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { User, signInWithGoogle, signInWithDummy, logOut, getCurrentUser } from "@/lib/firebase";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-export type UserRole = "exporter" | "buyer" | "logistics_provider" | "financier" | "agent" | "admin";
+export type UserRole = "exporter" | "buyer" | "logistics_provider" | "agent";
 
 export interface AuthUser {
   id: number;
-  firebaseUid: string;
   username: string;
   name: string;
   email: string;
@@ -18,126 +16,72 @@ export interface AuthUser {
   twoFactorEnabled: boolean;
   kycStatus: string;
   kybStatus: string;
+  onboardingCompleted: boolean;
+  gpsLocation?: any;
+  preferredVoiceLanguage: string;
+  accessibilityMode: boolean;
   createdAt: Date;
 }
 
 interface AuthContextType {
   user: AuthUser | null;
-  firebaseUser: User | null;
   loading: boolean;
   error: Error | null;
-  signIn: () => Promise<void>;
   signOut: () => Promise<void>;
-  updateUserRole: (role: UserRole) => Promise<void>;
+  refetch: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [dummyUser, setDummyUser] = useState<User | null>(null);
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(false);
   const queryClient = useQueryClient();
 
-  // Demo user for dummy authentication
-  const demoAuthUser: AuthUser = {
-    id: 1,
-    firebaseUid: "demo-user-uid",
-    username: "demo_user", 
-    name: "Demo User",
-    email: "demo@example.com",
-    role: "exporter" as UserRole,
-    language: "en",
-    country: "US",
-    phoneNumber: "+1234567890",
-    twoFactorEnabled: false,
-    kycStatus: "pending",
-    kybStatus: "pending",
-    createdAt: new Date()
-  };
-
-  // Initialize with demo user
-  useEffect(() => {
-    const currentDummyUser = getCurrentUser();
-    if (currentDummyUser) {
-      setDummyUser(currentDummyUser);
-    } else {
-      // Auto-sign in with first dummy user
-      signInWithDummy(0).then(result => {
-        setDummyUser(result.user);
-      });
-    }
-  }, []);
-
-  // Set auth user when dummy user changes
-  useEffect(() => {
-    if (dummyUser) {
-      setUser({
-        ...demoAuthUser,
-        firebaseUid: dummyUser.uid,
-        email: dummyUser.email,
-        name: dummyUser.displayName,
-      });
-    } else {
-      setUser(null);
-    }
-  }, [dummyUser]);
-
-  const updateRoleMutation = useMutation({
-    mutationFn: async (role: UserRole) => {
-      // For dummy auth, just update local state
-      if (user) {
-        setUser({ ...user, role });
+  // Fetch current user from session
+  const { data: user, isLoading: loading, error, refetch } = useQuery({
+    queryKey: ['/api/user'],
+    queryFn: async () => {
+      const response = await fetch('/api/user');
+      if (!response.ok) {
+        if (response.status === 401) {
+          return null; // User not authenticated
+        }
+        throw new Error('Failed to fetch user');
       }
-      return { role };
+      return response.json();
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const signOutMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch('/api/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Logout failed');
+      }
+      return response.json();
     },
     onSuccess: () => {
-      // No backend invalidation needed for dummy auth
+      queryClient.clear();
+      refetch();
     },
   });
 
-  const handleSignIn = async () => {
-    setLoading(true);
-    try {
-      const result = await signInWithGoogle();
-      setDummyUser(result.user);
-    } catch (err: any) {
-      console.error("Sign-in failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSignOut = async () => {
-    setLoading(true);
-    try {
-      await logOut();
-      setDummyUser(null);
-      setUser(null);
-    } catch (err: any) {
-      console.error("Sign-out failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateUserRole = async (role: UserRole) => {
-    if (!user) throw new Error("No user to update");
-    await updateRoleMutation.mutateAsync(role);
-  };
-
-  const contextValue: AuthContextType = {
-    user,
-    firebaseUser: dummyUser,
-    loading: loading || updateRoleMutation.isPending,
-    error: null,
-    signIn: handleSignIn,
-    signOut: handleSignOut,
-    updateUserRole,
+  const signOut = async () => {
+    return signOutMutation.mutateAsync();
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      error: error as Error | null,
+      signOut,
+      refetch
+    }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,6 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/context/auth-context";
 import { AddProductDialog } from "@/components/add-product-dialog";
 import { useState } from "react";
 import { 
@@ -16,18 +17,22 @@ import {
 } from "lucide-react";
 
 export function ExporterDashboard() {
+  const { user } = useAuth();
   const [isAddProductOpen, setIsAddProductOpen] = useState(false);
   
   const { data: products = [] } = useQuery({
     queryKey: ["/api/products/my"],
+    enabled: !!user && user.role === 'exporter',
   });
 
   const { data: orders = [] } = useQuery({
     queryKey: ["/api/orders/export"],
+    enabled: !!user && user.role === 'exporter',
   });
 
   const { data: analytics = {} } = useQuery({
     queryKey: ["/api/analytics/export"],
+    enabled: !!user && user.role === 'exporter',
   });
 
   return (
@@ -35,9 +40,16 @@ export function ExporterDashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Exporter Dashboard</h1>
-          <p className="text-muted-foreground">Manage your export business and trade opportunities</p>
+          <p className="text-muted-foreground">
+            Welcome back, {user?.name || 'Exporter'}! Manage your export business and trade opportunities
+          </p>
+          {user?.role === 'exporter' && (
+            <Badge variant="secondary" className="mt-2">
+              {user.role.charAt(0).toUpperCase() + user.role.slice(1)} Account
+            </Badge>
+          )}
         </div>
-        <Button onClick={() => setIsAddProductOpen(true)}>
+        <Button onClick={() => setIsAddProductOpen(true)} disabled={!user || user.role !== 'exporter'}>
           <Plus className="mr-2 h-4 w-4" />
           Add Product
         </Button>
