@@ -129,6 +129,8 @@ function App() {
   const LazyBuyer = lazy(() => import("@/pages/buyer"));
   const LazyLogistics = lazy(() => import("@/pages/logistics"));
   const LazyShipments = lazy(() => import("@/pages/shipments"));
+  const LazyOrders = lazy(() => import("@/pages/orders"));
+  const LazyFleet = lazy(() => import("@/pages/fleet"));
 
   // Router component inside App to access location
   const Router = () => (
@@ -151,6 +153,8 @@ function App() {
       <ProtectedRoute path="/buyer" component={LazyBuyer} />
       <ProtectedRoute path="/logistics" component={LazyLogistics} />
       <ProtectedRoute path="/shipments" component={LazyShipments} />
+      <ProtectedRoute path="/orders" component={LazyOrders} />
+      <ProtectedRoute path="/fleet" component={LazyFleet} />
       
       <Route path="/auth" component={LazyAuthPage} />
       <Route path="/auth-enhanced" component={EnhancedAuthPage} />
