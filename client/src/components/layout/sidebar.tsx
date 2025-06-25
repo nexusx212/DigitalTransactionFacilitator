@@ -6,6 +6,7 @@ import { AppContext } from "@/context/app-context";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/auth-context";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { motion } from "framer-motion";
 
 type SidebarLinkProps = {
   href: string;
@@ -91,6 +92,7 @@ export function Sidebar() {
   const [location] = useLocation();
   const { user, signOut, loading } = useAuth();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isSpinning, setIsSpinning] = useState(false);
   
   // Initialize sidebar state from localStorage on mount
   useEffect(() => {
@@ -110,6 +112,15 @@ export function Sidebar() {
     setIsCollapsed(prev => !prev);
   };
 
+  const handleLogoClick = () => {
+    if (isSpinning) {
+      setIsSpinning(false);
+    } else {
+      setIsSpinning(true);
+      setTimeout(() => setIsSpinning(false), 3000);
+    }
+  };
+
   return (
     <TooltipProvider>
       <aside 
@@ -126,9 +137,20 @@ export function Sidebar() {
             "flex items-center gap-3 mb-10 relative",
             isCollapsed && "justify-center"
           )}>
-            <div className="gradient-primary w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md">
+            <motion.div 
+              className="gradient-primary w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-md cursor-pointer"
+              onClick={handleLogoClick}
+              animate={{ rotate: isSpinning ? 360 : 0 }}
+              transition={{ 
+                duration: isSpinning ? 1 : 0.3,
+                repeat: isSpinning ? Infinity : 0,
+                ease: "linear"
+              }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
               <span className="font-heading font-bold text-xl">D</span>
-            </div>
+            </motion.div>
             {!isCollapsed && (
               <div>
                 <h1 className="font-heading font-bold text-2xl text-neutral-800">DTFS</h1>

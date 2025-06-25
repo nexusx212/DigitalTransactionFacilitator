@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { AppContext } from "@/context/app-context";
 import { getInitials } from "@/lib/utils";
 import { 
@@ -15,12 +15,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 
 export function Header() {
   const { selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode } = useContext(AppContext);
   const { user, signOut, loading } = useAuth();
   const { toast } = useToast();
+  const [isSpinning, setIsSpinning] = useState(false);
 
   const isMobile = useIsMobile();
 
@@ -39,13 +41,34 @@ export function Header() {
     return language ? language.flag : "🌐";
   };
 
+  const handleLogoClick = () => {
+    if (isSpinning) {
+      setIsSpinning(false);
+    } else {
+      setIsSpinning(true);
+      // Auto-stop spinning after 3 seconds
+      setTimeout(() => setIsSpinning(false), 3000);
+    }
+  };
+
   return (
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-100 px-4 md:px-6 py-3 flex items-center justify-between">
         {/* Mobile Logo */}
         <div className="flex items-center gap-2.5 lg:hidden">
-          <div className="gradient-primary w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-md">
+          <motion.div 
+            className="gradient-primary w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-md cursor-pointer"
+            onClick={handleLogoClick}
+            animate={{ rotate: isSpinning ? 360 : 0 }}
+            transition={{ 
+              duration: isSpinning ? 1 : 0.3,
+              repeat: isSpinning ? Infinity : 0,
+              ease: "linear"
+            }}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
             <span className="font-heading font-bold text-xl">D</span>
-          </div>
+          </motion.div>
           <div>
             <h1 className="font-heading font-bold text-xl text-neutral-800">DTFS</h1>
             {!isMobile && (
