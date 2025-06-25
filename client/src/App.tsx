@@ -125,7 +125,8 @@ function App() {
     }
   }, []);
 
-  // Lazy load logistics components
+  // Lazy load specialized dashboard components
+  const LazyBuyer = lazy(() => import("@/pages/buyer"));
   const LazyLogistics = lazy(() => import("@/pages/logistics"));
   const LazyShipments = lazy(() => import("@/pages/shipments"));
 
@@ -146,7 +147,8 @@ function App() {
       <ProtectedRoute path="/badges" component={LazyBadgesDemo} />
       <ProtectedRoute path="/finance-comparison" component={LazyFinanceComparison} />
       
-      {/* Logistics Routes */}
+      {/* Role-specific Dashboard Routes */}
+      <ProtectedRoute path="/buyer" component={LazyBuyer} />
       <ProtectedRoute path="/logistics" component={LazyLogistics} />
       <ProtectedRoute path="/shipments" component={LazyShipments} />
       

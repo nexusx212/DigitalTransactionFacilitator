@@ -146,6 +146,8 @@ DTFS (Digital Trade Finance System) is a comprehensive full-stack web applicatio
 ✓ Created comprehensive logistics provider dashboard with fleet management
 ✓ Added shipment tracking, route optimization, and performance analytics
 ✓ Implemented logistics-specific routes and navigation
+✓ Added dedicated URL routes: /buyer for buyer dashboard, /logistics for logistics dashboard
+✓ Enhanced sidebar navigation with role-specific dashboard shortcuts
 
 ## Changelog
 
