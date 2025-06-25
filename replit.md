@@ -140,6 +140,9 @@ DTFS (Digital Trade Finance System) is a comprehensive full-stack web applicatio
 ✓ Optimized floating AI chatbot with improved positioning and animations
 ✓ Removed duplicate add product buttons and streamlined interface
 ✓ Added interactive spinning logo functionality for both mobile and desktop
+✓ Enhanced buyer dashboard with modern design and comprehensive features
+✓ Implemented role-based dashboard routing for different user types
+✓ Added animated components and improved user experience
 
 ## Changelog
 
