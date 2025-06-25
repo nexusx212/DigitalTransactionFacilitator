@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext } from "react";
 import { AppContext } from "@/context/app-context";
 import { getInitials } from "@/lib/utils";
 import { 
@@ -15,13 +15,13 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/context/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { MobileDrawer } from "./mobile-drawer";
+
 
 export function Header() {
   const { selectedLanguage, setSelectedLanguage, isOfflineMode, toggleOfflineMode } = useContext(AppContext);
   const { user, signOut, loading } = useAuth();
   const { toast } = useToast();
-  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
+
   const isMobile = useIsMobile();
 
   const languages = [
@@ -32,9 +32,7 @@ export function Header() {
     { code: "ha", name: "Hausa", flag: "🇳🇬" }
   ];
 
-  const toggleMobileDrawer = () => {
-    setIsMobileDrawerOpen(!isMobileDrawerOpen);
-  };
+
 
   const getFlag = (code: string) => {
     const language = languages.find((lang) => lang.code === code);
@@ -42,27 +40,17 @@ export function Header() {
   };
 
   return (
-    <>
       <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-neutral-100 px-4 md:px-6 py-3 flex items-center justify-between">
         {/* Mobile Logo */}
-        <div className="flex items-center gap-3 lg:hidden">
-          <button 
-            className="w-10 h-10 flex items-center justify-center rounded-lg text-neutral-600 hover:bg-neutral-100 transition-all duration-normal" 
-            aria-label="Menu"
-            onClick={toggleMobileDrawer}
-          >
-            <span className="material-icons">menu</span>
-          </button>
-          <div className="flex items-center gap-2.5">
-            <div className="gradient-primary w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-md">
-              <span className="font-heading font-bold text-xl">D</span>
-            </div>
-            <div>
-              <h1 className="font-heading font-bold text-xl text-neutral-800">DTFS</h1>
-              {!isMobile && (
-                <div className="text-[10px] text-neutral-500 leading-none -mt-0.5">Digital Trade Finance</div>
-              )}
-            </div>
+        <div className="flex items-center gap-2.5 lg:hidden">
+          <div className="gradient-primary w-9 h-9 rounded-lg flex items-center justify-center text-white shadow-md">
+            <span className="font-heading font-bold text-xl">D</span>
+          </div>
+          <div>
+            <h1 className="font-heading font-bold text-xl text-neutral-800">DTFS</h1>
+            {!isMobile && (
+              <div className="text-[10px] text-neutral-500 leading-none -mt-0.5">Digital Trade Finance</div>
+            )}
           </div>
         </div>
       
@@ -273,11 +261,5 @@ export function Header() {
         </div>
       </div>
     </header>
-
-      <MobileDrawer 
-        isOpen={isMobileDrawerOpen}
-        onClose={() => setIsMobileDrawerOpen(false)}
-      />
-    </>
   );
 }
