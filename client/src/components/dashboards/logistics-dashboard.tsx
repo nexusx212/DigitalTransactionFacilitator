@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,6 +7,7 @@ import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { useAuth } from "@/context/auth-context";
+import { LogisticsSidebar } from "@/components/layout/logistics-sidebar";
 import { 
   Truck, 
   Package, 
@@ -30,6 +32,7 @@ import {
 
 export function LogisticsDashboard() {
   const { user } = useAuth();
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   
   const { data: shipments } = useQuery({
     queryKey: ["/api/shipments"],
@@ -98,31 +101,37 @@ export function LogisticsDashboard() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <motion.div 
-        className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div>
-          <h1 className="text-2xl lg:text-3xl font-bold text-neutral-800 mb-2">
-            Logistics Control Center 🚛
-          </h1>
-          <p className="text-neutral-600">Monitor shipments, optimize routes, and manage your logistics operations</p>
-        </div>
-        <div className="flex gap-3">
-          <Button variant="outline" className="gap-2">
-            <Route className="w-4 h-4" />
-            Route Optimizer
-          </Button>
-          <Button className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
-            <Plus className="w-4 h-4" />
-            New Shipment
-          </Button>
-        </div>
-      </motion.div>
+    <div className="flex min-h-screen bg-neutral-50">
+      {/* Specialized Logistics Sidebar */}
+      <LogisticsSidebar isCollapsed={sidebarCollapsed} setIsCollapsed={setSidebarCollapsed} />
+      
+      {/* Main Content */}
+      <div className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? 'ml-16' : 'ml-72'}`}>
+        <div className="p-6 space-y-6">
+          {/* Header */}
+          <motion.div 
+            className="flex flex-col lg:flex-row lg:items-center justify-between gap-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <div>
+              <h1 className="text-2xl lg:text-3xl font-bold text-neutral-800 mb-2">
+                Logistics Control Center 🚛
+              </h1>
+              <p className="text-neutral-600">Monitor shipments, optimize routes, and manage your logistics operations</p>
+            </div>
+            <div className="flex gap-3">
+              <Button variant="outline" className="gap-2">
+                <Route className="w-4 h-4" />
+                Route Optimizer
+              </Button>
+              <Button className="gap-2 bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700">
+                <Plus className="w-4 h-4" />
+                New Shipment
+              </Button>
+            </div>
+          </motion.div>
 
       {/* Key Metrics */}
       <motion.div 
@@ -496,6 +505,8 @@ export function LogisticsDashboard() {
           </CardContent>
         </Card>
       </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
