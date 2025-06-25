@@ -215,16 +215,46 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/products", authenticateUser, async (req, res) => {
     try {
       const user = (req as any).user;
-      const productData = {
-        ...req.body,
-        userId: user.id
-      };
+      const { name, price, currency, description, categoryId, imageUrl, location, minimumOrder } = req.body;
+      
+      // Validate required fields
+      if (!name || !price || !currency || !description || !categoryId || !location || !minimumOrder) {
+        return res.status(400).json({ message: "Missing required fields" });
+      }
+      
+      // Validate price is a positive number
+      const parsedPrice = parseFloat(price);
+      if (isNaN(parsedPrice) || parsedPrice <= 0) {
+        return res.status(400).json({ message: "Price must be a positive number" });
+      }
+      
+      // Validate category exists
+      const category = await storage.getProductCategory(parseInt(categoryId));
+      if (!category) {
+        return res.status(400).json({ message: "Invalid category" });
+      }
+      
+      const productData = insertProductSchema.parse({
+        userId: user.id,
+        name: name.trim(),
+        price: parsedPrice,
+        currency,
+        description: description.trim(),
+        categoryId: parseInt(categoryId),
+        imageUrl: imageUrl?.trim() || null,
+        location: location.trim(),
+        minimumOrder: minimumOrder.trim(),
+        isVerified: false
+      });
       
       const product = await storage.createProduct(productData);
       res.status(201).json(product);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid product data", errors: error.errors });
+      }
       console.error("Create product error:", error);
-      res.status(500).json({ message: "Internal server error" });
+      res.status(500).json({ message: "Failed to create product" });
     }
   });
 

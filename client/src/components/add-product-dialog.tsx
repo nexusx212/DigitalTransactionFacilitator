@@ -51,39 +51,43 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
 
   const addProductMutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
+      const token = await user?.getIdToken();
       const response = await fetch("/api/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
         body: JSON.stringify({
           ...data,
-          userId: user?.id,
           price: parseFloat(data.price),
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to add product");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to add product");
       }
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
-        title: "Product Added",
-        description: "Your product has been successfully added to the marketplace.",
+        title: "Product Added Successfully",
+        description: `${data.name} has been added to the marketplace and is pending verification.`,
       });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products/my"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/analytics/export"] });
       reset();
       onOpenChange(false);
       setIsSubmitting(false);
     },
-    onError: (error) => {
+    onError: (error: any) => {
+      console.error("Add product error:", error);
       toast({
-        title: "Error",
-        description: "Failed to add product. Please try again.",
+        title: "Failed to Add Product",
+        description: error.message || "Please check your connection and try again.",
         variant: "destructive",
       });
       setIsSubmitting(false);
@@ -120,12 +124,13 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Product Name */}
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <Label htmlFor="name">Product Name *</Label>
               <Input
                 id="name"
                 placeholder="e.g., Premium Coffee Beans"
                 {...register("name")}
+                className="w-full"
               />
               {errors.name && (
                 <p className="text-sm text-red-600">{errors.name.message}</p>
@@ -222,6 +227,7 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
               placeholder="Provide a detailed description of your product, including quality specifications, origin, certifications, etc."
               rows={4}
               {...register("description")}
+              className="resize-none"
             />
             {errors.description && (
               <p className="text-sm text-red-600">{errors.description.message}</p>
@@ -230,7 +236,7 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
 
           {/* Image URL */}
           <div className="space-y-2">
-            <Label htmlFor="imageUrl">Product Image URL</Label>
+            <Label htmlFor="imageUrl">Product Image URL (Optional)</Label>
             <Input
               id="imageUrl"
               type="url"
@@ -240,6 +246,9 @@ export function AddProductDialog({ open, onOpenChange }: AddProductDialogProps) 
             {errors.imageUrl && (
               <p className="text-sm text-red-600">{errors.imageUrl.message}</p>
             )}
+            <p className="text-xs text-gray-500">
+              Provide a high-quality image URL for better product visibility
+            </p>
           </div>
 
           <DialogFooter>

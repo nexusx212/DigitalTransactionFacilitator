@@ -91,24 +91,36 @@ export function AiAssistant() {
     "What documents do I need for export?",
     "How to list a product on marketplace?",
     "Explain PAPSS payment system",
-    "Help with wallet setup"
+    "Help with wallet setup",
+    "Show me available training courses",
+    "How to verify my business?",
+    "Connect with buyers"
   ];
 
   return (
     <>
       {/* AI Assistant Button */}
       <motion.div
-        className="fixed bottom-6 right-6 z-50"
+        className="fixed bottom-24 lg:bottom-6 right-6 z-50"
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ delay: 1 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
       >
         <Button
-          onClick={() => setIsOpen(true)}
-          className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl border-0 relative"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-14 h-14 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-xl border-0 relative transition-all duration-300"
         >
-          <span className="material-icons text-2xl">smart_toy</span>
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+          <motion.span 
+            className="material-icons text-xl"
+            initial={false}
+            animate={{ rotate: isOpen ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            {isOpen ? 'close' : 'smart_toy'}
+          </motion.span>
+          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
         </Button>
       </motion.div>
 
@@ -119,7 +131,8 @@ export function AiAssistant() {
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            className="fixed bottom-24 right-6 z-50 w-96 max-w-[calc(100vw-3rem)]"
+            transition={{ type: "spring", damping: 20, stiffness: 300 }}
+            className="fixed bottom-24 lg:bottom-20 right-6 z-40 w-80 lg:w-96 max-w-[calc(100vw-3rem)]"
           >
             <Card className="shadow-2xl border-2 border-blue-200 bg-white/95 backdrop-blur-sm">
               <CardHeader className="pb-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-t-lg">
