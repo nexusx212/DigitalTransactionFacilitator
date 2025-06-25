@@ -125,6 +125,10 @@ function App() {
     }
   }, []);
 
+  // Lazy load logistics components
+  const LazyLogistics = lazy(() => import("@/pages/logistics"));
+  const LazyShipments = lazy(() => import("@/pages/shipments"));
+
   // Router component inside App to access location
   const Router = () => (
     <Switch>
@@ -141,6 +145,11 @@ function App() {
       <ProtectedRoute path="/upgrade" component={LazyUpgradePage} />
       <ProtectedRoute path="/badges" component={LazyBadgesDemo} />
       <ProtectedRoute path="/finance-comparison" component={LazyFinanceComparison} />
+      
+      {/* Logistics Routes */}
+      <ProtectedRoute path="/logistics" component={LazyLogistics} />
+      <ProtectedRoute path="/shipments" component={LazyShipments} />
+      
       <Route path="/auth" component={LazyAuthPage} />
       <Route path="/auth-enhanced" component={EnhancedAuthPage} />
       <Route path="/logout" component={LazyLogoutPage} />
