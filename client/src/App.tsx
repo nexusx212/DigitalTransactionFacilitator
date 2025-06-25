@@ -16,6 +16,7 @@ import { AuthProvider } from "@/context/auth-context";
 import { I18nProvider } from "@/hooks/use-i18n";
 import { lazy, Suspense, useEffect, useState, useContext } from "react";
 import { preloadCriticalResources, preloadCriticalData } from "@/lib/preload";
+import { registerServiceWorker } from "@/lib/performance";
 import { DashboardSkeleton } from "@/components/ui/dashboard-skeleton";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
@@ -66,6 +67,9 @@ function AppShell({ children, isAuthPage = false }: { children: React.ReactNode,
     // Preload critical resources and data
     preloadCriticalResources();
     preloadCriticalData();
+    
+    // Register service worker for caching
+    registerServiceWorker();
     
     // Reduced loading time for faster page loads
     const timer = setTimeout(() => {
